@@ -635,7 +635,8 @@ public class DesignPanel
                     throw new Exception("没有可用的玩家状态。");
 
                 var design = panel._converter.Convert(state, ApplicationRules.FromModifiers(state))
-                 ?? throw new Exception("剪贴板中没有有效数据。");
+                 ?? throw new Exception("剪贴板中没有可用数据。");
+                panel._selector.Selected!.GetMaterialDataRef().Clear();
                 panel._manager.ApplyDesign(panel._selector.Selected!, design);
             }
             catch (Exception ex)
