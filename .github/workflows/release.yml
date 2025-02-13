@@ -64,11 +64,12 @@ jobs:
 
       - name: Write out repo.json
         run: |
-          $ver = '${{ github.ref_name }}' -replace 'cn_'
+          $ver = '${{ github.ref_name }}'
+          $verNoPrefix = $ver -replace '^cn_', ''
           $path = './repo.json'
           $json = Get-Content -Raw $path | ConvertFrom-Json
-          $json[0].AssemblyVersion = $ver
-          $json[0].TestingAssemblyVersion = $ver
+          $json[0].AssemblyVersion = $verNoPrefix
+          $json[0].TestingAssemblyVersion = $verNoPrefix
           $json[0].DownloadLinkInstall = $json.DownloadLinkInstall -replace '[^/]+/Glamourer.zip',"$ver/Glamourer.zip"
           $json[0].DownloadLinkTesting = $json.DownloadLinkTesting -replace '[^/]+/Glamourer.zip',"$ver/Glamourer.zip"
           $json[0].DownloadLinkUpdate = $json.DownloadLinkUpdate -replace '[^/]+/Glamourer.zip',"$ver/Glamourer.zip"
