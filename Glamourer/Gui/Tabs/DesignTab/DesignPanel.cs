@@ -513,8 +513,8 @@ public class DesignPanel
 
         protected override string Description
             => panel._selector.Selected!.WriteProtected()
-                ? "解锁设计，使其可以被编辑。"
-                : "锁定设计，使其不能被编辑。";
+                ? "移除写保护，使其可以被编辑。"
+                : "启用写保护，使其不能被编辑。";
 
         protected override FontAwesomeIcon Icon
             => panel._selector.Selected!.WriteProtected()

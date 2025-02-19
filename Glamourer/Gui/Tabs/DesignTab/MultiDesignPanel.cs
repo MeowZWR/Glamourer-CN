@@ -176,16 +176,16 @@ public class MultiDesignPanel(DesignFileSystemSelector selector, DesignManager e
         var buttonWidth = new Vector2((ImGui.GetContentRegionAvail().X - ImGui.GetStyle().ItemSpacing.X) / 2, 0);
         var diff        = _numDesigns - _numQuickDesignEnabled;
         var tt = diff == 0
-            ? $"All {_numDesigns} selected designs are already displayed in the quick design bar."
-            : $"Display all {_numDesigns} selected designs in the quick design bar. Changes {diff} designs.";
+            ? $"当前所有{_numDesigns}个选中设计方案已在快速设计栏显示"
+            : $"将为全部{_numDesigns}个选中设计方案启用快速设计栏显示（影响{diff}个设计）";
         if (ImUtf8.ButtonEx("在快速设计栏中显示选中的设计"u8, tt, buttonWidth, diff == 0))
             foreach (var design in selector.SelectedPaths.OfType<DesignFileSystem.Leaf>())
                 editor.SetQuickDesign(design.Value, true);
 
         ImGui.SameLine();
         tt = _numQuickDesignEnabled == 0
-            ? $"All {_numDesigns} selected designs are already hidden in the quick design bar."
-            : $"Hide all {_numDesigns} selected designs in the quick design bar. Changes {_numQuickDesignEnabled} designs.";
+            ? $"当前所有{_numDesigns}个选中设计方案未在快速设计栏显示"
+            : $"将为全部{_numDesigns}个选中设计方案关闭快速设计栏显示（影响{_numQuickDesignEnabled}个设计）";
         if (ImUtf8.ButtonEx("在快速设计栏中隐藏选中的设计"u8, tt, buttonWidth, _numQuickDesignEnabled == 0))
             foreach (var design in selector.SelectedPaths.OfType<DesignFileSystem.Leaf>())
                 editor.SetQuickDesign(design.Value, false);
@@ -194,22 +194,22 @@ public class MultiDesignPanel(DesignFileSystemSelector selector, DesignManager e
 
     private void DrawMultiLock(float offset)
     {
-        ImUtf8.TextFrameAligned("Multi Lock:"u8);
+        ImUtf8.TextFrameAligned("批量锁定："u8);
         ImGui.SameLine(offset, ImGui.GetStyle().ItemSpacing.X);
         var buttonWidth = new Vector2((ImGui.GetContentRegionAvail().X - ImGui.GetStyle().ItemSpacing.X) / 2, 0);
         var diff        = _numDesigns - _numDesignsLocked;
         var tt = diff == 0
-            ? $"All {_numDesigns} selected designs are already write protected."
-            : $"Write-protect all {_numDesigns} designs. Changes {diff} designs.";
-        if (ImUtf8.ButtonEx("Turn Write-Protected"u8, tt, buttonWidth, diff == 0))
+            ? $"所有{_numDesigns}个选中方案已启用写保护"
+            : $"为全部{_numDesigns}个设计方案启用写保护（影响{diff}个设计）";
+        if (ImUtf8.ButtonEx("启用写保护"u8, tt, buttonWidth, diff == 0))
             foreach (var design in selector.SelectedPaths.OfType<DesignFileSystem.Leaf>())
                 editor.SetWriteProtection(design.Value, true);
 
         ImGui.SameLine();
         tt = _numDesignsLocked == 0
-            ? $"None of the {_numDesigns} selected designs are write-protected."
-            : $"Remove the write protection of the {_numDesigns} selected designs. Changes {_numDesignsLocked} designs.";
-        if (ImUtf8.ButtonEx("Remove Write-Protection"u8, tt, buttonWidth, _numDesignsLocked == 0))
+            ? $"当前{_numDesigns}个选中方案均未启用写保护"
+            : $"移除全部{_numDesigns}个选中方案的写保护（影响{_numDesignsLocked}个设计）";
+        if (ImUtf8.ButtonEx("移除写保护"u8, tt, buttonWidth, _numDesignsLocked == 0))
             foreach (var design in selector.SelectedPaths.OfType<DesignFileSystem.Leaf>())
                 editor.SetWriteProtection(design.Value, false);
         ImGui.Separator();
@@ -217,22 +217,22 @@ public class MultiDesignPanel(DesignFileSystemSelector selector, DesignManager e
 
     private void DrawMultiResetSettings(float offset)
     {
-        ImUtf8.TextFrameAligned("Settings:"u8);
+        ImUtf8.TextFrameAligned("设置："u8);
         ImGui.SameLine(offset, ImGui.GetStyle().ItemSpacing.X);
         var buttonWidth = new Vector2((ImGui.GetContentRegionAvail().X - ImGui.GetStyle().ItemSpacing.X) / 2, 0);
         var diff        = _numDesigns - _numDesignsResetSettings;
         var tt = diff == 0
-            ? $"All {_numDesigns} selected designs already reset temporary settings."
-            : $"Make all {_numDesigns} selected designs reset temporary settings. Changes {diff} designs.";
-        if (ImUtf8.ButtonEx("Set Reset Temp. Settings"u8, tt, buttonWidth, diff == 0))
+            ? $"所有{_numDesigns}个选中方案已设置重置临时设置"
+            : $"为全部{_numDesigns}个设计方案启用临时设置重置（影响{diff}个设计）";
+        if (ImUtf8.ButtonEx("设置重置临时设置"u8, tt, buttonWidth, diff == 0))
             foreach (var design in selector.SelectedPaths.OfType<DesignFileSystem.Leaf>())
                 editor.ChangeResetTemporarySettings(design.Value, true);
 
         ImGui.SameLine();
         tt = _numDesignsResetSettings == 0
-            ? $"None of the {_numDesigns} selected designs reset temporary settings."
-            : $"Stop all {_numDesigns} selected designs from resetting temporary settings. Changes {_numDesignsResetSettings} designs.";
-        if (ImUtf8.ButtonEx("Remove Reset Temp. Settings"u8, tt, buttonWidth, _numDesignsResetSettings == 0))
+            ? $"当前{_numDesigns}个选中方案均未配置重置临时设置"
+            : $"取消全部{_numDesigns}个方案的临时设置重置（影响{_numDesignsResetSettings}个设计）";
+        if (ImUtf8.ButtonEx("取消重置临时设置"u8, tt, buttonWidth, _numDesignsResetSettings == 0))
             foreach (var design in selector.SelectedPaths.OfType<DesignFileSystem.Leaf>())
                 editor.ChangeResetTemporarySettings(design.Value, false);
         ImGui.Separator();
@@ -240,22 +240,22 @@ public class MultiDesignPanel(DesignFileSystemSelector selector, DesignManager e
 
     private void DrawMultiResetDyes(float offset)
     {
-        ImUtf8.TextFrameAligned("Adv. Dyes:"u8);
+        ImUtf8.TextFrameAligned("高级染色："u8);
         ImGui.SameLine(offset, ImGui.GetStyle().ItemSpacing.X);
         var buttonWidth = new Vector2((ImGui.GetContentRegionAvail().X - ImGui.GetStyle().ItemSpacing.X) / 2, 0);
         var diff        = _numDesigns - _numDesignsResetDyes;
         var tt = diff == 0
-            ? $"All {_numDesigns} selected designs already reset advanced dyes."
-            : $"Make all {_numDesigns} selected designs reset advanced dyes. Changes {diff} designs.";
-        if (ImUtf8.ButtonEx("Set Reset Dyes"u8, tt, buttonWidth, diff == 0))
+            ? $"所有{_numDesigns}个选中方案已设置重置高级染色"
+            : $"为全部{_numDesigns}个设计方案启用高级染色重置（影响{diff}个设计）";
+        if (ImUtf8.ButtonEx("设置重置染色"u8, tt, buttonWidth, diff == 0))
             foreach (var design in selector.SelectedPaths.OfType<DesignFileSystem.Leaf>())
                 editor.ChangeResetAdvancedDyes(design.Value, true);
 
         ImGui.SameLine();
         tt = _numDesignsLocked == 0
-            ? $"None of the {_numDesigns} selected designs reset advanced dyes."
-            : $"Stop all {_numDesigns} selected designs from resetting advanced dyes. Changes {_numDesignsResetDyes} designs.";
-        if (ImUtf8.ButtonEx("Remove Reset Dyes"u8, tt, buttonWidth, _numDesignsResetDyes == 0))
+            ? $"当前{_numDesigns}个选中方案均未设置重置染色"
+            : $"取消全部{_numDesigns}个方案的高级染色重置（影响{_numDesignsResetDyes}个设计）";
+        if (ImUtf8.ButtonEx("取消重置染色"u8, tt, buttonWidth, _numDesignsResetDyes == 0))
             foreach (var design in selector.SelectedPaths.OfType<DesignFileSystem.Leaf>())
                 editor.ChangeResetAdvancedDyes(design.Value, false);
         ImGui.Separator();
@@ -263,22 +263,22 @@ public class MultiDesignPanel(DesignFileSystemSelector selector, DesignManager e
 
     private void DrawMultiForceRedraw(float offset)
     {
-        ImUtf8.TextFrameAligned("Redrawing:"u8);
+        ImUtf8.TextFrameAligned("强制重绘："u8);
         ImGui.SameLine(offset, ImGui.GetStyle().ItemSpacing.X);
         var buttonWidth = new Vector2((ImGui.GetContentRegionAvail().X - ImGui.GetStyle().ItemSpacing.X) / 2, 0);
         var diff        = _numDesigns - _numDesignsForcedRedraw;
         var tt = diff == 0
-            ? $"All {_numDesigns} selected designs already force redraws."
-            : $"Make all {_numDesigns} designs force redraws. Changes {diff} designs.";
-        if (ImUtf8.ButtonEx("Force Redraws"u8, tt, buttonWidth, diff == 0))
+            ? $"所有{_numDesigns}个选中方案已启用强制重绘"
+            : $"为全部{_numDesigns}个设计方案启用强制重绘（影响{diff}个设计）";
+        if (ImUtf8.ButtonEx("强制重绘"u8, tt, buttonWidth, diff == 0))
             foreach (var design in selector.SelectedPaths.OfType<DesignFileSystem.Leaf>())
                 editor.ChangeForcedRedraw(design.Value, true);
 
         ImGui.SameLine();
         tt = _numDesignsLocked == 0
-            ? $"None of the {_numDesigns} selected designs force redraws."
-            : $"Stop all {_numDesigns} selected designs from forcing redraws. Changes {_numDesignsForcedRedraw} designs.";
-        if (ImUtf8.ButtonEx("Remove Forced Redraws"u8, tt, buttonWidth, _numDesignsForcedRedraw == 0))
+            ? $"当前{_numDesigns}个选中方案均未启用强制重绘"
+            : $"取消全部{_numDesigns}个方案的强制重绘（影响{_numDesignsForcedRedraw}个设计）";
+        if (ImUtf8.ButtonEx("取消强制重绘"u8, tt, buttonWidth, _numDesignsForcedRedraw == 0))
             foreach (var design in selector.SelectedPaths.OfType<DesignFileSystem.Leaf>())
                 editor.ChangeForcedRedraw(design.Value, false);
         ImGui.Separator();
