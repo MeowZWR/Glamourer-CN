@@ -35,6 +35,10 @@ public class MaterialDrawer(DesignManager _designManager, Configuration _config)
           + (GlossWidth + SpecularStrengthWidth) * ImGuiHelpers.GlobalScale
           + 6 * _spacing
           + ImUtf8.CalcTextSize("Revert"u8).X;
+        DrawMultiButtons(design);
+        ImUtf8.Dummy(0);
+        ImGui.Separator();
+        ImUtf8.Dummy(0);
         if (available > 1.95 * colorWidth)
             DrawSingleRow(design);
         else
@@ -42,9 +46,42 @@ public class MaterialDrawer(DesignManager _designManager, Configuration _config)
         DrawNew(design);
     }
 
+    private void DrawMultiButtons(Design design)
+    {
+        var any      = design.Materials.Count > 0;
+        var disabled = !_config.DeleteDesignModifier.IsActive();
+        var size     = new Vector2(200 * ImUtf8.GlobalScale, 0);
+        if (ImUtf8.ButtonEx("Enable All Advanced Dyes"u8,
+                any
+                    ? "Enable the application of all contained advanced dyes without deleting them."u8
+                    : "This design does not contain any advanced dyes."u8, size,
+                !any || disabled))
+            _designManager.ChangeApplyMulti(design, null, null, null, null, null, null, true, null);
+        ;
+        if (disabled && any)
+            ImUtf8.HoverTooltip($"Hold {_config.DeleteDesignModifier} while clicking to enable.");
+        ImGui.SameLine();
+        if (ImUtf8.ButtonEx("Disable All Advanced Dyes"u8,
+                any
+                    ? "Disable the application of all contained advanced dyes without deleting them."u8
+                    : "This design does not contain any advanced dyes."u8, size,
+                !any || disabled))
+            _designManager.ChangeApplyMulti(design, null, null, null, null, null, null, false, null);
+        if (disabled && any)
+            ImUtf8.HoverTooltip($"Hold {_config.DeleteDesignModifier} while clicking to disable.");
+
+        if (ImUtf8.ButtonEx("Delete All Advanced Dyes"u8, any ? ""u8 : "This design does not contain any advanced dyes."u8, size,
+                !any || disabled))
+            while (design.Materials.Count > 0)
+                _designManager.ChangeMaterialValue(design, MaterialValueIndex.FromKey(design.Materials[0].Item1), null);
+
+        if (disabled && any)
+            ImUtf8.HoverTooltip($"Hold {_config.DeleteDesignModifier} while clicking to delete.");
+    }
+
     private void DrawName(MaterialValueIndex index)
     {
-        using var style = ImRaii.PushStyle(ImGuiStyleVar.ButtonTextAlign, new Vector2(0, 0.5f));
+        using var style = ImRaii.PushStyle(ImGuiStyleVar.ButtonTextAlign, new Vector2(0.05f, 0.5f));
         ImUtf8.TextFramed(index.ToString(), 0, new Vector2((GlossWidth + SpecularStrengthWidth) * ImGuiHelpers.GlobalScale + _spacing, 0),
             borderColor: ImGui.GetColorU32(ImGuiCol.Text));
     }
@@ -139,7 +176,7 @@ public class MaterialDrawer(DesignManager _designManager, Configuration _config)
             "如果选中此项，Glamourer将尝试将此行高级染色恢复到其游戏状态，不应用此行。"u8);
     }
 
-    public sealed class MaterialSlotCombo; 
+    public sealed class MaterialSlotCombo;
 
     public void DrawNew(Design design)
     {
@@ -165,22 +202,27 @@ public class MaterialDrawer(DesignManager _designManager, Configuration _config)
     {
         ImGui.SetNextItemWidth(ImUtf8.CalcTextSize("Material AA"u8).X);
         var format = $"Material {(char)('A' + _newMaterialIdx)}";
-        if (ImUtf8.DragScalar("##Material"u8, ref _newMaterialIdx, format, 0, MaterialService.MaterialsPerModel - 1, 0.01f))
+        if (ImUtf8.DragScalar("##Material"u8, ref _newMaterialIdx, format, 0, MaterialService.MaterialsPerModel - 1, 0.01f,
+                ImGuiSliderFlags.NoInput))
         {
             _newMaterialIdx = Math.Clamp(_newMaterialIdx, 0, MaterialService.MaterialsPerModel - 1);
             _newKey         = _newKey with { MaterialIndex = (byte)_newMaterialIdx };
         }
+
+        ImUtf8.HoverTooltip("Drag this to the left or right to change its value."u8);
     }
 
     private void DrawRowIdxDrag()
     {
         ImGui.SetNextItemWidth(ImUtf8.CalcTextSize("Row 0000"u8).X);
         var format = $"Row {_newRowIdx / 2 + 1}{(char)(_newRowIdx % 2 + 'A')}";
-        if (ImUtf8.DragScalar("##Row"u8, ref _newRowIdx, format, 0, ColorTable.NumRows - 1, 0.01f))
+        if (ImUtf8.DragScalar("##Row"u8, ref _newRowIdx, format, 0, ColorTable.NumRows - 1, 0.01f, ImGuiSliderFlags.NoInput))
         {
             _newRowIdx = Math.Clamp(_newRowIdx, 0, ColorTable.NumRows - 1);
             _newKey    = _newKey with { RowIndex = (byte)_newRowIdx };
         }
+
+        ImUtf8.HoverTooltip("Drag this to the left or right to change its value."u8);
     }
 
     private void DrawRow(Design design, MaterialValueIndex index, in ColorRow row, bool disabled)

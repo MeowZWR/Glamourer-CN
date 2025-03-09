@@ -7,11 +7,12 @@ using Dalamud.Plugin.Services;
 using Glamourer.Automation;
 using Glamourer.Designs;
 using Glamourer.Interop;
+using Glamourer.Interop.Penumbra;
 using Glamourer.Interop.Structs;
 using Glamourer.State;
 using ImGuiNET;
-using OtterGui;
 using OtterGui.Classes;
+using OtterGui.Text;
 using Penumbra.GameData.Actors;
 
 namespace Glamourer.Gui;
@@ -26,6 +27,7 @@ public enum QdbButtons
     RevertEquip       = 0x10,
     RevertCustomize   = 0x20,
     ReapplyAutomation = 0x40,
+    ResetSettings     = 0x80,
 }
 
 public sealed class DesignQuickBar : Window, IDisposable
@@ -40,14 +42,16 @@ public sealed class DesignQuickBar : Window, IDisposable
     private readonly StateManager      _stateManager;
     private readonly AutoDesignApplier _autoDesignApplier;
     private readonly ObjectManager     _objects;
+    private readonly PenumbraService   _penumbra;
     private readonly IKeyState         _keyState;
     private readonly ImRaii.Style      _windowPadding  = new();
     private readonly ImRaii.Color      _windowColor    = new();
     private          DateTime          _keyboardToggle = DateTime.UnixEpoch;
     private          int               _numButtons;
+    private readonly StringBuilder     _tooltipBuilder = new(512);
 
     public DesignQuickBar(Configuration config, QuickDesignCombo designCombo, StateManager stateManager, IKeyState keyState,
-        ObjectManager objects, AutoDesignApplier autoDesignApplier)
+        ObjectManager objects, AutoDesignApplier autoDesignApplier, PenumbraService penumbra)
         : base("Glamourer Quick Bar", ImGuiWindowFlags.NoDecoration | ImGuiWindowFlags.NoDocking)
     {
         _config             = config;
@@ -56,6 +60,7 @@ public sealed class DesignQuickBar : Window, IDisposable
         _keyState           = keyState;
         _objects            = objects;
         _autoDesignApplier  = autoDesignApplier;
+        _penumbra           = penumbra;
         IsOpen              = _config.Ephemeral.ShowDesignQuickBar;
         DisableWindowSounds = true;
         Size                = Vector2.Zero;
@@ -103,7 +108,7 @@ public sealed class DesignQuickBar : Window, IDisposable
 
     private void Draw(float width)
     {
-        using var group      = ImRaii.Group();
+        using var group      = ImUtf8.Group();
         var       spacing    = ImGui.GetStyle().ItemInnerSpacing;
         using var style      = ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, spacing);
         var       buttonSize = new Vector2(ImGui.GetFrameHeight());
@@ -122,6 +127,7 @@ public sealed class DesignQuickBar : Window, IDisposable
         DrawRevertAdvancedCustomization(buttonSize);
         DrawRevertAutomationButton(buttonSize);
         DrawReapplyAutomationButton(buttonSize);
+        DrawResetSettingsButton(buttonSize);
     }
 
     private ActorIdentifier _playerIdentifier;
@@ -144,33 +150,38 @@ public sealed class DesignQuickBar : Window, IDisposable
     {
         var design    = _designCombo.Design as Design;
         var available = 0;
-        var tooltip   = string.Empty;
+        _tooltipBuilder.Clear();
+
         if (design == null)
         {
-            tooltip = "未选择任何设计。";
+            _tooltipBuilder.Append("未选择任何设计。");
         }
         else
         {
             if (_playerIdentifier.IsValid && _playerData.Valid)
             {
                 available |= 1;
-                tooltip   =  $"左键单击：应用{design.ResolveName(_config.Ephemeral.IncognitoMode)}到你自己。";
+                _tooltipBuilder.Append("左键单击：应用")
+                    .Append(design.ResolveName(_config.Ephemeral.IncognitoMode))
+                    .Append("到你自己。");
             }
 
             if (_targetIdentifier.IsValid && _targetData.Valid)
             {
                 if (available != 0)
-                    tooltip += '\n';
+                    _tooltipBuilder.Append('\n');
                 available |= 2;
-                tooltip   += $"右键单击：应用{design.ResolveName(_config.Ephemeral.IncognitoMode)}到{_targetIdentifier}。";
+                _tooltipBuilder.Append("右键单击：应用")
+                    .Append(design.ResolveName(_config.Ephemeral.IncognitoMode))
+                    .Append("到{_targetIdentifier}。");
             }
 
             if (available == 0)
-                tooltip = "玩家和目标都不可用。";
+                _tooltipBuilder.Append("玩家和目标都不可用。");
         }
 
 
-        var (clicked, id, data, state) = ResolveTarget(FontAwesomeIcon.PlayCircle, size, tooltip, available);
+        var (clicked, id, data, state) = ResolveTarget(FontAwesomeIcon.PlayCircle, size, available);
         ImGui.SameLine();
         if (!clicked)
             return;
@@ -192,25 +203,28 @@ public sealed class DesignQuickBar : Window, IDisposable
             return;
 
         var available = 0;
-        var tooltip   = string.Empty;
+        _tooltipBuilder.Clear();
+
         if (_playerIdentifier.IsValid && _playerState is { IsLocked: false })
         {
             available |= 1;
-            tooltip   = "左键单击：将玩家角色恢复到游戏状态。";
+            _tooltipBuilder.Append("左键单击：将玩家角色恢复到游戏状态。");
         }
 
         if (_targetIdentifier.IsValid && _targetState is { IsLocked: false })
         {
             if (available != 0)
-                tooltip += '\n';
+                _tooltipBuilder.Append('\n');
             available |= 2;
-            tooltip   += $"右键单击：将{_targetIdentifier}恢复到游戏状态。";
+            _tooltipBuilder.Append("右键单击：将")
+                .Append(_targetIdentifier)
+                .Append("恢复到游戏状态。");
         }
 
         if (available == 0)
-            tooltip = "玩家角色和目标都不可用，被Glamourer修改了状态，或者他们的状态被锁定。";
+            _tooltipBuilder.Append("玩家角色和目标都不可用，被Glamourer修改了状态，或者他们的状态被锁定。");
 
-        var (clicked, _, _, state) = ResolveTarget(FontAwesomeIcon.UndoAlt, buttonSize, tooltip, available);
+        var (clicked, _, _, state) = ResolveTarget(FontAwesomeIcon.UndoAlt, buttonSize, available);
         ImGui.SameLine();
         if (clicked)
             _stateManager.ResetState(state!, StateSource.Manual, isFinal: true);
@@ -225,26 +239,28 @@ public sealed class DesignQuickBar : Window, IDisposable
             return;
 
         var available = 0;
-        var tooltip   = string.Empty;
+        _tooltipBuilder.Clear();
 
         if (_playerIdentifier.IsValid && _playerState is { IsLocked: false } && _playerData.Valid)
         {
             available |= 1;
-            tooltip   = "左键单击：将玩家角色恢复到自动执行状态。";
+            _tooltipBuilder.Append("左键单击：将玩家角色恢复到自动执行状态。");
         }
 
         if (_targetIdentifier.IsValid && _targetState is { IsLocked: false } && _targetData.Valid)
         {
             if (available != 0)
-                tooltip += '\n';
+                _tooltipBuilder.Append('\n');
             available |= 2;
-            tooltip   += $"右键单击：将{_targetIdentifier}恢复到自动执行状态。";
+            _tooltipBuilder.Append("右键单击：将")
+                .Append(_targetIdentifier)
+                .Append("恢复到自动执行状态。");
         }
 
         if (available == 0)
-            tooltip = "玩家角色和目标都不可用，被Glamourer修改了状态，或者他们的状态被锁定。";
+            _tooltipBuilder.Append("玩家角色和目标都不可用，被Glamourer修改了状态，或者他们的状态被锁定。");
 
-        var (clicked, id, data, state) = ResolveTarget(FontAwesomeIcon.SyncAlt, buttonSize, tooltip, available);
+        var (clicked, id, data, state) = ResolveTarget(FontAwesomeIcon.SyncAlt, buttonSize,  available);
         ImGui.SameLine();
         if (!clicked)
             return;
@@ -265,26 +281,28 @@ public sealed class DesignQuickBar : Window, IDisposable
             return;
 
         var available = 0;
-        var tooltip   = string.Empty;
+        _tooltipBuilder.Clear();
 
         if (_playerIdentifier.IsValid && _playerState is { IsLocked: false } && _playerData.Valid)
         {
             available |= 1;
-            tooltip   =  "左键单击：在玩家角色当前状态的基础上重新应用其当前的自动执行。";
+            _tooltipBuilder.Append("左键单击：在玩家角色当前状态的基础上重新应用其当前的自动执行。");
         }
 
         if (_targetIdentifier.IsValid && _targetState is { IsLocked: false } && _targetData.Valid)
         {
             if (available != 0)
-                tooltip += '\n';
+                _tooltipBuilder.Append('\n');
             available |= 2;
-            tooltip   += $"右键单击：在{_targetIdentifier}当前状态的基础上重新应用其当前的自动执行。";
+            _tooltipBuilder.Append("右键单击：在")
+                .Append(_targetIdentifier)
+                .Append("当前状态的基础上重新应用其当前的自动执行。");
         }
 
         if (available == 0)
-            tooltip = "玩家角色和目标均不可用，由 Glamourer 修改了状态，或者它们的状态已被锁定。";
+            _tooltipBuilder.Append("玩家角色和目标均不可用，由 Glamourer 修改了状态，或者它们的状态已被锁定。");
 
-        var (clicked, id, data, state) = ResolveTarget(FontAwesomeIcon.Repeat, buttonSize, tooltip, available);
+        var (clicked, id, data, state) = ResolveTarget(FontAwesomeIcon.Repeat, buttonSize, available);
         ImGui.SameLine();
         if (!clicked)
             return;
@@ -298,33 +316,32 @@ public sealed class DesignQuickBar : Window, IDisposable
 
     private void DrawRevertAdvancedCustomization(Vector2 buttonSize)
     {
-        if (!_config.UseAdvancedParameters)
-            return;
-
         if (!_config.QdbButtons.HasFlag(QdbButtons.RevertAdvanced))
             return;
 
         var available = 0;
-        var tooltip   = string.Empty;
+        _tooltipBuilder.Clear();
 
         if (_playerIdentifier.IsValid && _playerState is { IsLocked: false } && _playerData.Valid)
         {
             available |= 1;
-            tooltip   = "左键单击：将玩家角色的高级外貌、高级染色设置还原为游戏状态。";
+            _tooltipBuilder.Append("左键单击：将玩家角色的高级外貌、高级染色设置还原为游戏状态。");
         }
 
         if (_targetIdentifier.IsValid && _targetState is { IsLocked: false } && _targetData.Valid)
         {
             if (available != 0)
-                tooltip += '\n';
+                _tooltipBuilder.Append('\n');
             available |= 2;
-            tooltip   += $"右键单击：将{_targetIdentifier}高级外貌、高级染色设置还原为游戏状态。";
+            _tooltipBuilder.Append("右键单击：将")
+                .Append(_targetIdentifier)
+                .Append("高级外貌、高级染色设置还原为游戏状态。");
         }
 
         if (available == 0)
-            tooltip = "玩家角色和目标都不可用，或者他们的状态被锁定。";
+            _tooltipBuilder.Append("玩家角色和目标都不可用，或者他们的状态被锁定。");
 
-        var (clicked, _, _, state) = ResolveTarget(FontAwesomeIcon.Palette, buttonSize, tooltip, available);
+        var (clicked, _, _, state) = ResolveTarget(FontAwesomeIcon.Palette, buttonSize, available);
         ImGui.SameLine();
         if (clicked)
             _stateManager.ResetAdvancedState(state!, StateSource.Manual);
@@ -336,26 +353,28 @@ public sealed class DesignQuickBar : Window, IDisposable
             return;
 
         var available = 0;
-        var tooltip   = string.Empty;
+        _tooltipBuilder.Clear();
 
         if (_playerIdentifier.IsValid && _playerState is { IsLocked: false } && _playerData.Valid)
         {
             available |= 1;
-            tooltip   = "左键单击：将玩家角色的外貌设置恢复到游戏状态。";
+            _tooltipBuilder.Append("左键单击：将玩家角色的外貌设置恢复到游戏状态。");
         }
 
         if (_targetIdentifier.IsValid && _targetState is { IsLocked: false } && _targetData.Valid)
         {
             if (available != 0)
-                tooltip += '\n';
+                _tooltipBuilder.Append('\n');
             available |= 2;
-            tooltip   += $"右键单击：恢复{_targetIdentifier}的外貌设置恢复到游戏状态。";
+            _tooltipBuilder.Append("右键单击：恢复")
+                .Append(_targetIdentifier)
+                .Append("的外貌设置恢复到游戏状态。");
         }
 
         if (available == 0)
-            tooltip = "玩家角色和目标都不可用，或者他们的状态被锁定。";
+            _tooltipBuilder.Append("玩家角色和目标都不可用，或者他们的状态被锁定。");
 
-        var (clicked, _, _, state) = ResolveTarget(FontAwesomeIcon.User, buttonSize, tooltip, available);
+        var (clicked, _, _, state) = ResolveTarget(FontAwesomeIcon.User, buttonSize, available);
         ImGui.SameLine();
         if (clicked)
             _stateManager.ResetCustomize(state!, StateSource.Manual);
@@ -367,35 +386,76 @@ public sealed class DesignQuickBar : Window, IDisposable
             return;
 
         var available = 0;
-        var tooltip   = string.Empty;
+        _tooltipBuilder.Clear();
 
         if (_playerIdentifier.IsValid && _playerState is { IsLocked: false } && _playerData.Valid)
         {
             available |= 1;
-            tooltip   = "左键单击：将玩家的装备恢复到游戏状态。";
+            _tooltipBuilder.Append("左键单击：将玩家的装备恢复到游戏状态。");
         }
 
         if (_targetIdentifier.IsValid && _targetState is { IsLocked: false } && _targetData.Valid)
         {
             if (available != 0)
-                tooltip += '\n';
+                _tooltipBuilder.Append('\n');
             available |= 2;
-            tooltip   += $"右键单击：将{_targetIdentifier}的装备恢复到游戏状态。";
+            _tooltipBuilder.Append("右键单击：将")
+                .Append(_targetIdentifier)
+                .Append("的装备恢复到游戏状态。");
         }
 
         if (available == 0)
-            tooltip = "玩家角色和目标都不可用，或者他们的状态被锁定。";
+            _tooltipBuilder.Append("玩家角色和目标都不可用，或者他们的状态被锁定。");
 
-        var (clicked, _, _, state) = ResolveTarget(FontAwesomeIcon.Vest, buttonSize, tooltip, available);
+        var (clicked, _, _, state) = ResolveTarget(FontAwesomeIcon.Vest, buttonSize, available);
         ImGui.SameLine();
         if (clicked)
             _stateManager.ResetEquip(state!, StateSource.Manual);
     }
 
-    private (bool, ActorIdentifier, ActorData, ActorState?) ResolveTarget(FontAwesomeIcon icon, Vector2 buttonSize, string tooltip,
-        int available)
+    private void DrawResetSettingsButton(Vector2 buttonSize)
     {
-        ImGuiUtil.DrawDisabledButton(icon.ToIconString(), buttonSize, tooltip, available == 0, true);
+        if (!_config.QdbButtons.HasFlag(QdbButtons.ResetSettings))
+            return;
+
+        var available = 0;
+        _tooltipBuilder.Clear();
+
+        if (_playerIdentifier.IsValid && _playerData.Valid)
+        {
+            available |= 1;
+            _tooltipBuilder.Append("左键单击：重置所有由 Glamourer 应用的临时设置（手动或通过自动化）到影响 ")
+                .Append(_playerIdentifier)
+                .Append(" 的合集。");
+        }
+
+        if (_targetIdentifier.IsValid && _targetData.Valid)
+        {
+            if (available != 0)
+                _tooltipBuilder.Append('\n');
+            available |= 2;
+            _tooltipBuilder.Append("右键单击：重置所有由 Glamourer 应用的临时设置（手动或通过自动化）到影响 ")
+                .Append(_targetIdentifier)
+                .Append(" 的合集。");
+        }
+
+        if (available == 0)
+            _tooltipBuilder.Append("玩家角色和目标都不可用，无法识别它们的合集。");
+
+        var (clicked, _, data, _) = ResolveTarget(FontAwesomeIcon.Cog, buttonSize, available);
+        ImGui.SameLine();
+        if (clicked)
+        {
+            _penumbra.RemoveAllTemporarySettings(data.Objects[0].Index, StateSource.Manual);
+            _penumbra.RemoveAllTemporarySettings(data.Objects[0].Index, StateSource.Fixed);
+        }
+    }
+
+    private (bool, ActorIdentifier, ActorData, ActorState?) ResolveTarget(FontAwesomeIcon icon, Vector2 buttonSize, int available)
+    {
+        var enumerator = _tooltipBuilder.GetChunks();
+        var span       = enumerator.MoveNext() ? enumerator.Current.Span : [];
+        ImUtf8.IconButton(icon, span, buttonSize, available == 0);
         if ((available & 1) == 1 && ImGui.IsItemClicked(ImGuiMouseButton.Left))
             return (true, _playerIdentifier, _playerData, _playerState);
         if ((available & 2) == 2 && ImGui.IsItemClicked(ImGuiMouseButton.Right))
@@ -435,11 +495,13 @@ public sealed class DesignQuickBar : Window, IDisposable
                 ++_numButtons;
         }
 
-        if ((_config.UseAdvancedParameters || _config.UseAdvancedDyes) && _config.QdbButtons.HasFlag(QdbButtons.RevertAdvanced))
+        if (_config.QdbButtons.HasFlag(QdbButtons.RevertAdvanced))
             ++_numButtons;
         if (_config.QdbButtons.HasFlag(QdbButtons.RevertCustomize))
             ++_numButtons;
         if (_config.QdbButtons.HasFlag(QdbButtons.RevertEquip))
+            ++_numButtons;
+        if (_config.UseTemporarySettings && _config.QdbButtons.HasFlag(QdbButtons.ResetSettings))
             ++_numButtons;
         if (_config.QdbButtons.HasFlag(QdbButtons.ApplyDesign))
         {

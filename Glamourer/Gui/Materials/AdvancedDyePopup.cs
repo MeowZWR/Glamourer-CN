@@ -1,4 +1,5 @@
 ﻿using Dalamud.Interface;
+using Dalamud.Interface.ImGuiNotification;
 using Dalamud.Interface.Utility;
 using FFXIVClientStructs.FFXIV.Client.Graphics.Kernel;
 using FFXIVClientStructs.FFXIV.Client.Graphics.Render;
@@ -8,7 +9,6 @@ using Glamourer.Designs;
 using Glamourer.Interop.Material;
 using Glamourer.State;
 using ImGuiNET;
-using OtterGui;
 using OtterGui.Raii;
 using OtterGui.Services;
 using OtterGui.Text;
@@ -17,6 +17,7 @@ using Penumbra.GameData.Enums;
 using Penumbra.GameData.Files.MaterialStructs;
 using Penumbra.GameData.Interop;
 using Penumbra.String;
+using Notification = OtterGui.Classes.Notification;
 
 namespace Glamourer.Gui.Materials;
 
@@ -39,9 +40,6 @@ public sealed unsafe class AdvancedDyePopup(
 
     private bool ShouldBeDrawn()
     {
-        if (!config.UseAdvancedDyes)
-            return false;
-
         if (_drawIndex is not { Valid: true })
             return false;
 
@@ -51,28 +49,29 @@ public sealed unsafe class AdvancedDyePopup(
         return true;
     }
 
-    public void DrawButton(EquipSlot slot)
-        => DrawButton(MaterialValueIndex.FromSlot(slot));
+    public void DrawButton(EquipSlot slot, uint color)
+        => DrawButton(MaterialValueIndex.FromSlot(slot), color);
 
-    public void DrawButton(BonusItemFlag slot)
-        => DrawButton(MaterialValueIndex.FromSlot(slot));
+    public void DrawButton(BonusItemFlag slot, uint color)
+        => DrawButton(MaterialValueIndex.FromSlot(slot), color);
 
-    private void DrawButton(MaterialValueIndex index)
+    private void DrawButton(MaterialValueIndex index, uint color)
     {
-        if (!config.UseAdvancedDyes)
+        if (config.HideDesignPanel.HasFlag(DesignPanelFlag.AdvancedDyes))
             return;
 
         ImGui.SameLine();
-        using var id     = ImRaii.PushId(index.SlotIndex | ((int)index.DrawObject << 8));
+        using var id     = ImUtf8.PushId(index.SlotIndex | ((int)index.DrawObject << 8));
         var       isOpen = index == _drawIndex;
 
-        using (ImRaii.PushColor(ImGuiCol.Button, ImGui.GetColorU32(ImGuiCol.ButtonActive), isOpen)
-                   .Push(ImGuiCol.Text,   ColorId.HeaderButtons.Value(), isOpen)
-                   .Push(ImGuiCol.Border, ColorId.HeaderButtons.Value(), isOpen))
+        var (textColor, buttonColor) = isOpen
+            ? (ColorId.HeaderButtons.Value(), ImGui.GetColorU32(ImGuiCol.ButtonActive))
+            : (color, 0u);
+
+        using (ImRaii.PushColor(ImGuiCol.Border, textColor, isOpen))
         {
             using var frame = ImRaii.PushStyle(ImGuiStyleVar.FrameBorderSize, 2 * ImGuiHelpers.GlobalScale, isOpen);
-            if (ImGuiUtil.DrawDisabledButton(FontAwesomeIcon.Palette.ToIconString(), new Vector2(ImGui.GetFrameHeight()),
-                    string.Empty, false, true))
+            if (ImUtf8.IconButton(FontAwesomeIcon.Palette, ""u8, default, false, textColor, buttonColor))
             {
                 _forceFocus       = true;
                 _selectedMaterial = byte.MaxValue;
@@ -80,7 +79,7 @@ public sealed unsafe class AdvancedDyePopup(
             }
         }
 
-        ImGuiUtil.HoverTooltip("打开此插槽的高级染色窗口。");
+        ImUtf8.HoverTooltip("打开此插槽的高级染色窗口。"u8);
     }
 
     private (string Path, string GamePath) ResourceName(MaterialValueIndex index)
@@ -101,11 +100,12 @@ public sealed unsafe class AdvancedDyePopup(
 
     private void DrawTabBar(ReadOnlySpan<Pointer<Texture>> textures, ReadOnlySpan<Pointer<Material>> materials, ref bool firstAvailable)
     {
-        using var bar = ImRaii.TabBar("tabs");
+        using var bar = ImUtf8.TabBar("tabs"u8);
         if (!bar)
             return;
 
-        var table = new ColorTable.Table();
+        var table          = new ColorTable.Table();
+        var highLightColor = ColorId.AdvancedDyeActive.Value();
         for (byte i = 0; i < MaterialService.MaterialsPerModel; ++i)
         {
             var index = _drawIndex!.Value with { MaterialIndex = i };
@@ -124,17 +124,30 @@ public sealed unsafe class AdvancedDyePopup(
             if (available)
                 firstAvailable = false;
 
-            using var tab = _label.TabItem(i, select);
+            var       hasAdvancedDyes = _state.Materials.CheckExistenceMaterial(index);
+            using var c               = ImRaii.PushColor(ImGuiCol.Text, highLightColor, hasAdvancedDyes);
+            using var tab             = _label.TabItem(i, select);
+            c.Pop();
             if (ImGui.IsItemHovered(ImGuiHoveredFlags.AllowWhenDisabled))
             {
                 using var enabled = ImRaii.Enabled();
                 var (path, gamePath) = ResourceName(index);
+                using var tt = ImUtf8.Tooltip();
+
                 if (gamePath.Length == 0 || path.Length == 0)
-                    ImGui.SetTooltip("此材质不存在。");
+                    ImUtf8.Text("此材质不存在。"u8);
                 else if (!available)
-                    ImGui.SetTooltip($"此材质没有关联的颜色集。\n\n{gamePath}\n{path}");
+                    ImUtf8.Text($"此材质没有关联的颜色集。\n\n{gamePath}\n{path}");
                 else
-                    ImGui.SetTooltip($"{gamePath}\n{path}");
+                    ImUtf8.Text($"{gamePath}\n{path}");
+
+                if (hasAdvancedDyes && !available)
+                {
+                    ImUtf8.Text("\n右键点击以移除无效的高级染色。"u8);
+                    if (ImGui.IsMouseClicked(ImGuiMouseButton.Right))
+                        for (byte row = 0; row < ColorTable.NumRows; ++row)
+                            stateManager.ResetMaterialValue(_state, index with { RowIndex = row }, ApplySettings.Game);
+                }
             }
 
             if ((tab.Success || select is ImGuiTabItemFlags.SetSelected) && available)
@@ -154,7 +167,7 @@ public sealed unsafe class AdvancedDyePopup(
 
         using (ImRaii.PushColor(ImGuiCol.Button, ImGui.GetColorU32(_rowOffset == 0 ? ImGuiCol.TabActive : ImGuiCol.Tab)))
         {
-            if (ToggleButton.ButtonEx("Row Pairs 1-8 ", buttonWidth, ImGuiButtonFlags.MouseButtonLeft, ImDrawFlags.RoundCornersLeft))
+            if (ToggleButton.ButtonEx("行对 1-8 ", buttonWidth, ImGuiButtonFlags.MouseButtonLeft, ImDrawFlags.RoundCornersLeft))
                 _rowOffset = 0;
         }
 
@@ -162,7 +175,7 @@ public sealed unsafe class AdvancedDyePopup(
 
         using (ImRaii.PushColor(ImGuiCol.Button, ImGui.GetColorU32(_rowOffset == RowsPerPage ? ImGuiCol.TabActive : ImGuiCol.Tab)))
         {
-            if (ToggleButton.ButtonEx("Row Pairs 9-16", buttonWidth, ImGuiButtonFlags.MouseButtonLeft, ImDrawFlags.RoundCornersRight))
+            if (ToggleButton.ButtonEx("行对 9-16", buttonWidth, ImGuiButtonFlags.MouseButtonLeft, ImDrawFlags.RoundCornersRight))
                 _rowOffset = RowsPerPage;
         }
     }
@@ -173,7 +186,7 @@ public sealed unsafe class AdvancedDyePopup(
         DrawTabBar(textures, materials, ref firstAvailable);
 
         if (firstAvailable)
-            ImGui.TextUnformatted("没有可编辑的材质。");
+            ImUtf8.Text("没有可编辑的材质。"u8);
     }
 
     private void DrawWindow(ReadOnlySpan<Pointer<Texture>> textures, ReadOnlySpan<Pointer<Material>> materials)
@@ -197,13 +210,13 @@ public sealed unsafe class AdvancedDyePopup(
         var width = 7 * ImGui.GetFrameHeight() // Buttons
           + 3 * ImGui.GetStyle().ItemSpacing.X // around text
           + 7 * ImGui.GetStyle().ItemInnerSpacing.X
-          + 200 * ImGuiHelpers.GlobalScale             // Drags
+          + 200 * ImGuiHelpers.GlobalScale                                        // Drags
           + 7 * UiBuilder.MonoFont.GetCharAdvance(' ') * ImGuiHelpers.GlobalScale // Row
           + 2 * ImGui.GetStyle().WindowPadding.X;
         var height = 19 * ImGui.GetFrameHeightWithSpacing() + ImGui.GetStyle().WindowPadding.Y + 3 * ImGui.GetStyle().ItemSpacing.Y;
         ImGui.SetNextWindowSize(new Vector2(width, height));
 
-        var window = ImGui.Begin("###Glamourer Advanced Dyes", flags);
+        var window = ImGui.Begin("###Glamourer 高级染色", flags);
         if (ImGui.IsWindowAppearing() || _forceFocus)
         {
             ImGui.SetWindowFocus();
@@ -251,32 +264,89 @@ public sealed unsafe class AdvancedDyePopup(
         DrawAllRow(materialIndex, table);
     }
 
+    private static void CopyToClipboard(in ColorTable.Table table)
+    {
+        try
+        {
+            fixed (ColorTable.Table* ptr = &table)
+            {
+                var data   = new ReadOnlySpan<byte>(ptr, sizeof(ColorTable.Table));
+                var base64 = Convert.ToBase64String(data);
+                ImGui.SetClipboardText(base64);
+            }
+        }
+        catch (Exception ex)
+        {
+            Glamourer.Log.Error($"无法复制颜色集到剪贴板：\n{ex}");
+        }
+    }
+
+    private static bool ImportFromClipboard(out ColorTable.Table table)
+    {
+        try
+        {
+            var base64 = ImGui.GetClipboardText();
+            if (base64.Length > 0)
+            {
+                var data = Convert.FromBase64String(base64);
+                if (sizeof(ColorTable.Table) <= data.Length)
+                {
+                    table = new ColorTable.Table();
+                    fixed (ColorTable.Table* tPtr = &table)
+                    {
+                        fixed (byte* ptr = data)
+                        {
+                            new ReadOnlySpan<byte>(ptr, sizeof(ColorTable.Table)).CopyTo(new Span<byte>(tPtr, sizeof(ColorTable.Table)));
+                            return true;
+                        }
+                    }
+                }
+            }
+
+            if (ColorRowClipboard.IsTableSet)
+            {
+                table = ColorRowClipboard.Table;
+                return true;
+            }
+        }
+        catch (Exception ex)
+        {
+            Glamourer.Messager.AddMessage(new Notification(ex, "无法从剪贴板粘贴颜色集。",
+                "无法从剪贴板粘贴颜色集。", NotificationType.Error));
+        }
+
+        table = default;
+        return false;
+    }
+
     private void DrawAllRow(MaterialValueIndex materialIndex, in ColorTable.Table table)
     {
         using var id         = ImRaii.PushId(100);
         var       buttonSize = new Vector2(ImGui.GetFrameHeight());
-        ImGuiUtil.DrawDisabledButton(FontAwesomeIcon.Crosshairs.ToIconString(), buttonSize, "高亮显示角色身上所有受影响的颜色。",
-            false, true);
+        ImUtf8.IconButton(FontAwesomeIcon.Crosshairs, "高亮显示角色身上所有受影响的颜色。"u8, buttonSize);
         if (ImGui.IsItemHovered())
             preview.OnHover(materialIndex with { RowIndex = byte.MaxValue }, _actor.Index, table);
         ImGui.SameLine();
         ImGui.AlignTextToFramePadding();
         using (ImRaii.PushFont(UiBuilder.MonoFont))
         {
-            ImGui.TextUnformatted("所有颜色行");
+            ImUtf8.Text("所有颜色行 (1-16)"u8);
         }
 
         var spacing = ImGui.GetStyle().ItemInnerSpacing.X;
         ImGui.SameLine(ImGui.GetWindowSize().X - 3 * buttonSize.X - 2 * spacing - ImGui.GetStyle().WindowPadding.X);
-        if (ImGuiUtil.DrawDisabledButton(FontAwesomeIcon.Clipboard.ToIconString(), buttonSize, "将此颜色集表导出到剪贴板。", false,
-                true))
+        if (ImUtf8.IconButton(FontAwesomeIcon.Clipboard, "将此颜色集表导出到剪贴板。"u8, buttonSize))
+        {
             ColorRowClipboard.Table = table;
+            CopyToClipboard(table);
+        }
+
         ImGui.SameLine(0, spacing);
-        if (ImGuiUtil.DrawDisabledButton(FontAwesomeIcon.Paste.ToIconString(), buttonSize,
-                "将导出的表从剪贴板导入到此表。", !ColorRowClipboard.IsTableSet, true))
+        if (ImUtf8.IconButton(FontAwesomeIcon.Paste, "将导出的表从剪贴板导入到此表。"u8, buttonSize)
+         && ImportFromClipboard(out var newTable))
             for (var idx = 0; idx < ColorTable.NumRows; ++idx)
             {
-                var row         = ColorRowClipboard.Table[idx];
+                var row         = newTable[idx];
                 var internalRow = new ColorRow(row);
                 var slot        = materialIndex.ToEquipSlot();
                 var weapon = slot is EquipSlot.MainHand or EquipSlot.OffHand
@@ -287,15 +357,14 @@ public sealed unsafe class AdvancedDyePopup(
             }
 
         ImGui.SameLine(0, spacing);
-        if (ImGuiUtil.DrawDisabledButton(FontAwesomeIcon.UndoAlt.ToIconString(), buttonSize, "将此表重置为游戏状态。", !_anyChanged,
-                true))
+        if (ImUtf8.IconButton(FontAwesomeIcon.UndoAlt, "将此表重置为游戏状态。"u8, buttonSize, !_anyChanged))
             for (byte i = 0; i < ColorTable.NumRows; ++i)
                 stateManager.ResetMaterialValue(_state, materialIndex with { RowIndex = i }, ApplySettings.Game);
     }
 
     private void DrawRow(ref ColorTableRow row, MaterialValueIndex index, in ColorTable.Table table)
     {
-        using var id      = ImRaii.PushId(index.RowIndex);
+        using var id      = ImUtf8.PushId(index.RowIndex);
         var       changed = _state.Materials.TryGetValue(index, out var value);
         if (!changed)
         {
@@ -305,8 +374,9 @@ public sealed unsafe class AdvancedDyePopup(
             {
                 EquipSlot.MainHand => _state.ModelData.Weapon(EquipSlot.MainHand),
                 EquipSlot.OffHand  => _state.ModelData.Weapon(EquipSlot.OffHand),
-                EquipSlot.Unknown  => _state.ModelData.BonusItem((index.SlotIndex - 16u).ToBonusSlot()).Armor().ToWeapon(0), // TODO: Handle better
-                _                  => _state.ModelData.Armor(slot).ToWeapon(0),
+                EquipSlot.Unknown =>
+                    _state.ModelData.BonusItem((index.SlotIndex - 16u).ToBonusSlot()).Armor().ToWeapon(0), // TODO: Handle better
+                _ => _state.ModelData.Armor(slot).ToWeapon(0),
             };
             value = new MaterialValueState(internalRow, internalRow, weapon, StateSource.Manual);
         }
@@ -317,8 +387,7 @@ public sealed unsafe class AdvancedDyePopup(
         }
 
         var buttonSize = new Vector2(ImGui.GetFrameHeight());
-        ImGuiUtil.DrawDisabledButton(FontAwesomeIcon.Crosshairs.ToIconString(), buttonSize, "高亮显示角色身上受影响的颜色。",
-            false, true);
+        ImUtf8.IconButton(FontAwesomeIcon.Crosshairs, "高亮显示角色身上受影响的颜色。"u8, buttonSize);
         if (ImGui.IsItemHovered())
             preview.OnHover(index, _actor.Index, table);
 
@@ -328,28 +397,28 @@ public sealed unsafe class AdvancedDyePopup(
         {
             var rowIndex  = index.RowIndex / 2 + 1;
             var rowSuffix = (index.RowIndex & 1) == 0 ? 'A' : 'B';
-            ImGui.TextUnformatted($"行#{rowIndex,2}{rowSuffix}");
+            ImUtf8.Text($"Row {rowIndex,2}{rowSuffix}");
         }
 
         ImGui.SameLine(0, ImGui.GetStyle().ItemSpacing.X * 2);
-        var applied = ImGuiUtil.ColorPicker("##diffuse", "更改此行的漫反射值。", value.Model.Diffuse,
-            v => value.Model.Diffuse = v, "D");
+        var applied = ImUtf8.ColorPicker("##diffuse"u8, "更改此行的漫反射值。"u8, value.Model.Diffuse,
+            v => value.Model.Diffuse = v, "D"u8);
 
         var spacing = ImGui.GetStyle().ItemInnerSpacing;
         ImGui.SameLine(0, spacing.X);
-        applied |= ImGuiUtil.ColorPicker("##specular", "更改此行的镜面反射值。", value.Model.Specular,
-            v => value.Model.Specular = v, "S");
+        applied |= ImUtf8.ColorPicker("##specular"u8, "更改此行的镜面反射值。"u8, value.Model.Specular,
+            v => value.Model.Specular = v, "S"u8);
 
         ImGui.SameLine(0, spacing.X);
-        applied |= ImGuiUtil.ColorPicker("##emissive", "更改此行的发光值。", value.Model.Emissive,
-            v => value.Model.Emissive = v, "E");
+        applied |= ImUtf8.ColorPicker("##emissive"u8, "更改此行的发光值。"u8, value.Model.Emissive,
+            v => value.Model.Emissive = v, "E"u8);
 
         ImGui.SameLine(0, spacing.X);
         if (_mode is not ColorRow.Mode.Dawntrail)
         {
             ImGui.SetNextItemWidth(100 * ImGuiHelpers.GlobalScale);
             applied |= DragGloss(ref value.Model.GlossStrength);
-            ImGuiUtil.HoverTooltip("更改此行的光泽强度。");
+            ImUtf8.HoverTooltip("更改此行的光泽强度。"u8);
         }
         else
         {
@@ -361,7 +430,7 @@ public sealed unsafe class AdvancedDyePopup(
         {
             ImGui.SetNextItemWidth(100 * ImGuiHelpers.GlobalScale);
             applied |= DragSpecularStrength(ref value.Model.SpecularStrength);
-            ImGuiUtil.HoverTooltip("更改此行的镜面反射强度。");
+            ImUtf8.HoverTooltip("更改此行的镜面反射强度。"u8);
         }
         else
         {
@@ -369,19 +438,18 @@ public sealed unsafe class AdvancedDyePopup(
         }
 
         ImGui.SameLine(0, spacing.X);
-        if (ImGuiUtil.DrawDisabledButton(FontAwesomeIcon.Clipboard.ToIconString(), buttonSize, "将此行导出到剪贴板。", false,
-                true))
+        if (ImUtf8.IconButton(FontAwesomeIcon.Clipboard, "将此行导出到剪贴板。"u8, buttonSize))
             ColorRowClipboard.Row = value.Model;
         ImGui.SameLine(0, spacing.X);
-        if (ImGuiUtil.DrawDisabledButton(FontAwesomeIcon.Paste.ToIconString(), buttonSize,
-                "将导出的行从剪贴板导入到此行。", !ColorRowClipboard.IsSet, true))
+        if (ImUtf8.IconButton(FontAwesomeIcon.Paste, "将导出的行从剪贴板导入到此行。"u8, buttonSize,
+                !ColorRowClipboard.IsSet))
         {
             value.Model = ColorRowClipboard.Row;
             applied     = true;
         }
 
         ImGui.SameLine(0, spacing.X);
-        if (ImGuiUtil.DrawDisabledButton(FontAwesomeIcon.UndoAlt.ToIconString(), buttonSize, "将此行重置为游戏状态。", !changed, true))
+        if (ImUtf8.IconButton(FontAwesomeIcon.UndoAlt, "将此行重置为游戏状态。"u8, buttonSize, !changed))
             stateManager.ResetMaterialValue(_state, index, ApplySettings.Game);
 
         if (applied)
@@ -392,7 +460,8 @@ public sealed unsafe class AdvancedDyePopup(
     {
         var tmp      = value;
         var minValue = ImGui.GetIO().KeyCtrl ? 0f : (float)Half.Epsilon;
-        if (!ImUtf8.DragScalar("##Gloss"u8, ref tmp, "%.1f G"u8, 0.001f, minValue, Math.Max(0.01f, 0.005f * value), ImGuiSliderFlags.AlwaysClamp))
+        if (!ImUtf8.DragScalar("##Gloss"u8, ref tmp, "%.1f G"u8, 0.001f, minValue, Math.Max(0.01f, 0.005f * value),
+                ImGuiSliderFlags.AlwaysClamp))
             return false;
 
         var tmp2 = Math.Clamp(tmp, minValue, (float)Half.MaxValue);

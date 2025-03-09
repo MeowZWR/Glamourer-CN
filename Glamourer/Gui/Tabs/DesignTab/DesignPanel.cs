@@ -17,7 +17,6 @@ using OtterGui;
 using OtterGui.Classes;
 using OtterGui.Raii;
 using OtterGui.Text;
-using OtterGuiInternal.Structs;
 using Penumbra.GameData.Enums;
 using static Glamourer.Gui.Tabs.HeaderDrawer;
 
@@ -102,7 +101,7 @@ public class DesignPanel
 
     private void DrawEquipment()
     {
-        using var h = ImRaii.CollapsingHeader("装备");
+        using var h = DesignPanelFlag.Equipment.Header(_config);
         if (!h)
             return;
 
@@ -157,10 +156,14 @@ public class DesignPanel
 
     private void DrawCustomize()
     {
+        if (_config.HideDesignPanel.HasFlag(DesignPanelFlag.Customization))
+            return;
+
         var header = _selector.Selected!.DesignData.ModelId == 0
             ? "外貌"
-            : $"Customization (Model Id #{_selector.Selected!.DesignData.ModelId})###Customization";
-        using var h = ImRaii.CollapsingHeader(header);
+            : $"外貌（模型ID#{_selector.Selected!.DesignData.ModelId}）###Customization";
+        var       expand = _config.AutoExpandDesignPanel.HasFlag(DesignPanelFlag.Customization);
+        using var h      = ImUtf8.CollapsingHeaderId(header, expand ? ImGuiTreeNodeFlags.DefaultOpen : ImGuiTreeNodeFlags.None);
         if (!h)
             return;
 
@@ -181,10 +184,7 @@ public class DesignPanel
 
     private void DrawCustomizeParameters()
     {
-        if (!_config.UseAdvancedParameters)
-            return;
-
-        using var h = ImRaii.CollapsingHeader("外貌（高级）- 调色盘");
+        using var h = DesignPanelFlag.AdvancedCustomizations.Header(_config);
         if (!h)
             return;
 
@@ -193,10 +193,7 @@ public class DesignPanel
 
     private void DrawMaterialValues()
     {
-        if (!_config.UseAdvancedDyes)
-            return;
-
-        using var h = ImRaii.CollapsingHeader("染色（高级）- 颜色集");
+        using var h = DesignPanelFlag.AdvancedDyes.Header(_config);
         if (!h)
             return;
 
@@ -205,7 +202,7 @@ public class DesignPanel
 
     private void DrawCustomizeApplication()
     {
-        using var id        = ImRaii.PushId("Customizations");
+        using var id        = ImUtf8.PushId("Customizations"u8);
         var       set       = _selector.Selected!.CustomizeSet;
         var       available = set.SettingAvailable | CustomizeFlag.Clan | CustomizeFlag.Gender | CustomizeFlag.BodyType;
         var flags = _selector.Selected!.ApplyCustomizeExcludingBodyType == 0 ? 0 :
@@ -220,55 +217,54 @@ public class DesignPanel
         }
 
         var applyClan = _selector.Selected!.DoApplyCustomize(CustomizeIndex.Clan);
-        if (ImGui.Checkbox($"应用{CustomizeIndex.Clan.ToDefaultName()}", ref applyClan))
+        if (ImUtf8.Checkbox($"应用{CustomizeIndex.Clan.ToDefaultName()}", ref applyClan))
             _manager.ChangeApplyCustomize(_selector.Selected!, CustomizeIndex.Clan, applyClan);
 
         var applyGender = _selector.Selected!.DoApplyCustomize(CustomizeIndex.Gender);
-        if (ImGui.Checkbox($"应用{CustomizeIndex.Gender.ToDefaultName()}", ref applyGender))
+        if (ImUtf8.Checkbox($"应用{CustomizeIndex.Gender.ToDefaultName()}", ref applyGender))
             _manager.ChangeApplyCustomize(_selector.Selected!, CustomizeIndex.Gender, applyGender);
 
 
         foreach (var index in CustomizationExtensions.All.Where(set.IsAvailable))
         {
             var apply = _selector.Selected!.DoApplyCustomize(index);
-            if (ImGui.Checkbox($"应用{set.Option(index)}", ref apply))
+            if (ImUtf8.Checkbox($"应用 set.Option(index)}", ref apply))
                 _manager.ChangeApplyCustomize(_selector.Selected!, index, apply);
         }
     }
 
     private void DrawCrestApplication()
     {
-        using var id        = ImRaii.PushId("队徽");
+        using var id        = ImUtf8.PushId("队徽"u8);
         var       flags     = (uint)_selector.Selected!.Application.Crest;
         var       bigChange = ImGui.CheckboxFlags("应用所有队徽", ref flags, (uint)CrestExtensions.AllRelevant);
         foreach (var flag in CrestExtensions.AllRelevantSet)
         {
             var apply = bigChange ? ((CrestFlag)flags & flag) == flag : _selector.Selected!.DoApplyCrest(flag);
-            if (ImGui.Checkbox($"应用{flag.ToLabel()}队徽", ref apply) || bigChange)
+            if (ImUtf8.Checkbox($"应用{flag.ToLabel()}队徽", ref apply) || bigChange)
                 _manager.ChangeApplyCrest(_selector.Selected!, flag, apply);
         }
     }
 
     private void DrawApplicationRules()
     {
-        using var h = ImRaii.CollapsingHeader("应用规则");
+        using var h = DesignPanelFlag.ApplicationRules.Header(_config);
         if (!h)
             return;
 
         using var disabled = ImRaii.Disabled(_selector.Selected!.WriteProtected());
 
-        using (var _ = ImRaii.Group())
+        DrawAllButtons();
+
+        using (var _ = ImUtf8.Group())
         {
             DrawCustomizeApplication();
             ImUtf8.IconDummy();
             DrawCrestApplication();
             ImUtf8.IconDummy();
-            if (_config.UseAdvancedParameters)
-            {
-                DrawMetaApplication();
-                ImUtf8.IconDummy();
-                DrawBonusSlotApplication();
-            }
+            DrawMetaApplication();
+            ImUtf8.IconDummy();
+            DrawBonusSlotApplication();
         }
 
         ImGui.SameLine(ImGui.GetContentRegionAvail().X / 2);
@@ -277,20 +273,20 @@ public class DesignPanel
             void ApplyEquip(string label, EquipFlag allFlags, bool stain, IEnumerable<EquipSlot> slots)
             {
                 var       flags     = (uint)(allFlags & _selector.Selected!.Application.Equip);
-                using var id        = ImRaii.PushId(label);
+                using var id        = ImUtf8.PushId(label);
                 var       bigChange = ImGui.CheckboxFlags($"应用全部{label}", ref flags, (uint)allFlags);
                 if (stain)
                     foreach (var slot in slots)
                     {
                         var apply = bigChange ? ((EquipFlag)flags).HasFlag(slot.ToStainFlag()) : _selector.Selected!.DoApplyStain(slot);
-                        if (ImGui.Checkbox($"应用{slot.ToName()}染色", ref apply) || bigChange)
+                        if (ImUtf8.Checkbox($"应用{slot.ToName()}染色", ref apply) || bigChange)
                             _manager.ChangeApplyStains(_selector.Selected!, slot, apply);
                     }
                 else
                     foreach (var slot in slots)
                     {
                         var apply = bigChange ? ((EquipFlag)flags).HasFlag(slot.ToFlag()) : _selector.Selected!.DoApplyEquip(slot);
-                        if (ImGui.Checkbox($"应用{slot.ToName()}", ref apply) || bigChange)
+                        if (ImUtf8.Checkbox($"应用{slot.ToName()}", ref apply) || bigChange)
                             _manager.ChangeApplyItem(_selector.Selected!, slot, apply);
                     }
             }
@@ -312,17 +308,94 @@ public class DesignPanel
                 EquipSlotExtensions.FullSlots);
 
             ImUtf8.IconDummy();
-            if (_config.UseAdvancedParameters)
-            {
-                DrawParameterApplication();
-            }
-            else
-            {
-                DrawMetaApplication();
-                ImUtf8.IconDummy();
-                DrawBonusSlotApplication();
-            }
+            DrawParameterApplication();
         }
+    }
+
+    private void DrawAllButtons()
+    {
+        var   enabled   = _config.DeleteDesignModifier.IsActive();
+        bool? equip     = null;
+        bool? customize = null;
+        var   size      = new Vector2(200 * ImUtf8.GlobalScale, 0);
+        if (ImUtf8.ButtonEx("禁用所有"u8,
+            "禁用所有应用，包括任何现有的高级染色、高级外貌、队徽和湿身效果。"u8, size,
+            !enabled))
+        {
+            equip     = false;
+            customize = false;
+        }
+
+        if (!enabled)
+            ImUtf8.HoverTooltip(ImGuiHoveredFlags.AllowWhenDisabled, $"点击时按住 {_config.DeleteDesignModifier}。");
+
+        ImGui.SameLine();
+        if (ImUtf8.ButtonEx("启用所有"u8,
+            "启用所有应用，包括任何现有的高级染色、高级外貌、队徽和湿身效果。"u8, size,
+            !enabled))
+        {
+            equip     = true;
+            customize = true;
+        }
+
+        if (!enabled)
+            ImUtf8.HoverTooltip(ImGuiHoveredFlags.AllowWhenDisabled, $"点击时按住 {_config.DeleteDesignModifier}。");
+
+        if (ImUtf8.ButtonEx("仅装备"u8,
+            "启用与装备相关的所有应用，禁用与装备无关的所有应用。"u8, size,
+            !enabled))
+        {
+            equip     = true;
+            customize = false;
+        }
+
+        if (!enabled)
+            ImUtf8.HoverTooltip(ImGuiHoveredFlags.AllowWhenDisabled, $"点击时按住 {_config.DeleteDesignModifier}。");
+
+        ImGui.SameLine();
+        if (ImUtf8.ButtonEx("仅外貌"u8,
+            "启用与外貌相关的所有应用，禁用与外貌无关的所有应用。"u8, size,
+            !enabled))
+        {
+            equip     = false;
+            customize = true;
+        }
+        if (!enabled)
+            ImUtf8.HoverTooltip(ImGuiHoveredFlags.AllowWhenDisabled, $"点击时按住 {_config.DeleteDesignModifier}。");
+
+        if (ImUtf8.ButtonEx("默认应用"u8,
+            "将应用规则设置为默认值，就像设计是新创建的一样，没有任何高级功能或湿身效果。"u8,
+            size,
+            !enabled))
+        {
+            _manager.ChangeApplyMulti(_selector.Selected!, true, true, true, false, true, true, false, true);
+            _manager.ChangeApplyMeta(_selector.Selected!, MetaIndex.Wetness, false);
+        }
+        if (!enabled)
+            ImUtf8.HoverTooltip(ImGuiHoveredFlags.AllowWhenDisabled, $"点击时按住 {_config.DeleteDesignModifier}。");
+
+        ImGui.SameLine();
+        if (ImUtf8.ButtonEx("禁用高级"u8, "禁用所有高级染色和外貌，但保留其他所有设置。"u8,
+            size,
+            !enabled))
+            _manager.ChangeApplyMulti(_selector.Selected!, null, null, null, false, null, null, false, null);
+
+        if (!enabled)
+            ImUtf8.HoverTooltip(ImGuiHoveredFlags.AllowWhenDisabled, $"点击时按住 {_config.DeleteDesignModifier}。");
+
+        if (equip is null && customize is null)
+            return;
+
+        _manager.ChangeApplyMulti(_selector.Selected!, equip, customize, equip, customize, null, equip, equip, equip);
+        if (equip.HasValue)
+        {
+            _manager.ChangeApplyMeta(_selector.Selected!, MetaIndex.HatState,    equip.Value);
+            _manager.ChangeApplyMeta(_selector.Selected!, MetaIndex.VisorState,  equip.Value);
+            _manager.ChangeApplyMeta(_selector.Selected!, MetaIndex.WeaponState, equip.Value);
+        }
+
+        if (customize.HasValue)
+            _manager.ChangeApplyMeta(_selector.Selected!, MetaIndex.Wetness, customize.Value);
     }
 
     private static readonly IReadOnlyList<string> MetaLabels =
@@ -335,7 +408,7 @@ public class DesignPanel
 
     private void DrawMetaApplication()
     {
-        using var  id        = ImRaii.PushId("Meta");
+        using var  id        = ImUtf8.PushId("Meta");
         const uint all       = (uint)MetaExtensions.All;
         var        flags     = (uint)_selector.Selected!.Application.Meta;
         var        bigChange = ImGui.CheckboxFlags("应用全部元数据修改", ref flags, all);
@@ -343,7 +416,7 @@ public class DesignPanel
         foreach (var (index, label) in MetaExtensions.AllRelevant.Zip(MetaLabels))
         {
             var apply = bigChange ? ((MetaFlag)flags).HasFlag(index.ToFlag()) : _selector.Selected!.DoApplyMeta(index);
-            if (ImGui.Checkbox(label, ref apply) || bigChange)
+            if (ImUtf8.Checkbox(label, ref apply) || bigChange)
                 _manager.ChangeApplyMeta(_selector.Selected!, index, apply);
         }
     }
@@ -369,20 +442,20 @@ public class DesignPanel
 
     private void DrawParameterApplication()
     {
-        using var id        = ImRaii.PushId("Parameter");
+        using var id        = ImUtf8.PushId("Parameter");
         var       flags     = (uint)_selector.Selected!.Application.Parameters;
         var       bigChange = ImGui.CheckboxFlags("应用所有外貌参数", ref flags, (uint)CustomizeParameterExtensions.All);
         foreach (var flag in CustomizeParameterExtensions.AllFlags)
         {
             var apply = bigChange ? ((CustomizeParameterFlag)flags).HasFlag(flag) : _selector.Selected!.DoApplyParameter(flag);
-            if (ImGui.Checkbox($"应用{flag.ToName()}", ref apply) || bigChange)
+            if (ImUtf8.Checkbox($"应用{flag.ToName()}", ref apply) || bigChange)
                 _manager.ChangeApplyParameter(_selector.Selected!, flag, apply);
         }
     }
 
     public void Draw()
     {
-        using var group = ImRaii.Group();
+        using var group = ImUtf8.Group();
         if (_selector.SelectedPaths.Count > 1)
         {
             _multiDesignPanel.Draw();
@@ -402,12 +475,12 @@ public class DesignPanel
                 foreach (var idx in CustomizationExtensions.AllBasic)
                     _manager.ChangeCustomize(_selector.Selected!, idx, dat.Customize[idx]);
                 Glamourer.Messager.NotificationMessage(
-                    $"Applied games .dat file {dat.Description} customizations to {_selector.Selected.Name}.", NotificationType.Success, false);
+                    $"应用了游戏 .dat 文件 {dat.Description} 的自定义设置到 {_selector.Selected.Name}。", NotificationType.Success, false);
             }
             else if (_importService.CreateCharaTarget(out var designBase, out var name))
             {
                 _manager.ApplyDesign(_selector.Selected!, designBase);
-                Glamourer.Messager.NotificationMessage($"Applied Anamnesis .chara file {name} to {_selector.Selected.Name}.",
+                Glamourer.Messager.NotificationMessage($"应用了 Anamnesis .chara 文件 {name} 到 {_selector.Selected.Name}。",
                     NotificationType.Success, false);
             }
         }
@@ -420,10 +493,12 @@ public class DesignPanel
         using var table = ImUtf8.Table("##Panel", 1, ImGuiTableFlags.BordersOuter | ImGuiTableFlags.ScrollY, ImGui.GetContentRegionAvail());
         if (!table || _selector.Selected == null)
             return;
+
         ImGui.TableSetupScrollFreeze(0, 1);
         ImGui.TableNextColumn();
         if (_selector.Selected == null)
             return;
+
         ImGui.Dummy(Vector2.Zero);
         DrawButtonRow();
         ImGui.TableNextColumn();

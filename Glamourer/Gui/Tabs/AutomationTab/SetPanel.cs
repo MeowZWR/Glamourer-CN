@@ -30,10 +30,10 @@ public class SetPanel(
     Configuration _config,
     RandomRestrictionDrawer _randomDrawer)
 {
-    private readonly JobGroupCombo          _jobGroupCombo = new(_manager, _jobs, Glamourer.Log);
+    private readonly JobGroupCombo         _jobGroupCombo = new(_manager, _jobs, Glamourer.Log);
     private readonly HeaderDrawer.Button[] _rightButtons  = [new HeaderDrawer.IncognitoButton(_config.Ephemeral)];
-    private          string?                _tempName;
-    private          int                    _dragIndex = -1;
+    private          string?               _tempName;
+    private          int                   _dragIndex = -1;
 
     private Action? _endAction;
 
@@ -52,7 +52,7 @@ public class SetPanel(
 
     private void DrawPanel()
     {
-        using var child = ImRaii.Child("##Panel", -Vector2.One, true);
+        using var child = ImUtf8.Child("##Panel"u8, -Vector2.One, true);
         if (!child || !_selector.HasSelection)
             return;
 
@@ -63,20 +63,20 @@ public class SetPanel(
             using (ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, spacing))
             {
                 var enabled = Selection.Enabled;
-                if (ImGui.Checkbox("##Enabled", ref enabled))
+                if (ImUtf8.Checkbox("##Enabled"u8, ref enabled))
                     _manager.SetState(_selector.SelectionIndex, enabled);
-                ImGuiUtil.LabeledHelpMarker("启用",
-                    "是否应用该自动执行集中的设计。一个角色同时只能启用一个执行集。");
+                ImUtf8.LabeledHelpMarker("启用"u8,
+                    "是否应用该自动执行集中的设计。一个角色同时只能启用一个执行集。"u8);
             }
 
             using (ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, spacing))
             {
                 var useGame = _selector.Selection!.BaseState is AutoDesignSet.Base.Game;
-                if (ImGui.Checkbox("##gameState", ref useGame))
+                if (ImUtf8.Checkbox("##gameState"u8, ref useGame))
                     _manager.ChangeBaseState(_selector.SelectionIndex, useGame ? AutoDesignSet.Base.Game : AutoDesignSet.Base.Current);
-                ImGuiUtil.LabeledHelpMarker("使用游戏状态作为基础",
-                    "启用此选项后，符合条件的角色设计将按顺序应用于游戏中角色的外观上。\n"
-                  + "禁用此选项后，设计将应用于角色当前被 Glamourer 修改后的实际外观上。");
+                ImUtf8.LabeledHelpMarker("使用游戏状态作为基础"u8,
+                    "启用此选项后，符合条件的角色设计将按顺序应用于游戏中角色的外观上。"u8
+                  + "禁用此选项后，设计将应用于角色当前被 Glamourer 修改后的实际外观上。"u8);
             }
         }
 
@@ -86,14 +86,14 @@ public class SetPanel(
             using (ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, spacing))
             {
                 var editing = _config.ShowAutomationSetEditing;
-                if (ImGui.Checkbox("##Show Editing", ref editing))
+                if (ImUtf8.Checkbox("##Show Editing"u8, ref editing))
                 {
                     _config.ShowAutomationSetEditing = editing;
                     _config.Save();
                 }
 
-                ImGuiUtil.LabeledHelpMarker("显示可编辑内容",
-                    "显示更改此执行集的名称、关联角色/NPC的选项。取消勾选以精简视图。");
+                ImUtf8.LabeledHelpMarker("显示可编辑内容"u8,
+                    "显示更改此执行集的名称、关联角色/NPC的选项。取消勾选以精简视图。"u8);
             }
 
             using (ImRaii.PushStyle(ImGuiStyleVar.ItemSpacing, spacing))
@@ -102,8 +102,8 @@ public class SetPanel(
                 if (ImGui.Checkbox("##resetSettings", ref resetSettings))
                     _manager.ChangeResetSettings(_selector.SelectionIndex, resetSettings);
 
-                ImGuiUtil.LabeledHelpMarker("重置临时设置",
-                    "每次应用此自动执行集时，始终重置由 Glamourer 应用的所有临时设置，无论当前设计是否激活。");
+                ImUtf8.LabeledHelpMarker("重置临时设置"u8,
+                    "每次应用此自动执行集时，始终重置由 Glamourer 应用的所有临时设置，无论当前设计是否激活。"u8);
             }
         }
 
@@ -160,42 +160,43 @@ public class SetPanel(
             (false, false) => 4,
         };
 
-        using var table = ImRaii.Table("SetTable", numRows, ImGuiTableFlags.RowBg | ImGuiTableFlags.ScrollX | ImGuiTableFlags.ScrollY);
+        using var table = ImUtf8.Table("SetTable"u8, numRows, ImGuiTableFlags.RowBg | ImGuiTableFlags.ScrollX | ImGuiTableFlags.ScrollY);
         if (!table)
             return;
 
-        ImGui.TableSetupColumn("##del",   ImGuiTableColumnFlags.WidthFixed, ImGui.GetFrameHeight());
-        ImGui.TableSetupColumn("##Index", ImGuiTableColumnFlags.WidthFixed, 30 * ImGuiHelpers.GlobalScale);
+        ImUtf8.TableSetupColumn("##del"u8,   ImGuiTableColumnFlags.WidthFixed, ImGui.GetFrameHeight());
+        ImUtf8.TableSetupColumn("##Index"u8, ImGuiTableColumnFlags.WidthFixed, 30 * ImGuiHelpers.GlobalScale);
 
         if (singleRow)
         {
-            ImGui.TableSetupColumn("角色设计",      ImGuiTableColumnFlags.WidthFixed, 220 * ImGuiHelpers.GlobalScale);
+            ImUtf8.TableSetupColumn("角色设计"u8, ImGuiTableColumnFlags.WidthFixed, 220 * ImGuiHelpers.GlobalScale);
             if (_config.ShowAllAutomatedApplicationRules)
-                ImGui.TableSetupColumn("执行规则", ImGuiTableColumnFlags.WidthFixed,
+                ImUtf8.TableSetupColumn("执行规则"u8, ImGuiTableColumnFlags.WidthFixed,
                     6 * ImGui.GetFrameHeight() + 10 * ImGuiHelpers.GlobalScale);
             else
-                ImGui.TableSetupColumn("使用", ImGuiTableColumnFlags.WidthFixed, ImGui.CalcTextSize("Use").X);
+                ImUtf8.TableSetupColumn("使用"u8, ImGuiTableColumnFlags.WidthFixed, ImGui.CalcTextSize("Use").X);
         }
         else
         {
-            ImGui.TableSetupColumn("角色设计/职业限制", ImGuiTableColumnFlags.WidthFixed, 250 * ImGuiHelpers.GlobalScale);
+            ImUtf8.TableSetupColumn("角色设计/职业限制"u8, ImGuiTableColumnFlags.WidthFixed,
+                250 * ImGuiHelpers.GlobalScale - (ImGui.GetScrollMaxY() > 0 ? ImGui.GetStyle().ScrollbarSize : 0));
             if (_config.ShowAllAutomatedApplicationRules)
-                ImGui.TableSetupColumn("执行规则", ImGuiTableColumnFlags.WidthFixed,
+                ImUtf8.TableSetupColumn("执行规则"u8, ImGuiTableColumnFlags.WidthFixed,
                     3 * ImGui.GetFrameHeight() + 4 * ImGuiHelpers.GlobalScale);
             else
-                ImGui.TableSetupColumn("使用", ImGuiTableColumnFlags.WidthFixed, ImGui.CalcTextSize("Use").X);
+                ImUtf8.TableSetupColumn("使用"u8, ImGuiTableColumnFlags.WidthFixed, ImGui.CalcTextSize("Use").X);
         }
 
         if (singleRow)
-            ImGui.TableSetupColumn("职业限制", ImGuiTableColumnFlags.WidthStretch);
+            ImUtf8.TableSetupColumn("职业限制"u8, ImGuiTableColumnFlags.WidthStretch);
 
         if (_config.ShowUnlockedItemWarnings)
-            ImGui.TableSetupColumn(string.Empty, ImGuiTableColumnFlags.WidthFixed, 2 * ImGui.GetFrameHeight() + 4 * ImGuiHelpers.GlobalScale);
+            ImUtf8.TableSetupColumn(""u8, ImGuiTableColumnFlags.WidthFixed, 2 * ImGui.GetFrameHeight() + 4 * ImGuiHelpers.GlobalScale);
 
         ImGui.TableHeadersRow();
         foreach (var (design, idx) in Selection.Designs.WithIndex())
         {
-            using var id = ImRaii.PushId(idx);
+            using var id = ImUtf8.PushId(idx);
             ImGui.TableNextColumn();
             var keyValid = _config.DeleteDesignModifier.IsActive();
             var tt = keyValid
@@ -205,8 +206,8 @@ public class SetPanel(
             if (ImGuiUtil.DrawDisabledButton(FontAwesomeIcon.Trash.ToIconString(), new Vector2(ImGui.GetFrameHeight()), tt, !keyValid, true))
                 _endAction = () => _manager.DeleteDesign(Selection, idx);
             ImGui.TableNextColumn();
-            ImGui.Selectable($"#{idx + 1:D2}");
-            DrawDragDrop(Selection, idx);
+            DrawSelectable(idx, design.Design);
+
             ImGui.TableNextColumn();
             DrawRandomEditing(Selection, design, idx);
             _designCombo.Draw(Selection, design, idx);
@@ -234,8 +235,7 @@ public class SetPanel(
 
         ImGui.TableNextColumn();
         ImGui.TableNextColumn();
-        ImGui.AlignTextToFramePadding();
-        ImGui.TextUnformatted("添加");
+        ImUtf8.TextFrameAligned("添加"u8);
         ImGui.TableNextColumn();
         _designCombo.Draw(Selection, null, -1);
         ImGui.TableNextRow();
@@ -244,26 +244,64 @@ public class SetPanel(
         _endAction = null;
     }
 
+    private void DrawSelectable(int idx, IDesignStandIn design)
+    {
+        var highlight = 0u;
+        var sb        = new StringBuilder();
+        if (design is Design d)
+        {
+            var count = design.AllLinks(true).Count();
+            if (count > 1)
+            {
+                sb.AppendLine($"此设计包含 {count - 1} 个指向其他设计的链接。");
+                highlight = ColorId.HeaderButtons.Value();
+            }
+
+            count = d.AssociatedMods.Count;
+            if (count > 0)
+            {
+                sb.AppendLine($"此设计包含 {count} 个模组关联。");
+                highlight = ColorId.ModdedItemMarker.Value();
+            }
+
+            count = design.GetMaterialData().Count(p => p.Item2.Enabled);
+            if (count > 0)
+            {
+                sb.AppendLine($"此设计包含 {count} 个已启用的高级染色。");
+                highlight = ColorId.AdvancedDyeActive.Value();
+            }
+        }
+
+        using (ImRaii.PushColor(ImGuiCol.Text, highlight, highlight != 0))
+        {
+            ImUtf8.Selectable($"#{idx + 1:D2}");
+        }
+
+        ImUtf8.HoverTooltip($"{sb}");
+
+        DrawDragDrop(Selection, idx);
+    }
+
     private int _tmpGearset = int.MaxValue;
     private int _whichIndex = -1;
 
     private void DrawConditions(AutoDesign design, int idx)
     {
         var usingGearset = design.GearsetIndex >= 0;
-        if (ImGui.Button($"{(usingGearset ? "套装" : "职业")}##usingGearset"))
+        if (ImUtf8.Button($"{(usingGearset ? "套装:" : "职业:")}##usingGearset"))
         {
             usingGearset = !usingGearset;
             _manager.ChangeGearsetCondition(Selection, idx, (short)(usingGearset ? 0 : -1));
         }
 
-        ImGuiUtil.HoverTooltip("单击可在职业和套装之间切换限制。");
+        ImUtf8.HoverTooltip("单击可在职业和套装之间切换限制。"u8);
 
         ImGui.SameLine(0, ImGui.GetStyle().ItemInnerSpacing.X);
         if (usingGearset)
         {
             var set = 1 + (_tmpGearset == int.MaxValue || _whichIndex != idx ? design.GearsetIndex : _tmpGearset);
             ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X);
-            if (ImGui.InputInt("##whichGearset", ref set, 0, 0))
+            if (ImUtf8.InputScalar("##whichGearset"u8, ref set))
             {
                 _whichIndex = idx;
                 _tmpGearset = Math.Clamp(set, 1, 100);
@@ -334,12 +372,12 @@ public class SetPanel(
                 continue;
 
             if (flag.RequiresRedraw())
-                sb.AppendLine($"{type.ToDefaultName()} Customization should not be changed automatically.");
+                sb.AppendLine($"{type.ToDefaultName()} 外貌不应自动更改。");
             else if (type is CustomizeIndex.Hairstyle or CustomizeIndex.FacePaint
                   && set.DataByValue(type, customize[type], out var data, customize.Face) >= 0
                   && !_customizeUnlocks.IsUnlocked(data!.Value, out _))
                 sb2.AppendLine(
-                    $"{type.ToDefaultName()} Customization {_customizeUnlocks.Unlockable[data.Value].Name} is not unlocked but should be applied.");
+                    $"{type.ToDefaultName()} 外貌 {_customizeUnlocks.Unlockable[data.Value].Name} 未解锁但应被应用。");
         }
 
         ImGui.SameLine();
@@ -361,12 +399,12 @@ public class SetPanel(
                     ImGuiUtil.DrawTextButton(FontAwesomeIcon.ExclamationCircle.ToIconString(), size, color);
                 }
 
-                ImGuiUtil.HoverTooltip(sb.ToString());
+                ImUtf8.HoverTooltip($"{sb}");
             }
             else
             {
                 ImGuiUtil.DrawTextButton(string.Empty, size, 0);
-                ImGuiUtil.HoverTooltip(good);
+                ImUtf8.HoverTooltip(good);
             }
         }
     }
@@ -374,7 +412,7 @@ public class SetPanel(
     private void DrawDragDrop(AutoDesignSet set, int index)
     {
         const string dragDropLabel = "DesignDragDrop";
-        using (var target = ImRaii.DragDropTarget())
+        using (var target = ImUtf8.DragDropTarget())
         {
             if (target.Success && ImGuiUtil.IsDropping(dragDropLabel))
             {
@@ -388,11 +426,11 @@ public class SetPanel(
             }
         }
 
-        using (var source = ImRaii.DragDropSource())
+        using (var source = ImUtf8.DragDropSource())
         {
             if (source)
             {
-                ImGui.TextUnformatted($"移动角色设计 #{index + 1:D2}...");
+                ImUtf8.Text($"移动角色设计 #{index + 1:D2}...");
                 if (ImGui.SetDragDropPayload(dragDropLabel, nint.Zero, 0))
                 {
                     _dragIndex                 = index;
@@ -415,16 +453,16 @@ public class SetPanel(
         }
 
         style.Pop();
-        ImGuiUtil.HoverTooltip("一键开关");
+        ImUtf8.HoverTooltip("一键开关"u8);
         if (_config.ShowAllAutomatedApplicationRules)
         {
             void Box(int idx)
             {
                 var (type, description) = ApplicationTypeExtensions.Types[idx];
                 var value = design.Type.HasFlag(type);
-                if (ImGui.Checkbox($"##{(byte)type}", ref value))
+                if (ImUtf8.Checkbox($"##{(byte)type}", ref value))
                     newType = value ? newType | type : newType & ~type;
-                ImGuiUtil.HoverTooltip(description);
+                ImUtf8.HoverTooltip(description);
             }
 
             ImGui.SameLine();

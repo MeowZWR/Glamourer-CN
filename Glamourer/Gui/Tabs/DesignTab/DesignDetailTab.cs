@@ -14,6 +14,7 @@ namespace Glamourer.Gui.Tabs.DesignTab;
 public class DesignDetailTab
 {
     private readonly SaveService              _saveService;
+    private readonly Configuration            _config;
     private readonly DesignFileSystemSelector _selector;
     private readonly DesignFileSystem         _fileSystem;
     private readonly DesignManager            _manager;
@@ -30,19 +31,20 @@ public class DesignDetailTab
     private DesignFileSystem.Leaf? _changeLeaf;
 
     public DesignDetailTab(SaveService saveService, DesignFileSystemSelector selector, DesignManager manager, DesignFileSystem fileSystem,
-        DesignColors colors)
+        DesignColors colors, Configuration config)
     {
         _saveService = saveService;
         _selector    = selector;
         _manager     = manager;
         _fileSystem  = fileSystem;
         _colors      = colors;
+        _config      = config;
         _colorCombo  = new DesignColorCombo(_colors, false);
     }
 
     public void Draw()
     {
-        using var h = ImUtf8.CollapsingHeaderId("设计详情"u8);
+        using var h = DesignPanelFlag.DesignDetails.Header(_config);
         if (!h)
             return;
 
@@ -159,7 +161,8 @@ public class DesignDetailTab
         ImGui.TableNextColumn();
         if (ImUtf8.Checkbox("##ResetTemporarySettings"u8, ref resetTemporarySettings))
             _manager.ChangeResetTemporarySettings(_selector.Selected!, resetTemporarySettings);
-        ImUtf8.HoverTooltip("将此设计设置为在通过任何方式应用时重置之前应用于相关合集的所有临时设置。"u8);
+        ImUtf8.HoverTooltip(
+            "将此设计设置为在通过任何方式应用时重置之前应用于相关合集的所有临时设置。"u8);
 
         ImUtf8.DrawFrameColumn("配色"u8);
         var colorName = _selector.Selected!.Color.Length == 0 ? DesignColors.AutomaticName : _selector.Selected!.Color;

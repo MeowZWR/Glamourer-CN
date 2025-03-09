@@ -1,15 +1,20 @@
 ﻿using Dalamud.Interface;
 using Dalamud.Interface.Utility;
 using Glamourer.Designs;
+using Glamourer.Interop.Material;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Raii;
 using OtterGui.Text;
+using static Glamourer.Gui.Tabs.HeaderDrawer;
 
 namespace Glamourer.Gui.Tabs.DesignTab;
 
-public class MultiDesignPanel(DesignFileSystemSelector selector, DesignManager editor, DesignColors colors)
+public class MultiDesignPanel(DesignFileSystemSelector selector, DesignManager editor, DesignColors colors, Configuration config)
 {
+    private readonly Button[] _leftButtons  = [];
+    private readonly Button[] _rightButtons = [new IncognitoButton(config.Ephemeral)];
+
     private readonly DesignColorCombo _colorCombo = new(colors, true);
 
     public void Draw()
@@ -17,8 +22,12 @@ public class MultiDesignPanel(DesignFileSystemSelector selector, DesignManager e
         if (selector.SelectedPaths.Count == 0)
             return;
 
-        var width = ImGuiHelpers.ScaledVector2(145, 0);
-        ImGui.NewLine();
+        HeaderDrawer.Draw(string.Empty, 0, ImGui.GetColorU32(ImGuiCol.FrameBg), _leftButtons, _rightButtons);
+        using var child = ImUtf8.Child("##MultiPanel"u8, default, true);
+        if (!child)
+            return;
+
+        var width       = ImGuiHelpers.ScaledVector2(145, 0);
         var treeNodePos = ImGui.GetCursorPos();
         _numDesigns = DrawDesignList();
         DrawCounts(treeNodePos);
@@ -29,6 +38,8 @@ public class MultiDesignPanel(DesignFileSystemSelector selector, DesignManager e
         DrawMultiResetSettings(offset);
         DrawMultiResetDyes(offset);
         DrawMultiForceRedraw(offset);
+        DrawAdvancedButtons(offset);
+        DrawApplicationButtons(offset);
     }
 
     private void DrawCounts(Vector2 treeNodePos)
@@ -49,11 +60,13 @@ public class MultiDesignPanel(DesignFileSystemSelector selector, DesignManager e
 
     private void ResetCounts()
     {
-        _numQuickDesignEnabled   = 0;
-        _numDesignsLocked        = 0;
-        _numDesignsForcedRedraw  = 0;
-        _numDesignsResetSettings = 0;
-        _numDesignsResetDyes     = 0;
+        _numQuickDesignEnabled      = 0;
+        _numDesignsLocked           = 0;
+        _numDesignsForcedRedraw     = 0;
+        _numDesignsResetSettings    = 0;
+        _numDesignsResetDyes        = 0;
+        _numDesignsWithAdvancedDyes = 0;
+        _numAdvancedDyes            = 0;
     }
 
     private bool CountLeaves(DesignFileSystem.IPath path)
@@ -71,6 +84,12 @@ public class MultiDesignPanel(DesignFileSystemSelector selector, DesignManager e
             ++_numDesignsForcedRedraw;
         if (l.Value.ResetAdvancedDyes)
             ++_numDesignsResetDyes;
+        if (l.Value.Materials.Count > 0)
+        {
+            ++_numDesignsWithAdvancedDyes;
+            _numAdvancedDyes += l.Value.Materials.Count;
+        }
+
         return true;
     }
 
@@ -127,6 +146,8 @@ public class MultiDesignPanel(DesignFileSystemSelector selector, DesignManager e
     private          int                 _numDesignsForcedRedraw;
     private          int                 _numDesignsResetSettings;
     private          int                 _numDesignsResetDyes;
+    private          int                 _numAdvancedDyes;
+    private          int                 _numDesignsWithAdvancedDyes;
     private          int                 _numDesigns;
     private readonly List<Design>        _addDesigns    = [];
     private readonly List<(Design, int)> _removeDesigns = [];
@@ -135,7 +156,7 @@ public class MultiDesignPanel(DesignFileSystemSelector selector, DesignManager e
     {
         ImUtf8.TextFrameAligned("批量标签："u8);
         ImGui.SameLine();
-        var offset = ImGui.GetItemRectSize().X;
+        var offset = ImGui.GetItemRectSize().X + ImGui.GetStyle().WindowPadding.X;
         ImGui.SetNextItemWidth(ImGui.GetContentRegionAvail().X - 2 * (width.X + ImGui.GetStyle().ItemSpacing.X));
         ImUtf8.InputText("##tag"u8, ref _tag, "标签名称..."u8);
 
@@ -286,7 +307,7 @@ public class MultiDesignPanel(DesignFileSystemSelector selector, DesignManager e
 
     private void DrawMultiColor(Vector2 width, float offset)
     {
-        ImUtf8.TextFrameAligned("批量配色：");
+        ImUtf8.TextFrameAligned("批量配色："u8);
         ImGui.SameLine(offset, ImGui.GetStyle().ItemSpacing.X);
         _colorCombo.Draw("##color", _colorCombo.CurrentSelection ?? string.Empty, "选择一个设计颜色。",
             ImGui.GetContentRegionAvail().X - 2 * (width.X + ImGui.GetStyle().ItemSpacing.X), ImGui.GetTextLineHeight());
@@ -302,7 +323,7 @@ public class MultiDesignPanel(DesignFileSystemSelector selector, DesignManager e
                 DesignColors.AutomaticName => "使用另一个按钮设置为自动配色。",
                 _                          => $"所选的所有设计都已设置为该颜色“{_colorCombo.CurrentSelection}”。",
             }
-            : $"将{_addDesigns.Count}个的颜色设置为“{_colorCombo.CurrentSelection}”\n\n\t{string.Join("\n\t", _addDesigns.Select(m => m.Name.Text))}";
+            : $"将 {_addDesigns.Count} 个的颜色设置为“{_colorCombo.CurrentSelection}”\n\n\t{string.Join("\n\t", _addDesigns.Select(m => m.Name.Text))}";
         ImGui.SameLine();
         if (ImUtf8.ButtonEx(label, tooltip, width, _addDesigns.Count == 0))
             foreach (var design in _addDesigns)
@@ -313,13 +334,137 @@ public class MultiDesignPanel(DesignFileSystemSelector selector, DesignManager e
             : "取消设置";
         tooltip = _removeDesigns.Count == 0
             ? "没有选中设计设置为非自动配色。"
-            : $"设置{_removeDesigns.Count}个设计为重新使用自动配色：\n\n\t{string.Join("\n\t", _removeDesigns.Select(m => m.Item1.Name.Text))}";
+            : $"设置 {_removeDesigns.Count} 个设计为重新使用自动配色：\n\n\t{string.Join("\n\t", _removeDesigns.Select(m => m.Item1.Name.Text))}";
         ImGui.SameLine();
         if (ImUtf8.ButtonEx(label, tooltip, width, _removeDesigns.Count == 0))
             foreach (var (design, _) in _removeDesigns)
                 editor.ChangeColor(design, string.Empty);
 
         ImGui.Separator();
+    }
+
+    private void DrawAdvancedButtons(float offset)
+    {
+        ImUtf8.TextFrameAligned("删除高级染色"u8);
+        ImGui.SameLine(offset, ImGui.GetStyle().ItemSpacing.X);
+        var enabled = config.DeleteDesignModifier.IsActive();
+        var tt = _numDesignsWithAdvancedDyes is 0
+            ? "选中的设计中不包含任何高级染色。"
+            : $"从 {_numDesignsWithAdvancedDyes} 个选中的设计中删除 {_numAdvancedDyes} 个高级染色。";
+        if (ImUtf8.ButtonEx("删除所有高级染料"u8, tt, new Vector2(ImGui.GetContentRegionAvail().X, 0),
+                !enabled || _numDesignsWithAdvancedDyes is 0))
+
+            foreach (var design in selector.SelectedPaths.OfType<DesignFileSystem.Leaf>())
+            {
+                while (design.Value.Materials.Count > 0)
+                    editor.ChangeMaterialValue(design.Value, MaterialValueIndex.FromKey(design.Value.Materials[0].Item1), null);
+            }
+
+        if (!enabled && _numDesignsWithAdvancedDyes is not 0)
+            ImUtf8.HoverTooltip(ImGuiHoveredFlags.AllowWhenDisabled, $"点击时按住 {config.DeleteDesignModifier} 。");
+        ImGui.Separator();
+    }
+
+    private void DrawApplicationButtons(float offset)
+    {
+        ImUtf8.TextFrameAligned("应用规则"u8);
+        ImGui.SameLine(offset, ImGui.GetStyle().ItemSpacing.X);
+        var   width     = new Vector2((ImGui.GetContentRegionAvail().X - ImGui.GetStyle().ItemSpacing.X) / 2, 0);
+        var   enabled   = config.DeleteDesignModifier.IsActive();
+        bool? equip     = null;
+        bool? customize = null;
+        var   group     = ImUtf8.Group();
+        if (ImUtf8.ButtonEx("禁用所有"u8,
+                _numDesigns > 0
+                    ? $"禁用所有内容的应用，包括所有 {_numDesigns} 个设计的任何现有高级染色、高级外貌、队徽和湿身。"
+                    : "未选择设计。", width, !enabled))
+        {
+            equip     = false;
+            customize = false;
+        }
+
+        if (!enabled)
+            ImUtf8.HoverTooltip(ImGuiHoveredFlags.AllowWhenDisabled, $"点击时按住 {config.DeleteDesignModifier}。");
+
+        ImGui.SameLine();
+        if (ImUtf8.ButtonEx("启用所有"u8,
+                _numDesigns > 0
+                    ? $"启用所有内容的应用，包括所有 {_numDesigns} 个设计的任何现有高级染色、高级自定义、队徽和湿身。"
+                    : "未选择设计。", width, !enabled))
+        {
+            equip     = true;
+            customize = true;
+        }
+
+        if (!enabled)
+            ImUtf8.HoverTooltip(ImGuiHoveredFlags.AllowWhenDisabled, $"点击时按住 {config.DeleteDesignModifier}。");
+
+        if (ImUtf8.ButtonEx("仅装备"u8,
+                _numDesigns > 0
+                    ? $"启用与装备相关的所有内容的应用，禁用所有与装备无关的内容的应用，适用于所有 {_numDesigns} 个设计。"
+                    : "未选择设计。", width, !enabled))
+        {
+            equip     = true;
+            customize = false;
+        }
+
+        if (!enabled)
+            ImUtf8.HoverTooltip(ImGuiHoveredFlags.AllowWhenDisabled, $"点击时按住 {config.DeleteDesignModifier}。");
+
+        ImGui.SameLine();
+        if (ImUtf8.ButtonEx("仅外貌"u8,
+                _numDesigns > 0
+                    ? $"启用与自定义相关的所有内容的应用，禁用所有与自定义无关的内容的应用，适用于所有 {_numDesigns} 个设计。"
+                    : "未选择设计。", width, !enabled))
+        {
+            equip     = false;
+            customize = true;
+        }
+
+        if (!enabled)
+            ImUtf8.HoverTooltip(ImGuiHoveredFlags.AllowWhenDisabled, $"点击时按住 {config.DeleteDesignModifier}。");
+
+        if (ImUtf8.ButtonEx("默认应用"u8,
+                _numDesigns > 0
+                    ? $"将应用规则设置为默认值，就像 {_numDesigns} 个设计是新创建的一样，没有任何高级功能或湿身。"
+                    : "未选择设计。", width, !enabled))
+            foreach (var design in selector.SelectedPaths.OfType<DesignFileSystem.Leaf>().Select(l => l.Value))
+            {
+                editor.ChangeApplyMulti(design, true, true, true, false, true, true, false, true);
+                editor.ChangeApplyMeta(design, MetaIndex.Wetness, false);
+            }
+
+        if (!enabled)
+            ImUtf8.HoverTooltip(ImGuiHoveredFlags.AllowWhenDisabled, $"点击时按住 {config.DeleteDesignModifier}。");
+
+        ImGui.SameLine();
+        if (ImUtf8.ButtonEx("禁用高级"u8, _numDesigns > 0
+                ? $"禁用所有高级染色和高级外貌，但保留所有其他内容的应用，适用于所有 {_numDesigns} 个设计。"
+                : "未选择设计。", width, !enabled))
+            foreach (var design in selector.SelectedPaths.OfType<DesignFileSystem.Leaf>().Select(l => l.Value))
+                editor.ChangeApplyMulti(design, null, null, null, false, null, null, false, null);
+
+        if (!enabled)
+            ImUtf8.HoverTooltip(ImGuiHoveredFlags.AllowWhenDisabled, $"点击时按住 {config.DeleteDesignModifier}。");
+
+        group.Dispose();
+        ImGui.Separator();
+        if (equip is null && customize is null)
+            return;
+
+        foreach (var design in selector.SelectedPaths.OfType<DesignFileSystem.Leaf>().Select(l => l.Value))
+        {
+            editor.ChangeApplyMulti(design, equip, customize, equip, customize, null, equip, equip, equip);
+            if (equip.HasValue)
+            {
+                editor.ChangeApplyMeta(design, MetaIndex.HatState,    equip.Value);
+                editor.ChangeApplyMeta(design, MetaIndex.VisorState,  equip.Value);
+                editor.ChangeApplyMeta(design, MetaIndex.WeaponState, equip.Value);
+            }
+
+            if (customize.HasValue)
+                editor.ChangeApplyMeta(design, MetaIndex.Wetness, customize.Value);
+        }
     }
 
     private void UpdateTagCache()

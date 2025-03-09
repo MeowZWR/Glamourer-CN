@@ -19,6 +19,7 @@ namespace Glamourer.Gui.Tabs.NpcTab;
 
 public class NpcPanel
 {
+    private readonly Configuration          _config;
     private readonly DesignColorCombo       _colorCombo;
     private          string                 _newName = string.Empty;
     private          DesignBase?            _newDesign;
@@ -42,7 +43,8 @@ public class NpcPanel
         DesignManager designManager,
         StateManager state,
         ObjectManager objects,
-        DesignColors colors)
+        DesignColors colors,
+        Configuration config)
     {
         _selector        = selector;
         _favorites       = favorites;
@@ -53,6 +55,7 @@ public class NpcPanel
         _state           = state;
         _objects         = objects;
         _colors          = colors;
+        _config          = config;
         _colorCombo      = new DesignColorCombo(colors, true);
         _leftButtons =
         [
@@ -139,9 +142,14 @@ public class NpcPanel
 
     private void DrawCustomization()
     {
-        using var h = _selector.Selection.ModelId == 0
-            ? ImUtf8.CollapsingHeaderId("外貌"u8)
-            : ImUtf8.CollapsingHeaderId($"外貌（模型 ID #{_selector.Selection.ModelId}）###Customization");
+        if (_config.HideDesignPanel.HasFlag(DesignPanelFlag.Customization))
+            return;
+
+        var header = _selector.Selection.ModelId == 0
+            ? "外貌"
+            : $"外貌（模型 ID #{_selector.Selection.ModelId}）###Customization";
+        var       expand = _config.AutoExpandDesignPanel.HasFlag(DesignPanelFlag.Customization);
+        using var h      = ImUtf8.CollapsingHeaderId(header, expand ? ImGuiTreeNodeFlags.DefaultOpen : ImGuiTreeNodeFlags.None);
         if (!h)
             return;
 
@@ -151,7 +159,7 @@ public class NpcPanel
 
     private void DrawEquipment()
     {
-        using var h = ImUtf8.CollapsingHeaderId("装备"u8);
+        using var h = DesignPanelFlag.Equipment.Header(_config);
         if (!h)
             return;
 
@@ -190,7 +198,9 @@ public class NpcPanel
     private void DrawApplyToSelf()
     {
         var (id, data) = _objects.PlayerData;
-        if (!ImUtf8.ButtonEx("应用到自己"u8, "将当前NPC外观应用于你的角色。\n按住Ctrl仅应用装备。\n按住Shift仅应用外貌。"u8, Vector2.Zero, !data.Valid))
+        if (!ImUtf8.ButtonEx("应用到自己"u8,
+                "将当前NPC外观应用于你的角色。\nn按住Ctrl仅应用装备。\nn按住Shift仅应用外貌。"u8,
+                Vector2.Zero, !data.Valid))
             return;
 
         if (_state.GetOrCreate(id, data.Objects[0], out var state))
@@ -221,7 +231,7 @@ public class NpcPanel
 
     private void DrawAppearanceInfo()
     {
-        using var h = ImUtf8.CollapsingHeaderId("外观详情"u8);
+        using var h = DesignPanelFlag.AppearanceDetails.Header(_config);
         if (!h)
             return;
 
@@ -266,7 +276,7 @@ public class NpcPanel
         if (_colors.TryGetValue(color, out var currentColor))
         {
             ImGui.SameLine();
-            if (DesignColorUi.DrawColorButton($"Color associated with {color}", currentColor, out var newColor))
+            if (DesignColorUi.DrawColorButton($"与 {color} 关联的颜色", currentColor, out var newColor))
                 _colors.SetColor(color, newColor);
         }
         else if (color.Length != 0)

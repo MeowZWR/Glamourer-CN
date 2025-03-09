@@ -59,7 +59,7 @@ public class ActorPanel
         ICondition conditions,
         DictModelChara modelChara,
         CustomizeParameterDrawer parameterDrawer,
-        AdvancedDyePopup advancedDyes, 
+        AdvancedDyePopup advancedDyes,
         EditorHistory editorHistory)
     {
         _selector            = selector;
@@ -157,6 +157,7 @@ public class ActorPanel
         using var table = ImUtf8.Table("##Panel", 1, ImGuiTableFlags.BordersOuter | ImGuiTableFlags.ScrollY, ImGui.GetContentRegionAvail());
         if (!table || !_selector.HasSelection || !_stateManager.GetOrCreate(_identifier, _actor, out _state))
             return;
+
         ImGui.TableSetupScrollFreeze(0, 1);
         ImGui.TableNextColumn();
         ImGui.Dummy(Vector2.Zero);
@@ -191,10 +192,14 @@ public class ActorPanel
 
     private void DrawCustomizationsHeader()
     {
+        if (_config.HideDesignPanel.HasFlag(DesignPanelFlag.Customization))
+            return;
+
         var header = _state!.ModelData.ModelId == 0
             ? "外貌"
-            : $"Customization (Model Id #{_state.ModelData.ModelId})###Customization";
-        using var h = ImUtf8.CollapsingHeaderId(header);
+            : $"外貌(模型ID#{_state.ModelData.ModelId}）###Customization";
+        var       expand = _config.AutoExpandDesignPanel.HasFlag(DesignPanelFlag.Customization);
+        using var h      = ImUtf8.CollapsingHeaderId(header, expand ? ImGuiTreeNodeFlags.DefaultOpen : ImGuiTreeNodeFlags.None);
         if (!h)
             return;
 
@@ -207,7 +212,7 @@ public class ActorPanel
 
     private void DrawEquipmentHeader()
     {
-        using var h = ImUtf8.CollapsingHeaderId("装备"u8);
+        using var h = DesignPanelFlag.Equipment.Header(_config);
         if (!h)
             return;
 
@@ -239,10 +244,7 @@ public class ActorPanel
 
     private void DrawParameterHeader()
     {
-        if (!_config.UseAdvancedParameters)
-            return;
-
-        using var h = ImUtf8.CollapsingHeaderId("外貌（高级）- 调色盘"u8);
+        using var h = DesignPanelFlag.AdvancedCustomizations.Header(_config);
         if (!h)
             return;
 
@@ -254,7 +256,7 @@ public class ActorPanel
         if (!_config.DebugMode)
             return;
 
-        using var h = ImUtf8.CollapsingHeaderId("调试数据"u8);
+        using var h = DesignPanelFlag.DebugData.Header(_config);
         if (!h)
             return;
 
@@ -262,17 +264,17 @@ public class ActorPanel
         if (!t)
             return;
 
-        ImUtf8.DrawTableColumn("Object Index"u8);
+        ImUtf8.DrawTableColumn("对象索引"u8);
         DrawCopyColumn($"{string.Join(", ", _data.Objects.Select(d => d.AsObject->ObjectIndex))}");
-        ImUtf8.DrawTableColumn("Name ID"u8);
+        ImUtf8.DrawTableColumn("名称 ID"u8);
         DrawCopyColumn($"{string.Join(", ", _data.Objects.Select(d => d.AsObject->GetNameId()))}");
-        ImUtf8.DrawTableColumn("Base ID"u8);
+        ImUtf8.DrawTableColumn("基础 ID"u8);
         DrawCopyColumn($"{string.Join(", ", _data.Objects.Select(d => d.AsObject->BaseId))}");
-        ImUtf8.DrawTableColumn("Entity ID"u8);
+        ImUtf8.DrawTableColumn("实体 ID"u8);
         DrawCopyColumn($"{string.Join(", ", _data.Objects.Select(d => d.AsObject->EntityId))}");
-        ImUtf8.DrawTableColumn("Owner ID"u8);
+        ImUtf8.DrawTableColumn("所有者 ID"u8);
         DrawCopyColumn($"{string.Join(", ", _data.Objects.Select(d => d.AsObject->OwnerId))}");
-        ImUtf8.DrawTableColumn("Game Object ID"u8);
+        ImUtf8.DrawTableColumn("游戏对象 ID"u8);
         DrawCopyColumn($"{string.Join(", ", _data.Objects.Select(d => d.AsObject->GetGameObjectId().ObjectId))}");
 
         static void DrawCopyColumn(ref Utf8StringHandler<TextStringHandlerBuffer> text)

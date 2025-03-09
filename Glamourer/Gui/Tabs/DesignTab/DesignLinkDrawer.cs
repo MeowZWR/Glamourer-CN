@@ -10,7 +10,12 @@ using OtterGui.Services;
 
 namespace Glamourer.Gui.Tabs.DesignTab;
 
-public class DesignLinkDrawer(DesignLinkManager _linkManager, DesignFileSystemSelector _selector, LinkDesignCombo _combo, DesignColors _colorManager) : IUiService
+public class DesignLinkDrawer(
+    DesignLinkManager _linkManager,
+    DesignFileSystemSelector _selector,
+    LinkDesignCombo _combo,
+    DesignColors _colorManager,
+    Configuration config) : IUiService
 {
     private int       _dragDropIndex       = -1;
     private LinkOrder _dragDropOrder       = LinkOrder.None;
@@ -19,12 +24,15 @@ public class DesignLinkDrawer(DesignLinkManager _linkManager, DesignFileSystemSe
 
     public void Draw()
     {
-        using var header = ImRaii.CollapsingHeader("设计链接");
+        using var h = DesignPanelFlag.DesignLinks.Header(config);
+        if (h.Disposed)
+            return;
+
         ImGuiUtil.HoverTooltip(
             "设计链接是指向其他设计的链接，这些设计将根据规则直接或通过自动执行应用于角色。\n"
           + "它们从上到下生效，就像自动执行里的一样，所以前面的设计设置的任何内容都不会被后面的设计再次设置，顺序很重要。\n"
-          + "如果被链接设计链接到其他设计，它们也将被应用，因此禁止循环链接。 ");
-        if (!header)
+          + "如果已链接设计被链接到其他设计，它们也将被应用，因此禁止循环链接。");
+        if (!h)
             return;
 
         DrawList();

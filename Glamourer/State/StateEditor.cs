@@ -277,7 +277,7 @@ public class StateEditor(
     public void ApplyDesign(object data, MergedDesign mergedDesign, ApplySettings settings)
     {
         var state = (ActorState)data;
-        modApplier.HandleStateApplication(state, mergedDesign);
+        modApplier.HandleStateApplication(state, mergedDesign, settings.Source, true, settings.RespectManual);
         if (!Editor.ChangeModelId(state, mergedDesign.Design.DesignData.ModelId, mergedDesign.Design.DesignData.Customize,
                 mergedDesign.Design.GetDesignDataRef().GetEquipmentPtr(), settings.Source, out var oldModelId, settings.Key))
             return;
@@ -425,7 +425,8 @@ public class StateEditor(
                 }
                 else if (!value.Revert)
                 {
-                    Editor.ChangeMaterialValue(state, idx, new MaterialValueState(ColorRow.Empty, value.Value, CharacterWeapon.Empty, source),
+                    Editor.ChangeMaterialValue(state, idx,
+                        new MaterialValueState(ColorRow.Empty, value.Value, CharacterWeapon.Empty, source),
                         settings.Source, out _, settings.Key);
                 }
             }

@@ -69,10 +69,9 @@ public class Glamourer : IDalamudPlugin
         sb.Append($"> **`Auto-Reload Gear:     `** {config.AutoRedrawEquipOnChanges}\n");
         sb.Append($"> **`Revert on Zone Change:`** {config.RevertManualChangesOnZoneChange}\n");
         sb.Append($"> **`Festival Easter-Eggs: `** {config.DisableFestivals}\n");
-        sb.Append($"> **`Advanced Customize:   `** {config.UseAdvancedParameters}\n");
-        sb.Append($"> **`Advanced Dye:         `** {config.UseAdvancedDyes}\n");
         sb.Append($"> **`Apply Entire Weapon:  `** {config.ChangeEntireItem}\n");
         sb.Append($"> **`Apply Associated Mods:`** {config.AlwaysApplyAssociatedMods}\n");
+        sb.Append($"> **`Hidden Panels:        `** {config.HideDesignPanel}\n");
         sb.Append($"> **`Show QDB:             `** {config.Ephemeral.ShowDesignQuickBar}\n");
         sb.Append($"> **`QDB Hotkey:           `** {config.ToggleQuickDesignBar}\n");
         sb.Append($"> **`Smaller Equip Display:`** {config.SmallEquip}\n");

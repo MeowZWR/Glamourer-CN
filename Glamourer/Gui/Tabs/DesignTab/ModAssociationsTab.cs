@@ -4,6 +4,7 @@ using Dalamud.Interface.Utility;
 using Dalamud.Utility;
 using Glamourer.Designs;
 using Glamourer.Interop.Penumbra;
+using Glamourer.State;
 using ImGuiNET;
 using OtterGui;
 using OtterGui.Classes;
@@ -15,12 +16,15 @@ namespace Glamourer.Gui.Tabs.DesignTab;
 
 public class ModAssociationsTab(PenumbraService penumbra, DesignFileSystemSelector selector, DesignManager manager, Configuration config)
 {
-    private readonly ModCombo              _modCombo = new(penumbra, Glamourer.Log);
+    private readonly ModCombo              _modCombo = new(penumbra, Glamourer.Log, selector);
     private          (Mod, ModSettings)[]? _copy;
 
     public void Draw()
     {
-        using var h = ImRaii.CollapsingHeader("模组关联");
+        using var h = DesignPanelFlag.ModAssociations.Header(config);
+        if (h.Disposed)
+            return;
+
         ImGuiUtil.HoverTooltip(
             "在此面板可以存储关联到此设计的特定模组的信息。\n\n"
           + "它不会自动更改模组的任何设置，尽管有手动应用所需模组设置的功能。\n"
@@ -83,12 +87,12 @@ public class ModAssociationsTab(PenumbraService penumbra, DesignFileSystemSelect
     public void ApplyAll()
     {
         foreach (var (mod, settings) in selector.Selected!.AssociatedMods)
-            penumbra.SetMod(mod, settings);
+            penumbra.SetMod(mod, settings, StateSource.Manual);
     }
 
     private void DrawTable()
     {
-        using var table = ImUtf8.Table("Mods"u8, config.UseTemporarySettings ? 7 : 6, ImGuiTableFlags.RowBg);
+        using var table = ImUtf8.Table("模组"u8, config.UseTemporarySettings ? 7 : 6, ImGuiTableFlags.RowBg);
         if (!table)
             return;
 
@@ -96,10 +100,10 @@ public class ModAssociationsTab(PenumbraService penumbra, DesignFileSystemSelect
             ImGui.GetFrameHeight() * 3 + ImGui.GetStyle().ItemInnerSpacing.X * 2);
         ImUtf8.TableSetupColumn("模组名称"u8, ImGuiTableColumnFlags.WidthStretch);
         if (config.UseTemporarySettings)
-            ImUtf8.TableSetupColumn("移除"u8, ImGuiTableColumnFlags.WidthFixed, ImUtf8.CalcTextSize("Remove"u8).X);
-        ImUtf8.TableSetupColumn("继承"u8, ImGuiTableColumnFlags.WidthFixed, ImUtf8.CalcTextSize("Inherit"u8).X);
-        ImUtf8.TableSetupColumn("状态"u8,     ImGuiTableColumnFlags.WidthFixed, ImUtf8.CalcTextSize("State"u8).X);
-        ImUtf8.TableSetupColumn("优先级"u8,  ImGuiTableColumnFlags.WidthFixed, ImUtf8.CalcTextSize("Priority"u8).X);
+            ImUtf8.TableSetupColumn("移除"u8, ImGuiTableColumnFlags.WidthFixed, ImUtf8.CalcTextSize("移除"u8).X);
+        ImUtf8.TableSetupColumn("继承"u8,   ImGuiTableColumnFlags.WidthFixed, ImUtf8.CalcTextSize("继承"u8).X);
+        ImUtf8.TableSetupColumn("状态"u8,     ImGuiTableColumnFlags.WidthFixed, ImUtf8.CalcTextSize("状态"u8).X);
+        ImUtf8.TableSetupColumn("优先级"u8,  ImGuiTableColumnFlags.WidthFixed, ImUtf8.CalcTextSize("优先级"u8).X);
         ImUtf8.TableSetupColumn("##Options"u8, ImGuiTableColumnFlags.WidthFixed, ImUtf8.CalcTextSize("Applym"u8).X);
         ImGui.TableHeadersRow();
 
@@ -218,7 +222,7 @@ public class ModAssociationsTab(PenumbraService penumbra, DesignFileSystemSelect
         if (ImGuiUtil.DrawDisabledButton("应用", new Vector2(ImGui.GetContentRegionAvail().X, 0), string.Empty,
                 !penumbra.Available))
         {
-            var text = penumbra.SetMod(mod, settings);
+            var text = penumbra.SetMod(mod, settings, StateSource.Manual);
             if (text.Length > 0)
                 Glamourer.Messager.NotificationMessage(text, NotificationType.Warning, false);
         }
