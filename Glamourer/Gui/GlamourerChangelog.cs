@@ -40,6 +40,7 @@ public class GlamourerChangelog
         Add1_3_4_0(Changelog);
         Add1_3_5_0(Changelog);
         Add1_3_6_0(Changelog);
+        Add1_3_7_0(Changelog);
     }
 
     private (int, ChangeLogDisplayType) ConfigData()
@@ -59,6 +60,31 @@ public class GlamourerChangelog
             _config.Save();
         }
     }
+
+    private static void Add1_3_7_0(Changelog log)
+        => log.NextVersion("版本 1.3.7.0")
+            .RegisterImportant(
+                "移除了禁用高级外貌或高级染色的选项。该功能不能完全禁用，您只能选择不使用它，并将其隐藏。")
+            .RegisterHighlight(
+                "现在可以配置哪些面板（如外貌、装备、高级外貌等）显示，哪些默认展开。这不会禁用任何功能。")
+            .RegisterHighlight(
+                "在解锁物品面板中，概览模式下现在会显示物品是否在当前选择的 Penumbra 合集中被修改，并且可以在详情模式中进行筛选和排序。")
+            .RegisterEntry("在快速设计栏中添加了一个可选按钮，用于重置 Glamourer 应用的所有临时设置。")
+            .RegisterHighlight(
+                "在角色设计面板的相应高级染色按钮和装备槽名称上，任何现有的高级染色现在都会被高亮显示。")
+            .RegisterEntry("这也影响当前不活跃的高级染色，现在可以手动移除不活跃的材质上的高级染色。", 1)
+            .RegisterHighlight(
+                "在自动执行设置的设计列表中，如果设计包含高级染色、模组关联或链接到其他设计，设计索引现在会被高亮显示。")
+            .RegisterHighlight("一些生活质量改进：")
+            .RegisterEntry("在应用规则面板中添加了一些应用规则预设按钮。", 1)
+            .RegisterEntry("在设计中添加了一些按钮，用于启用、禁用或删除所有高级染色。", 1)
+            .RegisterEntry("其中一些按钮也可以在多设计选择中使用，以一次性应用于所有选定的设计。", 1)
+            .RegisterEntry(
+                "从 Penumbra 复制的材质颜色集现在应该能够导入到高级染色颜色集中，反之亦然。")
+            .RegisterEntry(
+                "在应用包含模组关联和临时设置的设计时，自动执行的角色更新现在会被跳过，以防止集体动作中的一些问题。这不应影响其他任何内容。")
+            .RegisterEntry("Glamourer 现在会区分通过手动或自动执行的临时设置。");
+
 
     private static void Add1_3_6_0(Changelog log)
         => log.NextVersion("版本 1.3.6.0")
