@@ -196,7 +196,7 @@ public class SettingsTab(
         DrawFolderSortType();
 
         ImGui.NewLine();
-        ImUtf8.Text("Show the following panels in their respective tabs:"u8);
+        ImUtf8.Text("在各自的标签页中显示以下面板："u8);
         ImGui.Dummy(Vector2.Zero);
         DesignPanelFlagExtensions.DrawTable("##panelTable"u8, config.HideDesignPanel, config.AutoExpandDesignPanel, v =>
         {
@@ -256,7 +256,7 @@ public class SettingsTab(
 
         ReadOnlySpan<(string, bool, QdbButtons)> columns =
         [
-            (" 应用设计 "", true, QdbButtons.ApplyDesign),
+            (" 应用设计 ", true, QdbButtons.ApplyDesign),
             (" 全部还原 ", true, QdbButtons.RevertAll),
             (" 恢复自动 ", showAuto, QdbButtons.RevertAutomation),
             (" 重新应用自动 ", showAuto, QdbButtons.ReapplyAutomation),

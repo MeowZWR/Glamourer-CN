@@ -387,7 +387,7 @@ public sealed class RandomRestrictionDrawer : IService, IDisposable
         ImGui.Separator();
         ImGui.Dummy(Vector2.Zero);
         var reset = random.ResetOnRedraw;
-        if (ImUtf8.Checkbox("Reset Chosen Design On Every Redraw"u8, ref reset))
+        if (ImUtf8.Checkbox("每次重绘时重置选择的设计"u8, ref reset))
             _autoDesignManager.ChangeData(_set!, _designIndex, reset);
         ImGui.Separator();
         ImGui.Dummy(Vector2.Zero);
