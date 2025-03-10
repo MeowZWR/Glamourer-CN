@@ -51,32 +51,32 @@ public class MaterialDrawer(DesignManager _designManager, Configuration _config)
         var any      = design.Materials.Count > 0;
         var disabled = !_config.DeleteDesignModifier.IsActive();
         var size     = new Vector2(200 * ImUtf8.GlobalScale, 0);
-        if (ImUtf8.ButtonEx("Enable All Advanced Dyes"u8,
+        if (ImUtf8.ButtonEx("启用所有高级染色"u8,
                 any
-                    ? "Enable the application of all contained advanced dyes without deleting them."u8
-                    : "This design does not contain any advanced dyes."u8, size,
+                    ? "启用所有包含的高级染色而不删除它们。"u8
+                    : "此设计不包含任何高级染色。"u8, size,
                 !any || disabled))
             _designManager.ChangeApplyMulti(design, null, null, null, null, null, null, true, null);
         ;
         if (disabled && any)
-            ImUtf8.HoverTooltip($"Hold {_config.DeleteDesignModifier} while clicking to enable.");
+            ImUtf8.HoverTooltip($"按住 {_config.DeleteDesignModifier} 点击以启用。");
         ImGui.SameLine();
-        if (ImUtf8.ButtonEx("Disable All Advanced Dyes"u8,
+        if (ImUtf8.ButtonEx("禁用所有高级染色"u8,
                 any
-                    ? "Disable the application of all contained advanced dyes without deleting them."u8
-                    : "This design does not contain any advanced dyes."u8, size,
+                    ? "禁用所有包含的高级染色而不删除它们。"u8
+                    : "此设计不包含任何高级染色。"u8, size,
                 !any || disabled))
             _designManager.ChangeApplyMulti(design, null, null, null, null, null, null, false, null);
         if (disabled && any)
-            ImUtf8.HoverTooltip($"Hold {_config.DeleteDesignModifier} while clicking to disable.");
+            ImUtf8.HoverTooltip($"按住 {_config.DeleteDesignModifier} 点击以禁用。");
 
-        if (ImUtf8.ButtonEx("Delete All Advanced Dyes"u8, any ? ""u8 : "This design does not contain any advanced dyes."u8, size,
+        if (ImUtf8.ButtonEx("删除所有高级染色"u8, any ? ""u8 : "此设计不包含任何高级染色。"u8, size,
                 !any || disabled))
             while (design.Materials.Count > 0)
                 _designManager.ChangeMaterialValue(design, MaterialValueIndex.FromKey(design.Materials[0].Item1), null);
 
         if (disabled && any)
-            ImUtf8.HoverTooltip($"Hold {_config.DeleteDesignModifier} while clicking to delete.");
+            ImUtf8.HoverTooltip($"按住 {_config.DeleteDesignModifier} 点击以删除。");
     }
 
     private void DrawName(MaterialValueIndex index)
@@ -200,29 +200,29 @@ public class MaterialDrawer(DesignManager _designManager, Configuration _config)
 
     private void DrawMaterialIdxDrag()
     {
-        ImGui.SetNextItemWidth(ImUtf8.CalcTextSize("Material AA"u8).X);
-        var format = $"Material {(char)('A' + _newMaterialIdx)}";
-        if (ImUtf8.DragScalar("##Material"u8, ref _newMaterialIdx, format, 0, MaterialService.MaterialsPerModel - 1, 0.01f,
+        ImGui.SetNextItemWidth(ImUtf8.CalcTextSize("材质 AA"u8).X);
+        var format = $"材质 {(char)('A' + _newMaterialIdx)}";
+        if (ImUtf8.DragScalar("##材质"u8, ref _newMaterialIdx, format, 0, MaterialService.MaterialsPerModel - 1, 0.01f,
                 ImGuiSliderFlags.NoInput))
         {
             _newMaterialIdx = Math.Clamp(_newMaterialIdx, 0, MaterialService.MaterialsPerModel - 1);
             _newKey         = _newKey with { MaterialIndex = (byte)_newMaterialIdx };
         }
 
-        ImUtf8.HoverTooltip("Drag this to the left or right to change its value."u8);
+        ImUtf8.HoverTooltip("左右拖动以更改其值。"u8);
     }
 
     private void DrawRowIdxDrag()
     {
-        ImGui.SetNextItemWidth(ImUtf8.CalcTextSize("Row 0000"u8).X);
-        var format = $"Row {_newRowIdx / 2 + 1}{(char)(_newRowIdx % 2 + 'A')}";
-        if (ImUtf8.DragScalar("##Row"u8, ref _newRowIdx, format, 0, ColorTable.NumRows - 1, 0.01f, ImGuiSliderFlags.NoInput))
+        ImGui.SetNextItemWidth(ImUtf8.CalcTextSize("行 0000"u8).X);
+        var format = $"行 {_newRowIdx / 2 + 1}{(char)(_newRowIdx % 2 + 'A')}";
+        if (ImUtf8.DragScalar("##行"u8, ref _newRowIdx, format, 0, ColorTable.NumRows - 1, 0.01f, ImGuiSliderFlags.NoInput))
         {
             _newRowIdx = Math.Clamp(_newRowIdx, 0, ColorTable.NumRows - 1);
             _newKey    = _newKey with { RowIndex = (byte)_newRowIdx };
         }
 
-        ImUtf8.HoverTooltip("Drag this to the left or right to change its value."u8);
+        ImUtf8.HoverTooltip("左右拖动以更改其值。"u8);
     }
 
     private void DrawRow(Design design, MaterialValueIndex index, in ColorRow row, bool disabled)

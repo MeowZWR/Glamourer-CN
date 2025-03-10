@@ -583,7 +583,7 @@ public class EquipmentDrawer
 
     private static void DrawApply(in BonusDrawData data)
     {
-        if (UiHelpers.DrawCheckbox($"##apply{data.Slot}", "Apply this bonus item when applying the Design.", data.CurrentApply, out var enabled,
+        if (UiHelpers.DrawCheckbox($"##apply{data.Slot}", "应用设计时应用此额外项。", data.CurrentApply, out var enabled,
                 data.Locked))
             data.SetApplyItem(enabled);
     }
