@@ -23,7 +23,7 @@ public unsafe class InventoryPanel : IGameDataDrawer
         ImGuiUtil.CopyOnClickSelectable($"0x{(ulong)inventory:X}");
 
         var equip = inventory->GetInventoryContainer(InventoryType.EquippedItems);
-        if (equip == null || equip->IsLoaded)
+        if (equip == null || equip->Loaded == 0)
             return;
 
         ImGuiUtil.CopyOnClickSelectable($"0x{(ulong)equip:X}");
