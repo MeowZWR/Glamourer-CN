@@ -173,7 +173,7 @@ public sealed class DesignQuickBar : Window, IDisposable
                 available |= 2;
                 _tooltipBuilder.Append("右键单击：应用")
                     .Append(design.ResolveName(_config.Ephemeral.IncognitoMode))
-                    .Append("到{_targetIdentifier}。");
+                    .Append("到").Append(_config.Ephemeral.IncognitoMode ? _targetIdentifier.Incognito(null) : _targetIdentifier.ToName());
             }
 
             if (available == 0)
