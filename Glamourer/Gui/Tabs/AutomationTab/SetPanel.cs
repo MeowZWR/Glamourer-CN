@@ -31,7 +31,7 @@ public class SetPanel(
     RandomRestrictionDrawer _randomDrawer)
 {
     private readonly JobGroupCombo         _jobGroupCombo = new(_manager, _jobs, Glamourer.Log);
-    private readonly HeaderDrawer.Button[] _rightButtons  = [new HeaderDrawer.IncognitoButton(_config.Ephemeral)];
+    private readonly HeaderDrawer.Button[] _rightButtons  = [new HeaderDrawer.IncognitoButton(_config)];
     private          string?               _tempName;
     private          int                   _dragIndex = -1;
 
@@ -434,7 +434,7 @@ public class SetPanel(
                 if (ImGui.SetDragDropPayload(dragDropLabel, nint.Zero, 0))
                 {
                     _dragIndex                 = index;
-                    _selector._dragDesignIndex = index;
+                    _selector.DragDesignIndex = index;
                 }
             }
         }

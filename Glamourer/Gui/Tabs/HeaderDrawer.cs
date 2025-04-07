@@ -44,22 +44,36 @@ public static class HeaderDrawer
         }
     }
 
-    public sealed class IncognitoButton(EphemeralConfig config) : Button
+    public sealed class IncognitoButton(Configuration config) : Button
     {
         protected override string Description
-            => config.IncognitoMode
-                ? "关闭匿名模式。"
-                : "开启匿名模式。";
+        {
+            get
+            {
+                var hold = config.IncognitoModifier.IsActive();
+                return (config.Ephemeral.IncognitoMode, hold)
+                    switch
+                    {
+                        (true, true)   => "关闭匿名模式。",
+                        (false, true)  => "开启匿名模式。",
+                        (true, false)  => $"关闭匿名模式。\n\按住 {config.IncognitoModifier} 并点击以切换。",
+                        (false, false) => $"开启匿名模式。\n\按住 {config.IncognitoModifier} 并点击以切换。",
+                    };
+            }
+        }
 
         protected override FontAwesomeIcon Icon
-            => config.IncognitoMode
+            => config.Ephemeral.IncognitoMode
                 ? FontAwesomeIcon.EyeSlash
                 : FontAwesomeIcon.Eye;
 
         protected override void OnClick()
         {
-            config.IncognitoMode = !config.IncognitoMode;
-            config.Save();
+            if (!config.IncognitoModifier.IsActive())
+                return;
+
+            config.Ephemeral.IncognitoMode = !config.Ephemeral.IncognitoMode;
+            config.Ephemeral.Save();
         }
     }
 

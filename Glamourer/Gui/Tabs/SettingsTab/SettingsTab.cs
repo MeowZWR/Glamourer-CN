@@ -189,6 +189,10 @@ public class SettingsTab(
                 "在所有的删除按钮上生效所需要的组合键。", 100 * ImGuiHelpers.GlobalScale,
                 config.DeleteDesignModifier, v => config.DeleteDesignModifier = v))
             config.Save();
+        if (Widget.DoubleModifierSelector("Incognito Modifier",
+                "A modifier you need to hold while clicking the Incognito button for it to take effect.", 100 * ImGuiHelpers.GlobalScale,
+                config.IncognitoModifier, v => config.IncognitoModifier = v))
+            config.Save();
         DrawRenameSettings();
         Checkbox("自动展开角色设计折叠组"u8,
             "登录游戏后，角色设计折叠组默认状态是打开还是关闭。"u8, config.OpenFoldersByDefault,
