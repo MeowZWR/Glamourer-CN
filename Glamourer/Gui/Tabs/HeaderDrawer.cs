@@ -56,8 +56,8 @@ public static class HeaderDrawer
                     {
                         (true, true)   => "关闭匿名模式。",
                         (false, true)  => "开启匿名模式。",
-                        (true, false)  => $"关闭匿名模式。\n\按住 {config.IncognitoModifier} 并点击以切换。",
-                        (false, false) => $"开启匿名模式。\n\按住 {config.IncognitoModifier} 并点击以切换。",
+                        (true, false)  => $"关闭匿名模式。\n\n按住 {config.IncognitoModifier} 并点击以切换。",
+                        (false, false) => $"开启匿名模式。\n\n按住 {config.IncognitoModifier} 并点击以切换。",
                     };
             }
         }
