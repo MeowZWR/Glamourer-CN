@@ -241,8 +241,8 @@ public class MainWindow : Window, IDisposable
         {
             (true, true)   => "Glamourer（匿名模式）###GlamourerMainWindow",
             (true, false)  => "Glamourer###GlamourerMainWindow",
-            (false, false) => $"Glamourer v{Glamourer.Version}###GlamourerMainWindow",
-            (false, true)  => $"Glamourer v{Glamourer.Version}（匿名模式）###GlamourerMainWindow",
+            (false, false) => $"Glamourer v{Glamourer.Version}-cn###GlamourerMainWindow",
+            (false, true)  => $"Glamourer v{Glamourer.Version}-cn（匿名模式）###GlamourerMainWindow",
         };
 
     private void DrawProblemWindow(string text)
