@@ -3,7 +3,6 @@ using Dalamud.Interface.Utility;
 using Glamourer.Designs;
 using Glamourer.Interop.Material;
 using ImGuiNET;
-using OtterGui;
 using OtterGui.Extensions;
 using OtterGui.Raii;
 using OtterGui.Text;
@@ -11,7 +10,12 @@ using static Glamourer.Gui.Tabs.HeaderDrawer;
 
 namespace Glamourer.Gui.Tabs.DesignTab;
 
-public class MultiDesignPanel(DesignFileSystemSelector selector, DesignManager editor, DesignColors colors, Configuration config)
+public class MultiDesignPanel(
+    DesignFileSystemSelector selector,
+    DesignManager editor,
+    DesignColors colors,
+    Configuration config,
+    DesignComboWrapper combos)
 {
     private readonly Button[] _leftButtons  = [];
     private readonly Button[] _rightButtons = [new IncognitoButton(config)];
@@ -201,16 +205,23 @@ public class MultiDesignPanel(DesignFileSystemSelector selector, DesignManager e
             ? $"当前所有{_numDesigns}个选中设计方案已在快速设计栏显示"
             : $"将为全部{_numDesigns}个选中设计方案启用快速设计栏显示（影响{diff}个设计）";
         if (ImUtf8.ButtonEx("在快速设计栏中显示选中的设计"u8, tt, buttonWidth, diff == 0))
+        {
+            using var disableListener = combos.StopListening();
             foreach (var design in selector.SelectedPaths.OfType<DesignFileSystem.Leaf>())
                 editor.SetQuickDesign(design.Value, true);
+        }
 
         ImGui.SameLine();
         tt = _numQuickDesignEnabled == 0
             ? $"当前所有{_numDesigns}个选中设计方案未在快速设计栏显示"
             : $"将为全部{_numDesigns}个选中设计方案关闭快速设计栏显示（影响{_numQuickDesignEnabled}个设计）";
         if (ImUtf8.ButtonEx("在快速设计栏中隐藏选中的设计"u8, tt, buttonWidth, _numQuickDesignEnabled == 0))
+        {
+            using var disableListener = combos.StopListening();
             foreach (var design in selector.SelectedPaths.OfType<DesignFileSystem.Leaf>())
                 editor.SetQuickDesign(design.Value, false);
+        }
+
         ImGui.Separator();
     }
 
@@ -327,8 +338,11 @@ public class MultiDesignPanel(DesignFileSystemSelector selector, DesignManager e
             : $"将 {_addDesigns.Count} 个的颜色设置为“{_colorCombo.CurrentSelection}”\n\n\t{string.Join("\n\t", _addDesigns.Select(m => m.Name.Text))}";
         ImGui.SameLine();
         if (ImUtf8.ButtonEx(label, tooltip, width, _addDesigns.Count == 0))
+        {
+            using var disableListener = combos.StopListening();
             foreach (var design in _addDesigns)
                 editor.ChangeColor(design, _colorCombo.CurrentSelection!);
+        }
 
         label = _removeDesigns.Count > 0
             ? $"取消设置{_removeDesigns.Count}个设计"
@@ -338,8 +352,11 @@ public class MultiDesignPanel(DesignFileSystemSelector selector, DesignManager e
             : $"设置 {_removeDesigns.Count} 个设计为重新使用自动配色：\n\n\t{string.Join("\n\t", _removeDesigns.Select(m => m.Item1.Name.Text))}";
         ImGui.SameLine();
         if (ImUtf8.ButtonEx(label, tooltip, width, _removeDesigns.Count == 0))
+        {
+            using var disableListener = combos.StopListening();
             foreach (var (design, _) in _removeDesigns)
                 editor.ChangeColor(design, string.Empty);
+        }
 
         ImGui.Separator();
     }
@@ -455,7 +472,8 @@ public class MultiDesignPanel(DesignFileSystemSelector selector, DesignManager e
 
         foreach (var design in selector.SelectedPaths.OfType<DesignFileSystem.Leaf>().Select(l => l.Value))
         {
-            editor.ChangeApplyMulti(design, equip, customize, equip, customize.HasValue && !customize.Value ? false : null, null, equip, equip, equip);
+            editor.ChangeApplyMulti(design, equip, customize, equip, customize.HasValue && !customize.Value ? false : null, null, equip, equip,
+                equip);
             if (equip.HasValue)
             {
                 editor.ChangeApplyMeta(design, MetaIndex.HatState,    equip.Value);

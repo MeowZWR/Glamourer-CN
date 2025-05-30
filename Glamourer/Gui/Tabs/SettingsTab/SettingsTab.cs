@@ -103,6 +103,9 @@ public class SettingsTab(
             "将所有设置应用为临时设置，以便在 Glamourer 或游戏关闭时重置。"u8,
             config.UseTemporarySettings,
             v => config.UseTemporarySettings = v);
+        Checkbox("Prevent Random Design Repeats"u8,
+            "When using random designs, prevent the same design from being chosen twice in a row."u8,
+            config.PreventRandomRepeats, v => config.PreventRandomRepeats = v);
         ImGui.NewLine();
     }
 
@@ -248,8 +251,8 @@ public class SettingsTab(
 
     private void DrawQuickDesignBoxes()
     {
-        var showAuto     = config.EnableAutoDesigns;
-        var numColumns   = 8 - (showAuto ? 0 : 2) - (config.UseTemporarySettings ? 0 : 1);
+        var showAuto   = config.EnableAutoDesigns;
+        var numColumns = 9 - (showAuto ? 0 : 2) - (config.UseTemporarySettings ? 0 : 1);
         ImGui.NewLine();
         ImUtf8.Text("在快速设计栏中显示以下按钮："u8);
         ImGui.Dummy(Vector2.Zero);
@@ -266,7 +269,8 @@ public class SettingsTab(
             (" 重新应用自动 ", showAuto, QdbButtons.ReapplyAutomation),
             (" 还原装备 ", true, QdbButtons.RevertEquip),
             (" 还原外貌 ", true, QdbButtons.RevertCustomize),
-            (" 还原高级选项 ", true, QdbButtons.RevertAdvanced),
+            (" 还原高级外貌 ", true, QdbButtons.RevertAdvancedCustomization),
+            (" 还原高级染色 ", true, QdbButtons.RevertAdvancedDyes),
             (" 重置设置 ", config.UseTemporarySettings, QdbButtons.ResetSettings),
         ];
 

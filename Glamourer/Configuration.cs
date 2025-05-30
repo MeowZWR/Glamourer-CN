@@ -66,6 +66,7 @@ public class Configuration : IPluginConfiguration, ISavable
     public bool UseTemporarySettings             { get; set; } = true;
     public bool AllowDoubleClickToApply          { get; set; } = false;
     public bool RespectManualOnAutomationUpdate  { get; set; } = false;
+    public bool PreventRandomRepeats             { get; set; } = false;
 
     public DesignPanelFlag HideDesignPanel       { get; set; } = 0;
     public DesignPanelFlag AutoExpandDesignPanel { get; set; } = 0;
@@ -80,7 +81,7 @@ public class Configuration : IPluginConfiguration, ISavable
     public ChangeLogDisplayType ChangeLogDisplayType { get; set; } = ChangeLogDisplayType.New;
 
     public QdbButtons QdbButtons { get; set; } =
-        QdbButtons.ApplyDesign | QdbButtons.RevertAll | QdbButtons.RevertAutomation | QdbButtons.RevertAdvanced;
+        QdbButtons.ApplyDesign | QdbButtons.RevertAll | QdbButtons.RevertAutomation | QdbButtons.RevertAdvancedDyes;
 
     [JsonConverter(typeof(SortModeConverter))]
     [JsonProperty(Order = int.MaxValue)]
@@ -157,7 +158,7 @@ public class Configuration : IPluginConfiguration, ISavable
 
     public static class Constants
     {
-        public const int CurrentVersion = 7;
+        public const int CurrentVersion = 8;
 
         public static readonly ISortMode<Design>[] ValidSortModes =
         [
