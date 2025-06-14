@@ -64,41 +64,40 @@ public class GlamourerChangelog
     }
 
     private static void Add1_4_0_0(Changelog log)
-        => log.NextVersion("Version 1.4.0.0")
-            .RegisterHighlight("The design selector width is now draggable within certain restrictions that depend on the total window width.")
-            .RegisterEntry("The current behavior may not be final, let me know if you have any comments.", 1)
-            .RegisterEntry("Regular customization colors can now be dragged & dropped onto other customizations.")
+        => log.NextVersion("版本 1.4.0.0")
+            .RegisterHighlight("设计选择器的宽度现在可以在一定限制内拖动，这些限制取决于窗口的总宽度。")
+            .RegisterEntry("当前的行为可能不是最终版本，如果您有任何意见请告诉我。", 1)
+            .RegisterEntry("现在可以将常规外貌中的颜色拖放到其他外貌选项上。")
             .RegisterEntry(
-                "If no identical color is available in the target slot, the most similar color available (for certain values of similar) will be chosen instead.",
-                1)
-            .RegisterEntry("Resetting advanced dyes and customizations has been split into two buttons for the quick design bar.")
-            .RegisterEntry("Weapons now also support custom ID input in the combo search box.")
-            .RegisterEntry("Added new IPC methods GetExtendedDesignData, AddDesign, DeleteDesign, GetDesignBase64, GetDesignJObject.")
-            .RegisterEntry("Added the option to prevent immediate repeats for random design selection (Thanks Diorik!).")
-            .RegisterEntry("Optimized some multi-design changes when selecting many designs and changing them at once.")
-            .RegisterEntry("Fixed item combos not starting from the currently selected item when scrolling them via mouse wheel.")
-            .RegisterEntry("Fixed some issue with Glamourer not searching mods by name for mod associations in some cases.")
-            .RegisterEntry("Fixed the IPC methods SetMetaState and SetMetaStateName not working (Thanks Caraxi!).")
-            .RegisterEntry("Added new IPC method GetDesignListExtended. (1.3.8.6)")
+                "如果目标槽位中没有完全相同的颜色，将选择最相似的颜色（基于特定的相似度值）。", 1)
+            .RegisterEntry("快速设计栏中的高级染色和外貌重置功能已分为两个按钮。")
+            .RegisterEntry("武器现在也支持在组合搜索框中输入自定义ID。")
+            .RegisterEntry("新增了IPC方法：GetExtendedDesignData、AddDesign、DeleteDesign、GetDesignBase64、GetDesignJObject。")
+            .RegisterEntry("添加了防止随机设计选择立即重复的选项（感谢Diorik！）。")
+            .RegisterEntry("优化了同时选择多个设计并更改时的多设计变更性能。")
+            .RegisterEntry("修复了使用鼠标滚轮滚动时物品组合不从当前选中物品开始的问题。")
+            .RegisterEntry("修复了在某些情况下Glamourer无法通过名称搜索模组关联的问题。")
+            .RegisterEntry("修复了IPC方法SetMetaState和SetMetaStateName不工作的问题（感谢Caraxi！）。")
+            .RegisterEntry("新增了IPC方法GetDesignListExtended。（1.3.8.6）")
             .RegisterEntry(
-                "Improved the naming of NPCs for identifiers by using Haselnussbombers new naming functionality (Thanks Hasel!). (1.3.8.6)")
+                "通过使用Haselnussbomber的新命名功能改进了NPC标识符的命名（感谢Hasel！）。（1.3.8.6）")
             .RegisterEntry(
-                "Added a modifier key separate from the delete modifier key that is used for less important key-checks, specifically toggling incognito mode. (1.3.8.5)")
-            .RegisterEntry("Used better Penumbra IPC for some things. (1.3.8.5)")
-            .RegisterEntry("Fixed an issue with advanced dyes for weapons. (1.3.8.5)")
-            .RegisterEntry("Fixed an issue with NPC automation due to missing job detection. (1.3.8.1)");
+                "添加了一个与删除组合键分离的组合键，用于不太重要的按键检查，特别是切换匿名模式。（1.3.8.5）")
+            .RegisterEntry("在某些功能中使用了更好的Penumbra IPC。（1.3.8.5）")
+            .RegisterEntry("修复了武器高级染色的问题。（1.3.8.5）")
+            .RegisterEntry("修复了由于缺少职业检测导致的NPC自动执行问题。（1.3.8.1）");
 
     private static void Add1_3_8_0(Changelog log)
-        => log.NextVersion("Version 1.3.8.0")
-            .RegisterImportant("Updated Glamourer for update 7.20 and Dalamud API 12.")
+        => log.NextVersion("版本 1.3.8.0")
+            .RegisterImportant("已更新 Glamourer 以支持 7.20 版本更新和 Dalamud API 12。")
             .RegisterEntry(
-                "This is not thoroughly tested, but I decided to push to stable instead of testing because otherwise a lot of people would just go to testing just for early access again despite having no business doing so.",
+                "这尚未经过全面测试，但我决定直接发布到稳定版而不是测试版，因为否则会有很多人仅仅为了提前体验而转到测试版，尽管他们并不适合这样做。",
                 1)
             .RegisterEntry(
-                "I also do not use most of the functionality of Glamourer myself, so I am unable to even encounter most issues myself.", 1)
-            .RegisterEntry("If you encounter any issues, please report them quickly on the discord.",                                    1)
-            .RegisterEntry("Added a chat command to clear temporary settings applied by Glamourer to Penumbra.")
-            .RegisterEntry("Fixed small issues with customizations not applicable to your race still applying.");
+                "我自己也不使用 Glamourer 的大部分功能，所以我甚至无法自己发现大多数问题。", 1)
+            .RegisterEntry("如果您遇到任何问题，请在 discord 上快速报告。", 1)
+            .RegisterEntry("添加了一个聊天命令来清除 Glamourer 应用到 Penumbra 的临时设置。")
+            .RegisterEntry("修复了某些情况下无法应用于您种族的外貌选项仍然被应用的小问题。");
 
     private static void Add1_3_7_0(Changelog log)
         => log.NextVersion("版本 1.3.7.0")
