@@ -52,7 +52,6 @@ public class SettingsTab(
         ImGui.NewLine();
         ImGui.NewLine();
         ImGui.NewLine();
-        ImGui.NewLine();
 
         using (ImUtf8.Child("SettingsChild"u8, default))
         {

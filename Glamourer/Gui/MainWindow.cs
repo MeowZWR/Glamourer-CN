@@ -201,18 +201,15 @@ public class MainWindow : Window, IDisposable
         var width = ImUtf8.CalcTextSize(SupportInfoButtonText).X + ImGui.GetStyle().FramePadding.X * 2;
         var xPos  = ImGui.GetWindowWidth() - width;
         ImGui.SetCursorPos(new Vector2(xPos, 0));
-        CustomGui.DrawDiscordButton(Glamourer.Messager, width);
+        CustomGui.DrawDiscordSplitButton(Glamourer.Messager, new Vector2(width, ImGui.GetFrameHeight()));
 
-        ImGui.SetCursorPos(new Vector2(xPos, ImGui.GetFrameHeightWithSpacing()));
-        CustomGui.DrawCNDiscordButton(Glamourer.Messager, width);
-
-        ImGui.SetCursorPos(new Vector2(xPos, 2 * ImGui.GetFrameHeightWithSpacing()));
+        ImGui.SetCursorPos(new Vector2(xPos, 1 * ImGui.GetFrameHeightWithSpacing()));
         DrawSupportButton(glamourer); 
 
-        ImGui.SetCursorPos(new Vector2(xPos, 3 * ImGui.GetFrameHeightWithSpacing()));
+        ImGui.SetCursorPos(new Vector2(xPos, 2 * ImGui.GetFrameHeightWithSpacing()));
         CustomGui.DrawGuideButton(Glamourer.Messager, width);
 
-        ImGui.SetCursorPos(new Vector2(xPos, 4 * ImGui.GetFrameHeightWithSpacing()));
+        ImGui.SetCursorPos(new Vector2(xPos, 3 * ImGui.GetFrameHeightWithSpacing()));
         if (ImGui.Button("显示更新日志", new Vector2(width, 0)))
             changelog.ForceOpen = true;
     }
@@ -227,7 +224,7 @@ public class MainWindow : Window, IDisposable
 
         var text = glamourer.GatherSupportInformation();
         ImGui.SetClipboardText(text);
-        Glamourer.Messager.NotificationMessage("Copied Support Info to Clipboard.", NotificationType.Success, false);
+        Glamourer.Messager.NotificationMessage("复制支持信息到剪贴板。", NotificationType.Success, false);
     }
 
     private void OnTabSelected(TabType type, Design? _)
@@ -266,7 +263,7 @@ public class MainWindow : Window, IDisposable
 
         ImGui.NewLine();
         ImGui.NewLine();
-        CustomGui.DrawDiscordButton(Glamourer.Messager, 0);
+        CustomGui.DrawDiscordSplitButton(Glamourer.Messager, new Vector2(200, ImGui.GetFrameHeight()));
         ImGui.SameLine();
         ImGui.NewLine();
         ImGui.NewLine();
