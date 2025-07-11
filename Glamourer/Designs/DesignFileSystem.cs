@@ -41,11 +41,11 @@ public sealed class DesignFileSystem : FileSystem<Design>, IDisposable, ISavable
 
     public struct CreationDate : ISortMode<Design>
     {
-        public string Name
-            => "创建日期（较早的优先）";
+        public ReadOnlySpan<byte> Name
+            => "创建日期（较早的优先）"u8;
 
-        public string Description
-            => "在每个折叠组中，按字母顺序对所有子组进行排序，然后按创建日期对所有子项目进行排序。";
+        public ReadOnlySpan<byte> Description
+            => "在每个折叠组中，按字母顺序对所有子组进行排序，然后按创建日期对所有子项目进行排序。"u8;
 
         public IEnumerable<IPath> GetChildren(Folder f)
             => f.GetSubFolders().Cast<IPath>().Concat(f.GetLeaves().OrderBy(l => l.Value.CreationDate));
@@ -53,11 +53,11 @@ public sealed class DesignFileSystem : FileSystem<Design>, IDisposable, ISavable
 
     public struct UpdateDate : ISortMode<Design>
     {
-        public string Name
-            => "更新日期（较早的优先）";
+        public ReadOnlySpan<byte> Name
+            => "更新日期（较早的优先）"u8;
 
-        public string Description
-            => "在每个折叠组中，按字母顺序对所有子组进行排序，然后按最后更新日期对所有子项目进行排序。";
+        public ReadOnlySpan<byte> Description
+            => "在每个折叠组中，按字母顺序对所有子组进行排序，然后按最后更新日期对所有子项目进行排序。"u8;
 
         public IEnumerable<IPath> GetChildren(Folder f)
             => f.GetSubFolders().Cast<IPath>().Concat(f.GetLeaves().OrderBy(l => l.Value.LastEdit));
@@ -65,11 +65,11 @@ public sealed class DesignFileSystem : FileSystem<Design>, IDisposable, ISavable
 
     public struct InverseCreationDate : ISortMode<Design>
     {
-        public string Name
-            => "创建日期（较晚的优先）";
+        public ReadOnlySpan<byte> Name
+            => "创建日期（较晚的优先）"u8;
 
-        public string Description
-            => "在每个折叠组中，按字母顺序对所有子组进行排序，然后按创建日期对所有子项目进行反向排序。";
+        public ReadOnlySpan<byte> Description
+            => "在每个折叠组中，按字母顺序对所有子组进行排序，然后按创建日期对所有子项目进行反向排序。"u8;
 
         public IEnumerable<IPath> GetChildren(Folder f)
             => f.GetSubFolders().Cast<IPath>().Concat(f.GetLeaves().OrderByDescending(l => l.Value.CreationDate));
@@ -77,11 +77,11 @@ public sealed class DesignFileSystem : FileSystem<Design>, IDisposable, ISavable
 
     public struct InverseUpdateDate : ISortMode<Design>
     {
-        public string Name
-            => "更新日期（较晚的优先）";
+        public ReadOnlySpan<byte> Name
+            => "更新日期（较晚的优先）"u8;
 
-        public string Description
-            => "在每个折叠组中，按字母顺序对所有子组进行排序，然后按最后更新日期对所有子项目进行反向排序。";
+        public ReadOnlySpan<byte> Description
+            => "在每个折叠组中，按字母顺序对所有子组进行排序，然后按最后更新日期对所有子项目进行反向排序。"u8;
 
         public IEnumerable<IPath> GetChildren(Folder f)
             => f.GetSubFolders().Cast<IPath>().Concat(f.GetLeaves().OrderByDescending(l => l.Value.LastEdit));
