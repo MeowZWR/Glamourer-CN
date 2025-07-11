@@ -102,8 +102,8 @@ public class SettingsTab(
             "将所有设置应用为临时设置，以便在 Glamourer 或游戏关闭时重置。"u8,
             config.UseTemporarySettings,
             v => config.UseTemporarySettings = v);
-        Checkbox("Prevent Random Design Repeats"u8,
-            "When using random designs, prevent the same design from being chosen twice in a row."u8,
+        Checkbox("防止随机设计重复"u8,
+            "在使用随机设计时，防止连续两次选择相同的设计。"u8,
             config.PreventRandomRepeats, v => config.PreventRandomRepeats = v);
         ImGui.NewLine();
     }
@@ -191,8 +191,8 @@ public class SettingsTab(
                 "在所有的删除按钮上生效所需要的组合键。", 100 * ImGuiHelpers.GlobalScale,
                 config.DeleteDesignModifier, v => config.DeleteDesignModifier = v))
             config.Save();
-        if (Widget.DoubleModifierSelector("Incognito Modifier",
-                "A modifier you need to hold while clicking the Incognito button for it to take effect.", 100 * ImGuiHelpers.GlobalScale,
+        if (Widget.DoubleModifierSelector("隐身模式组合键",
+                "在点击隐身模式按钮时需要按住的组合键，才能使其生效。", 100 * ImGuiHelpers.GlobalScale,
                 config.IncognitoModifier, v => config.IncognitoModifier = v))
             config.Save();
         DrawRenameSettings();
