@@ -193,7 +193,7 @@ public class ModAssociationsTab(PenumbraService penumbra, DesignFileSystemSelect
         if (ImUtf8.Selectable($"{mod.Name}##name"))
             penumbra.OpenModPage(mod);
         if (ImGui.IsItemHovered())
-            ImGui.SetTooltip($"Mod Directory:    {mod.DirectoryName}\n\nClick to open mod page in Penumbra.");
+            ImGui.SetTooltip($"模组目录：    {mod.DirectoryName}\n\n点击以在 Penumbra 中打开模组页面。");
         if (config.UseTemporarySettings)
         {
             ImGui.TableNextColumn();
