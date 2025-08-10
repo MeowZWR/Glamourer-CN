@@ -65,17 +65,17 @@ public class GlamourerChangelog
     }
 
     private static void Add1_5_0_0(Changelog log)
-        => log.NextVersion("Version 1.5.0.0")
-            .RegisterImportant("Updated for game version 7.30 and Dalamud API13, which uses a new GUI backend. Some things may not work as expected. Please let me know any issues you encounter.")
-            .RegisterHighlight("Added the new Viera Ears state to designs. Old designs will not apply the state.")
-            .RegisterHighlight("Added the option to make newly created designs write-protected by default to the design defaults.")
-            .RegisterEntry("Fixed issues with reverting state and IPC.")
-            .RegisterEntry("Fixed an issue when using the mousewheel to scroll through designs (1.4.0.3).")
-            .RegisterEntry("Fixed an issue with invalid bonus items (1.4.0.3).")
-            .RegisterHighlight("Added drag & drop of equipment pieces which will try to match the corresponding model IDs in other slots if possible (1.4.0.2).")
-            .RegisterEntry("Heavily optimized some issues when having many designs and creating new ones or updating them (1.4.0.2)")
-            .RegisterEntry("Fixed an issue with staining templates (1.4.0.1).")
-            .RegisterEntry("Fixed an issue with the QDB buttons not counting correctly (1.4.0.1).");
+        => log.NextVersion("版本 1.5.0.0")
+            .RegisterImportant("已更新以支持游戏版本 7.30 和 Dalamud API13，使用了新的 GUI 后端。某些功能可能无法按预期工作。如果您遇到任何问题，请告诉我。")
+            .RegisterHighlight("在设计中添加了新的维埃拉耳朵状态。旧设计不会应用此状态。")
+            .RegisterHighlight("在设计默认设置中添加了将新创建的设计默认设为写保护的选项。")
+            .RegisterEntry("修复了状态还原和 IPC 的问题。")
+            .RegisterEntry("修复了使用鼠标滚轮滚动设计时的问题 (1.4.0.3)。")
+            .RegisterEntry("修复了无效奖励物品的问题 (1.4.0.3)。")
+            .RegisterHighlight("添加了装备部件的拖放功能，如果可能的话，会尝试匹配其他槽位中对应的模型 ID (1.4.0.2)。")
+            .RegisterEntry("大幅优化了拥有大量设计时创建新设计或更新设计的一些问题 (1.4.0.2)")
+            .RegisterEntry("修复了染色模板的问题 (1.4.0.1)。")
+            .RegisterEntry("修复了 QDB 按钮计数不正确的问题 (1.4.0.1)。");
 
     private static void Add1_4_0_0(Changelog log)
         => log.NextVersion("版本 1.4.0.0")
