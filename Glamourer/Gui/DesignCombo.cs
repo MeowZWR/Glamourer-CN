@@ -5,7 +5,7 @@ using Glamourer.Designs;
 using Glamourer.Designs.History;
 using Glamourer.Designs.Special;
 using Glamourer.Events;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui;
 using OtterGui.Classes;
 using OtterGui.Extensions;
@@ -194,7 +194,7 @@ public abstract class DesignComboBase : FilterComboCache<Tuple<IDesignStandIn, s
             ImGui.TextUnformatted("Currently resolving to ");
             using var color = ImRaii.PushColor(ImGuiCol.Text, DesignColors.GetColor(linkedDesign));
             ImGui.SameLine(0, 0);
-            ImGui.TextUnformatted(linkedDesign.Name);
+            ImGui.TextUnformatted(linkedDesign.Name.Text);
         }
         else
         {

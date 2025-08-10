@@ -3,7 +3,7 @@ using Dalamud.Interface.Utility;
 using Glamourer.Automation;
 using Glamourer.Designs;
 using Glamourer.Designs.Links;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui;
 using OtterGui.Raii;
 using OtterGui.Services;
@@ -195,7 +195,7 @@ public class DesignLinkDrawer(
         {
             if (source)
             {
-                ImGui.SetDragDropPayload("DraggingLink", IntPtr.Zero, 0);
+                ImGui.SetDragDropPayload("DraggingLink", null, 0);
                 ImGui.TextUnformatted($"Reordering {design.Name}...");
                 _dragDropIndex = index;
                 _dragDropOrder = order;

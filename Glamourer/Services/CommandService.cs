@@ -9,7 +9,7 @@ using Glamourer.Gui;
 using Glamourer.Gui.Tabs.DesignTab;
 using Glamourer.Interop.Penumbra;
 using Glamourer.State;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui;
 using OtterGui.Classes;
 using OtterGui.Extensions;
@@ -407,7 +407,7 @@ public class CommandService : IDisposable, IApiService
         foreach (var identifier in identifiers)
         {
             if (_stateManager.TryGetValue(identifier, out var state))
-                _stateManager.ResetState(state, StateSource.Manual);
+                _stateManager.ResetState(state, StateSource.Manual, isFinal: true);
         }
 
 

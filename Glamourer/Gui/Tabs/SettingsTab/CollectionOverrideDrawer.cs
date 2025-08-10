@@ -1,7 +1,7 @@
 ﻿using Dalamud.Interface;
 using Glamourer.Interop.Penumbra;
 using Glamourer.Services;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui;
 using OtterGui.Raii;
 using OtterGui.Services;
@@ -123,7 +123,7 @@ public class CollectionOverrideDrawer(
         {
             if (source)
             {
-                ImGui.SetDragDropPayload("DraggingOverride", nint.Zero, 0);
+                ImGui.SetDragDropPayload("DraggingOverride", null, 0);
                 ImGui.TextUnformatted($"重新排序覆盖 #{idx + 1}...");
                 _dragDropIndex = idx;
             }

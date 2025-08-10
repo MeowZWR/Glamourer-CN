@@ -2,7 +2,7 @@
 using Dalamud.Interface.Utility;
 using Glamourer.Automation;
 using Glamourer.Events;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui;
 using OtterGui.Classes;
 using OtterGui.Extensions;
@@ -144,7 +144,7 @@ public class SetSelector : IDisposable
         ImGui.SameLine();
         var f = _enabledFilter;
 
-        if (ImGui.CheckboxFlags("##enabledFilter", ref f, 3))
+        if (ImGui.CheckboxFlags("##enabledFilter", ref f, 3u))
         {
             _enabledFilter = _enabledFilter switch
             {
@@ -347,7 +347,7 @@ public class SetSelector : IDisposable
             if (source)
             {
                 ImGui.TextUnformatted($"移动来自第{index + 1}行的自动执行项目 {GetSetName(set, index)}...");
-                if (ImGui.SetDragDropPayload(dragDropLabel, nint.Zero, 0))
+                if (ImGui.SetDragDropPayload(dragDropLabel, null, 0))
                     _dragIndex = index;
             }
         }

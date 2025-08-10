@@ -8,7 +8,7 @@ using FFXIVClientStructs.Interop;
 using Glamourer.Designs;
 using Glamourer.Interop.Material;
 using Glamourer.State;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui.Raii;
 using OtterGui.Services;
 using OtterGui.Text;
@@ -91,7 +91,7 @@ public sealed unsafe class AdvancedDyePopup(
         var modelHandle = model == null ? null : model->ModelResourceHandle;
         var path = materialHandle == null
             ? string.Empty
-            : ByteString.FromSpanUnsafe(materialHandle->ResourceHandle.FileName.AsSpan(), true).ToString();
+            : ByteString.FromSpanUnsafe(materialHandle->FileName.AsSpan(), true).ToString();
         var gamePath = modelHandle == null
             ? string.Empty
             : modelHandle->GetMaterialFileNameBySlot(index.MaterialIndex).ToString();

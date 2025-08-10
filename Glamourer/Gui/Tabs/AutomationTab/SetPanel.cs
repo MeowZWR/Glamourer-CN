@@ -6,7 +6,7 @@ using Glamourer.Designs.Special;
 using Glamourer.Interop;
 using Glamourer.Services;
 using Glamourer.Unlocks;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui;
 using OtterGui.Extensions;
 using OtterGui.Log;
@@ -432,7 +432,7 @@ public class SetPanel(
             if (source)
             {
                 ImUtf8.Text($"移动角色设计 #{index + 1:D2}...");
-                if (ImGui.SetDragDropPayload(dragDropLabel, nint.Zero, 0))
+                if (ImGui.SetDragDropPayload(dragDropLabel, null, 0))
                 {
                     _dragIndex                 = index;
                     _selector.DragDesignIndex = index;

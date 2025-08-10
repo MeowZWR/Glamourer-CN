@@ -1,6 +1,6 @@
 ﻿using Dalamud.Interface.Utility;
 using Glamourer.Interop.Penumbra;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui;
 using OtterGui.Raii;
 using Penumbra.Api.Enums;
@@ -49,7 +49,7 @@ public unsafe class PenumbraPanel(PenumbraService _penumbra, PenumbraChangedItem
         ImGui.TableNextColumn();
         var address = _drawObject.Address;
         ImGui.SetNextItemWidth(200 * ImGuiHelpers.GlobalScale);
-        if (ImGui.InputScalar("##drawObjectPtr", ImGuiDataType.U64, (nint)(&address), nint.Zero, nint.Zero, "%llx",
+        if (ImGui.InputScalar("##drawObjectPtr", ImGuiDataType.U64, ref address, nint.Zero, nint.Zero, "%llx",
                 ImGuiInputTextFlags.CharsHexadecimal))
             _drawObject = address;
         ImGuiUtil.DrawTableColumn(_penumbra.Available

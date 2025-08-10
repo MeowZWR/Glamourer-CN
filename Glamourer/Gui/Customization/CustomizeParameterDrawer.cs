@@ -3,7 +3,7 @@ using Glamourer.Designs;
 using Glamourer.GameData;
 using Glamourer.Interop.PalettePlus;
 using Glamourer.State;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui;
 using OtterGui.Raii;
 using OtterGui.Services;
@@ -287,13 +287,13 @@ public class CustomizeParameterDrawer(Configuration config, PaletteImport import
     }
 
     private ImGuiColorEditFlags GetFlags()
-        => Format | Display | ImGuiColorEditFlags.HDR | ImGuiColorEditFlags.NoOptions;
+        => Format | Display | ImGuiColorEditFlags.Hdr | ImGuiColorEditFlags.NoOptions;
 
     private ImGuiColorEditFlags Format
         => config.UseFloatForColors ? ImGuiColorEditFlags.Float : ImGuiColorEditFlags.Uint8;
 
     private ImGuiColorEditFlags Display
-        => config.UseRgbForColors ? ImGuiColorEditFlags.DisplayRGB : ImGuiColorEditFlags.DisplayHSV;
+        => config.UseRgbForColors ? ImGuiColorEditFlags.DisplayRgb : ImGuiColorEditFlags.DisplayHsv;
 
     private ImRaii.IEndObject EnsureSize()
     {

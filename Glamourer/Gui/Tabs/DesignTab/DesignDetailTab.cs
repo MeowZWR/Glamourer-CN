@@ -2,7 +2,7 @@
 using Dalamud.Interface.ImGuiNotification;
 using Glamourer.Designs;
 using Glamourer.Services;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui;
 using OtterGui.Classes;
 using OtterGui.Raii;
@@ -189,10 +189,7 @@ public class DesignDetailTab
         else if (_selector.Selected!.Color.Length != 0)
         {
             ImGui.SameLine();
-            var       size = new Vector2(ImGui.GetFrameHeight());
-            using var font = ImRaii.PushFont(UiBuilder.IconFont);
-            ImGuiUtil.DrawTextButton(FontAwesomeIcon.ExclamationCircle.ToIconString(), size, 0, _colors.MissingColor);
-            ImUtf8.HoverTooltip("与此设计相关联的颜色不存在。"u8);
+            ImUtf8.Icon(FontAwesomeIcon.ExclamationCircle, "与此设计相关联的颜色不存在。"u8, _colors.MissingColor);
         }
 
         ImUtf8.DrawFrameColumn("创建日期"u8);

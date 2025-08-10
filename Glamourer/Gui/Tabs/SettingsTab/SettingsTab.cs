@@ -8,7 +8,7 @@ using Glamourer.Designs;
 using Glamourer.Gui.Tabs.DesignTab;
 using Glamourer.Interop;
 using Glamourer.Interop.PalettePlus;
-using ImGuiNET;
+using Dalamud.Bindings.ImGui;
 using OtterGui.Raii;
 using OtterGui.Text;
 using OtterGui.Widgets;
@@ -113,6 +113,8 @@ public class SettingsTab(
         if (!ImUtf8.CollapsingHeader("设计默认设置"))
             return;
 
+        Checkbox("锁定设计"u8, "新创建的设计将被锁定以防止意外修改。"u8,
+            config.DefaultDesignSettings.Locked, v => config.DefaultDesignSettings.Locked = v);
         Checkbox("在快速设计栏中显示"u8, "新创建的设计将默认显示在快速设计栏中。"u8,
             config.DefaultDesignSettings.ShowQuickDesignBar, v => config.DefaultDesignSettings.ShowQuickDesignBar = v);
         Checkbox("重置高级染色"u8, "新创建的设计将在应用时默认配置为重置高级染色。"u8,
