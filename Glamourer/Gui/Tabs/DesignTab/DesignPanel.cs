@@ -154,6 +154,7 @@ public class DesignPanel
             EquipmentDrawer.DrawMetaToggle(ToggleDrawData.FromDesign(MetaIndex.WeaponState, _manager, _selector.Selected!));
             EquipmentDrawer.DrawMetaToggle(ToggleDrawData.CrestFromDesign(CrestFlag.OffHand, _manager, _selector.Selected!));
         }
+
         ImGui.SameLine();
         using (var _ = ImRaii.Group())
         {
@@ -270,11 +271,9 @@ public class DesignPanel
             DrawCrestApplication();
             ImUtf8.IconDummy();
             DrawMetaApplication();
-            ImUtf8.IconDummy();
-            DrawBonusSlotApplication();
         }
 
-        ImGui.SameLine(ImGui.GetContentRegionAvail().X / 2);
+        ImGui.SameLine(210 * ImUtf8.GlobalScale + ImGui.GetStyle().ItemSpacing.X);
         using (var _ = ImRaii.Group())
         {
             void ApplyEquip(string label, EquipFlag allFlags, bool stain, IEnumerable<EquipSlot> slots)
@@ -316,6 +315,9 @@ public class DesignPanel
 
             ImUtf8.IconDummy();
             DrawParameterApplication();
+
+            ImUtf8.IconDummy();
+            DrawBonusSlotApplication();
         }
     }
 
@@ -324,10 +326,10 @@ public class DesignPanel
         var   enabled   = _config.DeleteDesignModifier.IsActive();
         bool? equip     = null;
         bool? customize = null;
-        var   size      = new Vector2(200 * ImUtf8.GlobalScale, 0);
+        var   size      = new Vector2(210 * ImUtf8.GlobalScale, 0);
         if (ImUtf8.ButtonEx("禁用所有"u8,
-            "禁用所有应用，包括任何现有的高级染色、高级外貌、队徽和湿身效果。"u8, size,
-            !enabled))
+                "禁用所有应用，包括任何现有的高级染色、高级外貌、队徽和湿身效果。"u8, size,
+                !enabled))
         {
             equip     = false;
             customize = false;
@@ -402,6 +404,7 @@ public class DesignPanel
             _manager.ChangeApplyMeta(_selector.Selected!, MetaIndex.HatState,    equip.Value);
             _manager.ChangeApplyMeta(_selector.Selected!, MetaIndex.VisorState,  equip.Value);
             _manager.ChangeApplyMeta(_selector.Selected!, MetaIndex.WeaponState, equip.Value);
+            _manager.ChangeApplyMeta(_selector.Selected!, MetaIndex.EarState,    equip.Value);
         }
 
         if (customize.HasValue)
@@ -414,6 +417,7 @@ public class DesignPanel
         "应用头部装备可见性",
         "应用头部装备状态",
         "应用武器可见性",
+        "应用维埃拉族耳朵可见性",
     ];
 
     private void DrawMetaApplication()
