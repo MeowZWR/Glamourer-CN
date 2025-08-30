@@ -1,4 +1,5 @@
-﻿using Dalamud.Game.ClientState.Keys;
+﻿using Dalamud.Bindings.ImGui;
+using Dalamud.Game.ClientState.Keys;
 using Dalamud.Interface;
 using Dalamud.Interface.Components;
 using Dalamud.Interface.Utility;
@@ -8,7 +9,8 @@ using Glamourer.Designs;
 using Glamourer.Gui.Tabs.DesignTab;
 using Glamourer.Interop;
 using Glamourer.Interop.PalettePlus;
-using Dalamud.Bindings.ImGui;
+using Glamourer.Services;
+using OtterGui;
 using OtterGui.Raii;
 using OtterGui.Text;
 using OtterGui.Widgets;
@@ -27,7 +29,8 @@ public class SettingsTab(
     CollectionOverrideDrawer overrides,
     CodeDrawer codeDrawer,
     Glamourer glamourer,
-    AutoDesignApplier autoDesignApplier)
+    AutoDesignApplier autoDesignApplier,
+    PcpService pcpService)
     : ITab
 {
     private readonly VirtualKey[] _validKeys = keys.GetValidVirtualKeys().Prepend(VirtualKey.NO_KEY).ToArray();
@@ -89,6 +92,15 @@ public class SettingsTab(
         Checkbox("自动重新加载装备"u8,
             "在更改Penumbra模组选项时，自动在自己的角色身上重新加载装备部件。"u8,
             config.AutoRedrawEquipOnChanges, v => config.AutoRedrawEquipOnChanges = v);
+        Checkbox("关联至PCP处理"u8,
+            "当Penumbra创建PCP时添加角色的Glamourer状态，并在Penumbra安装PCP时尽可能创建设计并应用"u8,
+            config.AttachToPcp, pcpService.Set);
+        var active = config.DeleteDesignModifier.IsActive();
+        ImGui.SameLine();
+        if (ImUtf8.ButtonEx("删除所有PCP设计"u8, "从设计列表中删除所有带有'PCP'标签的设计"u8, disabled: !active))
+            pcpService.CleanPcpDesigns();
+        if (!active)
+            ImUtf8.HoverTooltip(ImGuiHoveredFlags.AllowWhenDisabled, $"\n点击时按住 {config.DeleteDesignModifier} 。");
         Checkbox("在更换区域时撤销手动更改"u8,
             "当你更换区域时，撤销你对角色进行的手动更改，恢复到游戏基础状态或自动执行状态。"u8,
             config.RevertManualChangesOnZoneChange, v => config.RevertManualChangesOnZoneChange = v);
@@ -124,6 +136,28 @@ public class SettingsTab(
         Checkbox("重置临时设置"u8,
             "新创建的设计将在应用时默认配置为清除 Glamourer 应用到合集的所有高级设置。"u8,
             config.DefaultDesignSettings.ResetTemporarySettings, v => config.DefaultDesignSettings.ResetTemporarySettings = v);
+
+        var tmp = config.PcpFolder;
+        ImGui.SetNextItemWidth(0.4f * ImGui.GetContentRegionAvail().X);
+        if (ImUtf8.InputText("##pcpFolder"u8, ref tmp))
+            config.PcpFolder = tmp;
+
+        if (ImGui.IsItemDeactivatedAfterEdit())
+            config.Save();
+
+        ImGuiUtil.LabeledHelpMarker("默认PCP组织折叠组",
+            "所有因Penumbra角色包而创建的设计在生成时将被移动到的折叠组。\n留空则导入至根目录。");
+
+        tmp = config.PcpColor;
+        ImGui.SetNextItemWidth(0.4f * ImGui.GetContentRegionAvail().X);
+        if (ImUtf8.InputText("##pcpColor"u8, ref tmp))
+            config.PcpColor = tmp;
+
+        if (ImGui.IsItemDeactivatedAfterEdit())
+            config.Save();
+
+        ImGuiUtil.LabeledHelpMarker("默认PCP设计颜色",
+            "所有因Penumbra角色包而创建的设计将被分配的颜色组名称。\n留空则不指定特定颜色分配。");
     }
 
     private void DrawInterfaceSettings()

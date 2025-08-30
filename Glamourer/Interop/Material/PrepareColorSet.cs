@@ -69,13 +69,13 @@ public sealed unsafe class PrepareColorSet
     public static bool TryGetColorTable(MaterialResourceHandle* material, StainIds stainIds,
         out ColorTable.Table table)
     {
-        if (material->ColorTable == null)
+        if (material->DataSet == null || material->DataSetSize < sizeof(ColorTable.Table) || !material->HasColorTable)
         {
             table = default;
             return false;
         }
 
-        var newTable = *(ColorTable.Table*)material->ColorTable;
+        var newTable = *(ColorTable.Table*)material->DataSet;
         if (GetDyeTable(material, out var dyeTable))
         {
             if (stainIds.Stain1.Id != 0)
