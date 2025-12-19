@@ -6,6 +6,7 @@ using Dalamud.Interface.Utility;
 using Dalamud.Plugin.Services;
 using Glamourer.Automation;
 using Glamourer.Designs;
+using Glamourer.Events;
 using Glamourer.Gui.Tabs.DesignTab;
 using Glamourer.Interop;
 using Glamourer.Interop.PalettePlus;
@@ -30,6 +31,7 @@ public class SettingsTab(
     CodeDrawer codeDrawer,
     Glamourer glamourer,
     AutoDesignApplier autoDesignApplier,
+    AutoRedrawChanged autoRedraw,
     PcpService pcpService)
     : ITab
 {
@@ -90,8 +92,12 @@ public class SettingsTab(
             "Glamourer也许会在一些特别的日子做一些有趣的事情。如果你觉得这会影响你的体验，请禁用此选项。"u8,
             config.DisableFestivals == 0, v => config.DisableFestivals = v ? (byte)0 : (byte)2);
         Checkbox("自动重新加载装备"u8,
-            "在更改Penumbra模组选项时，自动在自己的角色身上重新加载装备部件。"u8,
-            config.AutoRedrawEquipOnChanges, v => config.AutoRedrawEquipOnChanges = v);
+            "在更改角色关联合集的Penumbra模组选项时，自动在自己的角色身上重新加载装备部件。"u8,
+            config.AutoRedrawEquipOnChanges, v =>
+            {
+                config.AutoRedrawEquipOnChanges = v;
+                autoRedraw.Invoke(v);
+            });
         Checkbox("关联至PCP处理"u8,
             "当Penumbra创建PCP时添加角色的Glamourer状态，并在Penumbra安装PCP时尽可能创建设计并应用"u8,
             config.AttachToPcp, pcpService.Set);
