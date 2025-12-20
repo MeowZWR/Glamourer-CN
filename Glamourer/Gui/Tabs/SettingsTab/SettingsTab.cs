@@ -10,6 +10,7 @@ using Glamourer.Events;
 using Glamourer.Gui.Tabs.DesignTab;
 using Glamourer.Interop;
 using Glamourer.Interop.PalettePlus;
+using Glamourer.Interop.Penumbra;
 using Glamourer.Services;
 using OtterGui;
 using OtterGui.Raii;
@@ -71,6 +72,12 @@ public class SettingsTab(
         MainWindow.DrawSupportButtons(glamourer, changelog.Changelog);
     }
 
+    public void DrawPenumbraIntegrationSettings()
+    {
+        DrawPenumbraIntegrationSettings1();
+        DrawPenumbraIntegrationSettings2();
+    }
+
     private void DrawBehaviorSettings()
     {
         if (!ImUtf8.CollapsingHeader("行为设置"u8))
@@ -91,6 +98,20 @@ public class SettingsTab(
         Checkbox("启动节日彩蛋"u8,
             "Glamourer也许会在一些特别的日子做一些有趣的事情。如果你觉得这会影响你的体验，请禁用此选项。"u8,
             config.DisableFestivals == 0, v => config.DisableFestivals = v ? (byte)0 : (byte)2);
+        DrawPenumbraIntegrationSettings1();
+        Checkbox("在更换区域时撤销手动更改"u8,
+            "当你更换区域时，撤销你对角色进行的手动更改，恢复到游戏基础状态或自动执行状态。"u8,
+            config.RevertManualChangesOnZoneChange, v => config.RevertManualChangesOnZoneChange = v);
+        PaletteImportButton();
+        DrawPenumbraIntegrationSettings2();
+        Checkbox("防止随机设计重复"u8,
+            "在使用随机设计时，防止连续两次选择相同的设计。"u8,
+            config.PreventRandomRepeats, v => config.PreventRandomRepeats = v);
+        ImGui.NewLine();
+    }
+
+    private void DrawPenumbraIntegrationSettings1()
+    {
         Checkbox("自动重新加载装备"u8,
             "在更改角色关联合集的Penumbra模组选项时，自动在自己的角色身上重新加载装备部件。"u8,
             config.AutoRedrawEquipOnChanges, v =>
@@ -106,11 +127,11 @@ public class SettingsTab(
         if (ImUtf8.ButtonEx("删除所有PCP设计"u8, "从设计列表中删除所有带有'PCP'标签的设计"u8, disabled: !active))
             pcpService.CleanPcpDesigns();
         if (!active)
-            ImUtf8.HoverTooltip(ImGuiHoveredFlags.AllowWhenDisabled, $"\n点击时按住 {config.DeleteDesignModifier} 。");
-        Checkbox("在更换区域时撤销手动更改"u8,
-            "当你更换区域时，撤销你对角色进行的手动更改，恢复到游戏基础状态或自动执行状态。"u8,
-            config.RevertManualChangesOnZoneChange, v => config.RevertManualChangesOnZoneChange = v);
-        PaletteImportButton();
+            ImUtf8.HoverTooltip(ImGuiHoveredFlags.AllowWhenDisabled, $"\nHold {config.DeleteDesignModifier} while clicking.");
+    }
+
+    private void DrawPenumbraIntegrationSettings2()
+    {
         Checkbox("始终应用关联的模组"u8,
             "无论何时将设计应用于角色（包括自动执行）时，Glamourer都会尝试将设计相关的模组设置应用于当前与该角色相关的合集（如果可用）。\n\n"u8
           + "Glamourer不会自动还原这些应用的设置。这可能会打乱你的合集和配置。\n\n"u8
@@ -120,10 +141,6 @@ public class SettingsTab(
             "将所有设置应用为临时设置，以便在 Glamourer 或游戏关闭时重置。"u8,
             config.UseTemporarySettings,
             v => config.UseTemporarySettings = v);
-        Checkbox("防止随机设计重复"u8,
-            "在使用随机设计时，防止连续两次选择相同的设计。"u8,
-            config.PreventRandomRepeats, v => config.PreventRandomRepeats = v);
-        ImGui.NewLine();
     }
 
     private void DrawDesignDefaultSettings()
