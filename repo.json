@@ -17,8 +17,8 @@
       "Character"
     ],
     "InternalName": "Glamourer",
-    "AssemblyVersion": "1.5.1.8",
-    "TestingAssemblyVersion": "1.5.1.8",
+    "AssemblyVersion": "1.5.1.9",
+    "TestingAssemblyVersion": "1.5.1.9",
     "RepoUrl": "https://github.com/MeowZWR/Glamourer-CN",
     "ApplicableVersion": "any",
     "DalamudApiLevel": 14,
@@ -27,9 +27,9 @@
     "IsTestingExclusive": "False",
     "DownloadCount": 1,
     "LastUpdate": 1618608322,
-    "DownloadLinkInstall": "https://meowrs.com/https://github.com/MeowZWR/Glamourer-CN/releases/download/1.5.1.8-cn/Glamourer.zip",
-    "DownloadLinkUpdate": "https://meowrs.com/https://github.com/MeowZWR/Glamourer-CN/releases/download/1.5.1.8-cn/Glamourer.zip",
-    "DownloadLinkTesting": "https://meowrs.com/https://github.com/MeowZWR/Glamourer-CN/releases/download/1.5.1.8-cn/Glamourer.zip",
+    "DownloadLinkInstall": "https://meowrs.com/https://github.com/MeowZWR/Glamourer-CN/releases/download/1.5.1.9-cn/Glamourer.zip",
+    "DownloadLinkUpdate": "https://meowrs.com/https://github.com/MeowZWR/Glamourer-CN/releases/download/1.5.1.9-cn/Glamourer.zip",
+    "DownloadLinkTesting": "https://meowrs.com/https://github.com/MeowZWR/Glamourer-CN/releases/download/1.5.1.9-cn/Glamourer.zip",
     "IconUrl": "https://static.meowrs.com/Plugins/Glamourer/icon.png"
   }
 ]
