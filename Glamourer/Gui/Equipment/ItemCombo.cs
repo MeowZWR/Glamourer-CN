@@ -115,6 +115,11 @@ public sealed class ItemCombo : FilterComboCache<EquipItem>
         var enumerable = list.AsEnumerable();
         if (slot.IsEquipment())
             enumerable = enumerable.Append(ItemManager.SmallClothesItem(slot));
+        
+        // Add bonus items (glasses) to Head slot
+        if (slot is EquipSlot.Head && items.ItemData.ByType.TryGetValue(FullEquipType.Glasses, out var glassesList))
+            enumerable = enumerable.Concat(glassesList);
+        
         return enumerable.OrderByDescending(favorites.Contains).ThenBy(i => i.Name).Prepend(nothing).ToList();
     }
 
