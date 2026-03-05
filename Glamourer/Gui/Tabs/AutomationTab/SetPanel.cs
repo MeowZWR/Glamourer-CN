@@ -1,4 +1,4 @@
-﻿using Glamourer.Automation;
+using Glamourer.Automation;
 using Glamourer.Designs;
 using Glamourer.Designs.Special;
 using Glamourer.Interop;
@@ -108,20 +108,7 @@ public sealed class SetPanel(
 
     private void DrawDesignTable()
     {
-        var (numCheckboxes, numSpacing) = (config.ShowAllAutomatedApplicationRules, config.ShowUnlockedItemWarnings) switch
-        {
-            (true, true)   => (9, 14),
-            (true, false)  => (7, 10),
-            (false, true)  => (4, 4),
-            (false, false) => (2, 0),
-        };
-
-        var requiredSizeOneLine = numCheckboxes * Im.Style.FrameHeight
-          + (30 + 220 + numSpacing) * Im.Style.GlobalScale
-          + 5 * Im.Style.CellPadding.X
-          + 150 * Im.Style.GlobalScale;
-
-        var singleRow = Im.ContentRegion.Available.X >= requiredSizeOneLine || numSpacing is 0;
+        var singleRow = IsSingleRowLayout();
         var numRows = (singleRow, config.ShowUnlockedItemWarnings) switch
         {
             (true, true)   => 6,
@@ -232,6 +219,24 @@ public sealed class SetPanel(
 
         _endAction?.Invoke();
         _endAction = null;
+    }
+
+    private bool IsSingleRowLayout()
+    {
+        var (numCheckboxes, numSpacing) = (config.ShowAllAutomatedApplicationRules, config.ShowUnlockedItemWarnings) switch
+        {
+            (true, true)   => (9, 14),
+            (true, false)  => (7, 10),
+            (false, true)  => (4, 4),
+            (false, false) => (2, 0),
+        };
+
+        var requiredSizeOneLine = numCheckboxes * Im.Style.FrameHeight
+          + (30 + 220 + numSpacing) * Im.Style.GlobalScale
+          + 5 * Im.Style.CellPadding.X
+          + 150 * Im.Style.GlobalScale;
+
+        return Im.ContentRegion.Available.X >= requiredSizeOneLine || numSpacing is 0;
     }
 
     private void DrawSelectable(in AutoDesignCacheItem cacheItem)
@@ -459,23 +464,26 @@ public sealed class SetPanel(
     private void DrawIdentifierSelection(int setIndex)
     {
         using var id = Im.Id.Push("Identifiers"u8);
+        var       singleRow = IsSingleRowLayout();
         identifierDrawer.DrawWorld(130);
         Im.Line.Same();
         identifierDrawer.DrawName(200 - Im.Style.ItemSpacing.X);
         identifierDrawer.DrawNpcs(330);
-        var buttonWidth = new Vector2(165 * Im.Style.GlobalScale - Im.Style.ItemSpacing.X / 2, 0);
+        var buttonWidth = new Vector2(100 * Im.Style.GlobalScale - Im.Style.ItemSpacing.X / 2, 0);
         if (ImEx.Button("分配给玩家"u8, buttonWidth, StringU8.Empty, !identifierDrawer.CanSetPlayer))
             manager.ChangeIdentifier(setIndex, identifierDrawer.PlayerIdentifier);
         Im.Line.Same();
         if (ImEx.Button("分配给NPC"u8, buttonWidth, StringU8.Empty, !identifierDrawer.CanSetNpc))
             manager.ChangeIdentifier(setIndex, identifierDrawer.NpcIdentifier);
-
+        Im.Line.Same();
         if (ImEx.Button("分配给雇员"u8, buttonWidth, StringU8.Empty, !identifierDrawer.CanSetRetainer))
             manager.ChangeIdentifier(setIndex, identifierDrawer.RetainerIdentifier);
-        Im.Line.Same();
+
+        if (singleRow)
+            Im.Line.Same();
         if (ImEx.Button("分配给服装模特"u8, buttonWidth, StringU8.Empty, !identifierDrawer.CanSetRetainer))
             manager.ChangeIdentifier(setIndex, identifierDrawer.MannequinIdentifier);
-
+        Im.Line.Same();
         if (ImEx.Button("分配给所属NPC"u8, buttonWidth, StringU8.Empty, !identifierDrawer.CanSetOwned))
             manager.ChangeIdentifier(setIndex, identifierDrawer.OwnedIdentifier);
     }
