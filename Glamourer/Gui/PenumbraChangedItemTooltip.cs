@@ -3,17 +3,18 @@ using Glamourer.Events;
 using Glamourer.Interop.Penumbra;
 using Glamourer.Services;
 using Glamourer.State;
-using Dalamud.Bindings.ImGui;
-using OtterGui.Raii;
+using ImSharp;
+using Luna;
 using Penumbra.Api.Enums;
 using Penumbra.GameData.Data;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Interop;
 using Penumbra.GameData.Structs;
+using MouseButton = Penumbra.Api.Enums.MouseButton;
 
 namespace Glamourer.Gui;
 
-public sealed class PenumbraChangedItemTooltip : IDisposable
+public sealed class PenumbraChangedItemTooltip : IDisposable, IRequiredService
 {
     private readonly PenumbraService    _penumbra;
     private readonly StateManager       _stateManager;
@@ -78,11 +79,11 @@ public sealed class PenumbraChangedItemTooltip : IDisposable
         {
             // + 2 due to weapons.
             var glasses = _lastItems[bonusSlot.ToSlot() + 2];
-            using (_ = !openTooltip ? null : ImRaii.Tooltip())
+            using (openTooltip ? Im.Tooltip.Begin() : default)
             {
-                ImGui.TextUnformatted($"{prefix}Right-Click to apply to current actor.");
+                Im.Text($"{prefix}Right-Click to apply to current actor.");
                 if (glasses.Valid)
-                    ImGui.TextUnformatted($"{prefix}Control + Right-Click to re-apply {glasses.Name} to current actor.");
+                    Im.Text($"{prefix}Control + Right-Click to re-apply {glasses.Name} to current actor.");
             }
 
             return;
@@ -96,49 +97,49 @@ public sealed class PenumbraChangedItemTooltip : IDisposable
             case EquipSlot.OffHand when !CanApplyWeapon(EquipSlot.OffHand,   item):
                 break;
             case EquipSlot.RFinger:
-                using (_ = !openTooltip ? null : ImRaii.Tooltip())
+                using (openTooltip ? Im.Tooltip.Begin() : default)
                 {
-                    ImGui.TextUnformatted($"{prefix}右键点击应用到当前角色(右指)。");
-                    ImGui.TextUnformatted($"{prefix}Shift+右键点击应用到当前角色(左指)。");
+                    Im.Text($"{prefix}右键点击应用到当前角色(右指)。");
+                    Im.Text($"{prefix}Shift+右键点击应用到当前角色(左指)。");
                     if (last.Valid)
-                        ImGui.TextUnformatted(
+                        Im.Text(
                             $"{prefix}Ctrl+右键点击重新应用[{last.Name}]到当前角色(右指)。");
 
                     var last2 = _lastItems[EquipSlot.LFinger.ToIndex()];
                     if (last2.Valid)
-                        ImGui.TextUnformatted(
+                        Im.Text(
                             $"{prefix}Shift+Ctrl+右键点击重新应用[{last.Name}]到当前角色(左指)。");
                 }
 
                 break;
             default:
-                using (_ = !openTooltip ? null : ImRaii.Tooltip())
+                using (openTooltip ? Im.Tooltip.Begin() : default)
                 {
-                    ImGui.TextUnformatted($"{prefix}右键点击应用到当前角色。");
+                    Im.Text($"{prefix}右键点击应用到当前角色。");
                     if (last.Valid)
-                        ImGui.TextUnformatted($"{prefix}Ctrl+右键点击重新应用{last.Name}到当前角色。");
+                        Im.Text($"{prefix}Ctrl+右键点击重新应用[{last.Name}]到当前角色。");
                 }
 
                 break;
         }
     }
 
-    public void ApplyItem(ActorState state, EquipItem item)
+    public void ApplyItem(ActorState state, EquipItem item, bool ignoreCtrl)
     {
         var bonusSlot = item.Type.ToBonus();
         if (bonusSlot is not BonusItemFlag.Unknown)
         {
             // + 2 due to weapons.
             var glasses = _lastItems[bonusSlot.ToSlot() + 2];
-            if (ImGui.GetIO().KeyCtrl && glasses.Valid)
+            if (!ignoreCtrl && Im.Io.KeyControl && glasses.Valid)
             {
-                Glamourer.Log.Debug($"Re-Applying {glasses.Name} to {bonusSlot.ToName()}.");
+                Glamourer.Log.Debug($"重新应用[{glasses.Name}]到[{bonusSlot.ToName()}]。");
                 SetLastItem(bonusSlot, default, state);
                 _stateManager.ChangeBonusItem(state, bonusSlot, glasses, ApplySettings.Manual);
             }
             else
             {
-                Glamourer.Log.Debug($"Applying {item.Name} to {bonusSlot.ToName()}.");
+                Glamourer.Log.Debug($"应用[{item.Name}]到[{bonusSlot.ToName()}]。");
                 SetLastItem(bonusSlot, item, state);
                 _stateManager.ChangeBonusItem(state, bonusSlot, item, ApplySettings.Manual);
             }
@@ -154,7 +155,7 @@ public sealed class PenumbraChangedItemTooltip : IDisposable
             case EquipSlot.OffHand when !CanApplyWeapon(EquipSlot.OffHand,   item):
                 break;
             case EquipSlot.RFinger:
-                switch (ImGui.GetIO().KeyCtrl, ImGui.GetIO().KeyShift)
+                switch (!ignoreCtrl && Im.Io.KeyControl, Im.Io.KeyShift)
                 {
                     case (false, false):
                         Glamourer.Log.Debug($"应用[{item.Name}]到右指。");
@@ -180,7 +181,7 @@ public sealed class PenumbraChangedItemTooltip : IDisposable
 
                 return;
             default:
-                if (ImGui.GetIO().KeyCtrl && last.Valid)
+                if (!ignoreCtrl && Im.Io.KeyControl && last.Valid)
                 {
                     Glamourer.Log.Debug($"重新应用[{last.Name}到{slot.ToName()}.");
                     SetLastItem(slot, default, state);
@@ -232,7 +233,7 @@ public sealed class PenumbraChangedItemTooltip : IDisposable
 
                 var customize = _objects.Player.Model.GetCustomize();
                 if (CheckGenderRace(customize, race, gender) && VerifyValue(customize, index, value))
-                    ImGui.TextUnformatted("[Glamourer] 右键单击应用到当前角色。");
+                    Im.Text("[Glamourer] 右键单击应用到当前角色。"u8);
 
                 return;
             }
@@ -269,7 +270,7 @@ public sealed class PenumbraChangedItemTooltip : IDisposable
                 if (!_items.ItemData.TryGetValue(id, type is ChangedItemType.Item ? EquipSlot.MainHand : EquipSlot.OffHand, out var item))
                     return;
 
-                ApplyItem(state, item);
+                ApplyItem(state, item, false);
                 return;
             }
             case ChangedItemType.CustomArmor:
@@ -277,7 +278,7 @@ public sealed class PenumbraChangedItemTooltip : IDisposable
                 var (model, variant, slot) = IdentifiedItem.Split(id);
                 var item = _items.Identify(slot.ToSlot(), model, variant);
                 if (item.Valid)
-                    ApplyItem(state, item);
+                    ApplyItem(state, item, false);
                 return;
             }
             case ChangedItemType.Customization:

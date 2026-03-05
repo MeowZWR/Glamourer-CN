@@ -1,133 +1,45 @@
-﻿using Dalamud.Interface;
-using Dalamud.Interface.ImGuiNotification;
-using FFXIVClientStructs.FFXIV.Client.Game.Object;
+﻿using FFXIVClientStructs.FFXIV.Client.Game.Object;
+using Glamourer.Config;
 using Glamourer.Designs;
 using Glamourer.Gui.Customization;
 using Glamourer.Gui.Equipment;
 using Glamourer.Gui.Tabs.DesignTab;
+using Glamourer.Gui.Tabs.SettingsTab;
 using Glamourer.State;
-using Dalamud.Bindings.ImGui;
-using OtterGui;
-using OtterGui.Classes;
-using OtterGui.Raii;
-using OtterGui.Text;
+using ImSharp;
+using Luna;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Interop;
-using static Glamourer.Gui.Tabs.HeaderDrawer;
 
 namespace Glamourer.Gui.Tabs.NpcTab;
 
-public class NpcPanel
+public sealed class NpcPanel(
+    Configuration config,
+    NpcSelection selection,
+    CustomizationDrawer customizeDrawer,
+    EquipmentDrawer equipmentDrawer,
+    ActorObjectManager objects,
+    StateManager stateManager,
+    LocalNpcAppearanceData favorites,
+    DesignColors designColors) : IPanel
 {
-    private readonly Configuration          _config;
-    private readonly DesignColorCombo       _colorCombo;
-    private          string                 _newName = string.Empty;
-    private          DesignBase?            _newDesign;
-    private readonly NpcSelector            _selector;
-    private readonly LocalNpcAppearanceData _favorites;
-    private readonly CustomizationDrawer    _customizeDrawer;
-    private readonly EquipmentDrawer        _equipDrawer;
-    private readonly DesignConverter        _converter;
-    private readonly DesignManager          _designManager;
-    private readonly StateManager           _state;
-    private readonly ActorObjectManager     _objects;
-    private readonly DesignColors           _colors;
-    private readonly Button[]               _leftButtons;
-    private readonly Button[]               _rightButtons;
+    private readonly DesignColorCombo _combo = new(designColors, true);
 
-    public NpcPanel(NpcSelector selector,
-        LocalNpcAppearanceData favorites,
-        CustomizationDrawer customizeDrawer,
-        EquipmentDrawer equipDrawer,
-        DesignConverter converter,
-        DesignManager designManager,
-        StateManager state,
-        ActorObjectManager objects,
-        DesignColors colors,
-        Configuration config)
-    {
-        _selector        = selector;
-        _favorites       = favorites;
-        _customizeDrawer = customizeDrawer;
-        _equipDrawer     = equipDrawer;
-        _converter       = converter;
-        _designManager   = designManager;
-        _state           = state;
-        _objects         = objects;
-        _colors          = colors;
-        _config          = config;
-        _colorCombo      = new DesignColorCombo(colors, true);
-        _leftButtons =
-        [
-            new ExportToClipboardButton(this),
-            new SaveAsDesignButton(this),
-        ];
-        _rightButtons =
-        [
-            new FavoriteButton(this),
-        ];
-    }
+    public ReadOnlySpan<byte> Id
+        => "NpcPanel"u8;
 
     public void Draw()
     {
-        using var group = ImRaii.Group();
-
-        DrawHeader();
-        DrawPanel();
-    }
-
-    private void DrawHeader()
-    {
-        HeaderDrawer.Draw(_selector.HasSelection ? _selector.Selection.Name : "未选择", ColorId.NormalDesign.Value(),
-            ImGui.GetColorU32(ImGuiCol.FrameBg), _leftButtons, _rightButtons);
-        SaveDesignDrawPopup();
-    }
-
-    private sealed class FavoriteButton(NpcPanel panel) : Button
-    {
-        protected override string Description
-            => panel._favorites.IsFavorite(panel._selector.Selection)
-                ? "从你的收藏中移除此NPC外观。"
-                : "将此NPC外观添加到你的收藏中。";
-
-        protected override uint TextColor
-            => panel._favorites.IsFavorite(panel._selector.Selection)
-                ? ColorId.FavoriteStarOn.Value()
-                : 0x80000000;
-
-        protected override FontAwesomeIcon Icon
-            => FontAwesomeIcon.Star;
-
-        public override bool Visible
-            => panel._selector.HasSelection;
-
-        protected override void OnClick()
-            => panel._favorites.ToggleFavorite(panel._selector.Selection);
-    }
-
-    private void SaveDesignDrawPopup()
-    {
-        if (!ImGuiUtil.OpenNameField("保存为设计", ref _newName))
+        using var table = Im.Table.Begin("##Panel"u8, 1, TableFlags.None, Im.ContentRegion.Available);
+        if (!table || !selection.HasSelection)
             return;
 
-        if (_newDesign != null && _newName.Length > 0)
-            _designManager.CreateClone(_newDesign, _newName, true);
-        _newDesign = null;
-        _newName   = string.Empty;
-    }
-
-    private void DrawPanel()
-    {
-        using var table = ImUtf8.Table("##Panel", 1, ImGuiTableFlags.BordersOuter | ImGuiTableFlags.ScrollY, ImGui.GetContentRegionAvail());
-        if (!table || !_selector.HasSelection)
-            return;
-
-        ImGui.TableSetupScrollFreeze(0, 1);
-        ImGui.TableNextColumn();
-        ImGui.Dummy(Vector2.Zero);
+        table.SetupScrollFreeze(0, 1);
+        table.NextColumn();
+        Im.Dummy(Vector2.Zero);
         DrawButtonRow();
 
-        ImGui.TableNextColumn();
+        table.NextColumn();
         DrawCustomization();
         DrawEquipment();
         DrawAppearanceInfo();
@@ -136,215 +48,153 @@ public class NpcPanel
     private void DrawButtonRow()
     {
         DrawApplyToSelf();
-        ImGui.SameLine();
+        Im.Line.Same();
         DrawApplyToTarget();
     }
 
     private void DrawCustomization()
     {
-        if (_config.HideDesignPanel.HasFlag(DesignPanelFlag.Customization))
+        if (config.HideDesignPanel.HasFlag(DesignPanelFlag.Customization))
             return;
 
-        var header = _selector.Selection.ModelId == 0
-            ? "外貌"
-            : $"外貌（模型 ID #{_selector.Selection.ModelId}）###Customization";
-        var       expand = _config.AutoExpandDesignPanel.HasFlag(DesignPanelFlag.Customization);
-        using var h      = ImUtf8.CollapsingHeaderId(header, expand ? ImGuiTreeNodeFlags.DefaultOpen : ImGuiTreeNodeFlags.None);
+        var expand = config.AutoExpandDesignPanel.HasFlag(DesignPanelFlag.Customization);
+        using var h = Im.Tree.HeaderId(selection.Data.ModelId is 0
+                ? "外貌"u8
+                : $"外貌（模型 ID #{selection.Data.ModelId}）###Customization",
+            expand ? TreeNodeFlags.DefaultOpen : TreeNodeFlags.None);
         if (!h)
             return;
 
-        _customizeDrawer.Draw(_selector.Selection.Customize, true, true);
-        ImGui.Dummy(new Vector2(ImGui.GetTextLineHeight() / 2));
+        customizeDrawer.Draw(selection.Data.Customize, true, true);
+        Im.Dummy(new Vector2(Im.Style.TextHeight / 2));
     }
 
     private void DrawEquipment()
     {
-        using var h = DesignPanelFlag.Equipment.Header(_config);
+        using var h = DesignPanelFlag.Equipment.Header(config);
         if (!h)
             return;
 
-        _equipDrawer.Prepare();
-        var designData = ToDesignData();
+        equipmentDrawer.Prepare();
+        var designData = selection.ToDesignData();
 
         foreach (var slot in EquipSlotExtensions.EqdpSlots)
         {
             var data = new EquipDrawData(slot, designData) { Locked = true };
-            _equipDrawer.DrawEquip(data);
+            equipmentDrawer.DrawEquip(data);
         }
 
         var mainhandData = new EquipDrawData(EquipSlot.MainHand, designData) { Locked = true };
         var offhandData  = new EquipDrawData(EquipSlot.OffHand,  designData) { Locked = true };
-        _equipDrawer.DrawWeapons(mainhandData, offhandData, false);
+        equipmentDrawer.DrawWeapons(mainhandData, offhandData, false);
 
-        ImGui.Dummy(new Vector2(ImGui.GetTextLineHeight() / 2));
-        EquipmentDrawer.DrawMetaToggle(ToggleDrawData.FromValue(MetaIndex.VisorState, _selector.Selection.VisorToggled));
-        ImGui.Dummy(new Vector2(ImGui.GetTextLineHeight() / 2));
-    }
-
-    private DesignData ToDesignData()
-    {
-        var selection  = _selector.Selection;
-        var items      = _converter.FromDrawData(selection.Equip.ToArray(), selection.Mainhand, selection.Offhand, true).ToArray();
-        var designData = new DesignData { Customize = selection.Customize };
-        foreach (var (slot, item, stain) in items)
-        {
-            designData.SetItem(slot, item);
-            designData.SetStain(slot, stain);
-        }
-
-        return designData;
+        Im.Dummy(new Vector2(Im.Style.TextHeight / 2));
+        EquipmentDrawer.DrawMetaToggle(ToggleDrawData.FromValue(MetaIndex.VisorState, selection.Data.VisorToggled));
+        Im.Dummy(new Vector2(Im.Style.TextHeight / 2));
     }
 
     private void DrawApplyToSelf()
     {
-        var (id, data) = _objects.PlayerData;
-        if (!ImUtf8.ButtonEx("应用到自己"u8,
-                "将当前NPC外观应用于你的角色。\nn按住Ctrl仅应用装备。\nn按住Shift仅应用外貌。"u8,
-                Vector2.Zero, !data.Valid))
+        var (id, data) = objects.PlayerData;
+        if (!ImEx.Button("应用到自己"u8, Vector2.Zero,
+                "将当前NPC外观应用于你的角色。\n按住Ctrl仅应用装备。\n按住Shift仅应用外貌。"u8,
+                !data.Valid))
             return;
 
-        if (_state.GetOrCreate(id, data.Objects[0], out var state))
+        if (stateManager.GetOrCreate(id, data.Objects[0], out var state))
         {
-            var design = _converter.Convert(ToDesignData(), new StateMaterialManager(), ApplicationRules.NpcFromModifiers());
-            _state.ApplyDesign(state, design, ApplySettings.Manual with { IsFinal = true });
+            var design = selection.ToDesignBase();
+            stateManager.ApplyDesign(state, design, ApplySettings.Manual with { IsFinal = true });
         }
     }
 
     private void DrawApplyToTarget()
     {
-        var (id, data) = _objects.TargetData;
+        var (id, data) = objects.TargetData;
         var tt = id.IsValid
             ? data.Valid
                 ? "将当前NPC外观应用于你的目标。\n按住Ctrl仅应用装备。\n按住Shift仅应用外貌。"u8
                 : "当前目标无法操作。"u8
             : "未选择有效的目标。"u8;
-        if (!ImUtf8.ButtonEx("应用到目标"u8, tt, Vector2.Zero, !data.Valid))
+        if (!ImEx.Button("应用到目标"u8, Vector2.Zero, tt, !data.Valid))
             return;
 
-        if (_state.GetOrCreate(id, data.Objects[0], out var state))
+        if (stateManager.GetOrCreate(id, data.Objects[0], out var state))
         {
-            var design = _converter.Convert(ToDesignData(), new StateMaterialManager(), ApplicationRules.NpcFromModifiers());
-            _state.ApplyDesign(state, design, ApplySettings.Manual with { IsFinal = true });
+            var design = selection.ToDesignBase();
+            stateManager.ApplyDesign(state, design, ApplySettings.Manual with { IsFinal = true });
         }
     }
 
 
     private void DrawAppearanceInfo()
     {
-        using var h = DesignPanelFlag.AppearanceDetails.Header(_config);
+        using var h = DesignPanelFlag.AppearanceDetails.Header(config);
         if (!h)
             return;
 
-        using var table = ImUtf8.Table("详细信息"u8, 2);
+        using var table = Im.Table.Begin("详细信息"u8, 2);
         if (!table)
             return;
 
-        using var style = ImRaii.PushStyle(ImGuiStyleVar.ButtonTextAlign, new Vector2(0, 0.5f));
-        ImUtf8.TableSetupColumn("类型"u8, ImGuiTableColumnFlags.WidthFixed, ImGui.CalcTextSize("最后更新时间").X);
-        ImUtf8.TableSetupColumn("数据"u8, ImGuiTableColumnFlags.WidthStretch);
+        using var style = ImStyleDouble.ButtonTextAlign.Push(new Vector2(0, 0.5f));
+        table.SetupColumn("类型"u8, TableColumnFlags.WidthFixed, Im.Font.CalculateButtonSize("最后更新时间"u8).X);
+        table.SetupColumn("数据"u8, TableColumnFlags.WidthStretch);
 
-        var selection = _selector.Selection;
-        CopyButton("NPC 名称"u8, selection.Name);
-        CopyButton("NPC ID"u8,   selection.Id.Id.ToString());
-        ImGuiUtil.DrawFrameColumn("NPC 类型");
-        ImGui.TableNextColumn();
-        var width = ImGui.GetContentRegionAvail().X;
-        ImGuiUtil.DrawTextButton(selection.Kind is ObjectKind.BattleNpc ? "战斗 NPC" : "事件 NPC", new Vector2(width, 0),
-            ImGui.GetColorU32(ImGuiCol.FrameBg));
+        CopyButton(table, "NPC 名称"u8, selection.Name);
+        CopyButton(table, "NPC ID"u8,   $"{selection.Data.Id.Id}");
+        table.DrawFrameColumn("NPC 类型"u8);
+        table.NextColumn();
+        var width = Im.ContentRegion.Available.X;
+        ImEx.TextFramed(selection.Data.Kind is ObjectKind.BattleNpc ? "战斗 NPC"u8 : "事件 NPC"u8, new Vector2(width, 0),
+            ImGuiColor.FrameBackground.Get());
 
-        ImUtf8.DrawFrameColumn("配色"u8);
-        var color     = _favorites.GetColor(selection);
-        var colorName = color.Length == 0 ? DesignColors.AutomaticName : color;
-        ImGui.TableNextColumn();
-        if (_colorCombo.Draw("##colorCombo", colorName,
-                "将颜色与此NPC外观相关联。\n"
-              + "右键单击可恢复为自动配色。\n"
-              + "按住Ctrl并滚动鼠标滚轮进行滚动选择。",
-                width - ImGui.GetStyle().ItemSpacing.X - ImGui.GetFrameHeight(), ImGui.GetTextLineHeight())
-         && _colorCombo.CurrentSelection != null)
+        table.DrawFrameColumn("配色"u8);
+        table.NextColumn();
+        var color = selection.ColorText;
+        if (_combo.Draw("##colorCombo"u8, selection.ColorTextU8,
+                "将颜色与此NPC外观相关联。\n"u8
+              + "右键单击可恢复为自动配色。\n"u8
+              + "按住Ctrl并滚动鼠标滚轮进行滚动选择。"u8,
+                width - Im.Style.ItemInnerSpacing.X - Im.Style.FrameHeight, out var newColorText))
+            favorites.SetColor(selection.Data, newColorText.Item == DesignColors.AutomaticName ? string.Empty : newColorText.Item);
+
+        if (Im.Item.RightClicked())
         {
-            color = _colorCombo.CurrentSelection is DesignColors.AutomaticName ? string.Empty : _colorCombo.CurrentSelection;
-            _favorites.SetColor(selection, color);
-        }
-
-        if (ImGui.IsItemClicked(ImGuiMouseButton.Right))
-        {
-            _favorites.SetColor(selection, string.Empty);
+            favorites.SetColor(selection.Data, string.Empty);
             color = string.Empty;
         }
 
-        if (_colors.TryGetValue(color, out var currentColor))
+        if (designColors.TryGetValue(color, out var currentColor))
         {
-            ImGui.SameLine();
+            Im.Line.SameInner();
             if (DesignColorUi.DrawColorButton($"与 {color} 关联的颜色", currentColor, out var newColor))
-                _colors.SetColor(color, newColor);
+                designColors.SetColor(color, newColor);
         }
-        else if (color.Length != 0)
+        else if (color.Length is not 0)
         {
-            ImGui.SameLine();
-            var       size = new Vector2(ImGui.GetFrameHeight());
-            using var font = ImRaii.PushFont(UiBuilder.IconFont);
-            ImGuiUtil.DrawTextButton(FontAwesomeIcon.ExclamationCircle.ToIconString(), size, 0, _colors.MissingColor);
-            ImUtf8.HoverTooltip("与此设计相关联的颜色不存在。"u8);
+            Im.Line.SameInner();
+            var size = new Vector2(Im.Style.FrameHeight);
+            using (AwesomeIcon.Font.Push())
+            {
+                ImEx.TextFramed(LunaStyle.WarningIcon.Span, size, designColors.MissingColor);
+            }
+
+            Im.Tooltip.OnHover("与此设计相关联的颜色不存在。"u8);
         }
 
         return;
 
-        static void CopyButton(ReadOnlySpan<byte> label, string text)
+        static void CopyButton(in Im.TableDisposable table, ReadOnlySpan<byte> label, Utf8StringHandler<HintStringHandlerBuffer> text)
         {
-            ImUtf8.DrawFrameColumn(label);
-            ImGui.TableNextColumn();
-            if (ImUtf8.Button(text, new Vector2(ImGui.GetContentRegionAvail().X, 0)))
-                ImUtf8.SetClipboardText(text);
-            ImUtf8.HoverTooltip("点击复制到剪贴板。"u8);
-        }
-    }
+            table.DrawFrameColumn(label);
+            table.NextColumn();
+            if (!text.GetSpan(out var span))
+                return;
 
-    private sealed class ExportToClipboardButton(NpcPanel panel) : Button
-    {
-        protected override string Description
-            => "将当前NPC外观复制到剪贴板。\n按住Ctrl禁止复制外貌。\n按住Shift可禁止复制装备。";
-
-        protected override FontAwesomeIcon Icon
-            => FontAwesomeIcon.Copy;
-
-        public override bool Visible
-            => panel._selector.HasSelection;
-
-        protected override void OnClick()
-        {
-            try
-            {
-                var data = panel.ToDesignData();
-                var text = panel._converter.ShareBase64(data, new StateMaterialManager(), ApplicationRules.NpcFromModifiers());
-                ImGui.SetClipboardText(text);
-            }
-            catch (Exception ex)
-            {
-                Glamourer.Messager.NotificationMessage(ex, $"无法复制{panel._selector.Selection.Name}的数据到剪贴板。",
-                    $"无法从NPC外观{panel._selector.Selection.Kind} {panel._selector.Selection.Id.Id}复制数据到剪贴板。",
-                    NotificationType.Error);
-            }
-        }
-    }
-
-    private sealed class SaveAsDesignButton(NpcPanel panel) : Button
-    {
-        protected override string Description
-            => "将此NPC外观保存为设计。\n按住Ctrl禁止保存外貌。\n按住Shift可禁止保存装备。";
-
-        protected override FontAwesomeIcon Icon
-            => FontAwesomeIcon.Save;
-
-        public override bool Visible
-            => panel._selector.HasSelection;
-
-        protected override void OnClick()
-        {
-            ImGui.OpenPopup("保存为设计");
-            panel._newName = panel._selector.Selection.Name;
-            var data = panel.ToDesignData();
-            panel._newDesign = panel._converter.Convert(data, new StateMaterialManager(), ApplicationRules.NpcFromModifiers());
+            if (Im.Button(span, Im.ContentRegion.Available with { Y = 0 }))
+                Im.Clipboard.Set(span);
+            Im.Tooltip.OnHover("点击复制到剪贴板。"u8);
         }
     }
 }

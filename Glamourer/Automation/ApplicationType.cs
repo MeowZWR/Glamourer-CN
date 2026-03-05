@@ -1,32 +1,44 @@
 ﻿using Glamourer.Api.Enums;
 using Glamourer.Designs;
 using Glamourer.GameData;
+using ImSharp;
+using Luna.Generators;
 using Penumbra.GameData.Enums;
 
 namespace Glamourer.Automation;
 
 [Flags]
+[TooltipEnum]
 public enum ApplicationType : byte
 {
-    Armor             = 0x01,
-    Customizations    = 0x02,
-    Weapons           = 0x04,
+    [Tooltip("应用此设计中启用的所有服装修改，这些修改须在自动执行中有效。")]
+    Armor = 0x01,
+
+    [Tooltip(
+        "应用此设计中启用的所有外貌修改，这些修改须在自动执行中有效，并适用于指定的种族和性别。")]
+    Customizations = 0x02,
+
+    [Tooltip("应用此设计中启用的所有武器修改，须符合当前职业，否则不生效。")]
+    Weapons = 0x04,
+
+    [Tooltip("应用此设计中启用的所有染色和队徽修改")]
     GearCustomization = 0x08,
-    Accessories       = 0x10,
+
+    [Tooltip("应用此设计中启用的所有饰品修改，这些修改须在自动执行中有效。")]
+    Accessories = 0x10,
 
     All = Armor | Accessories | Customizations | Weapons | GearCustomization,
 }
 
-public static class ApplicationTypeExtensions
+public static partial class ApplicationTypeExtensions
 {
-    public static readonly IReadOnlyList<(ApplicationType, string)> Types =
+    public static readonly IReadOnlyList<ApplicationType> Types =
     [
-        (ApplicationType.Customizations,
-            "应用此设计中启用的所有外貌修改，这些修改须在自动执行中有效，并适用于指定的种族和性别。"),
-        (ApplicationType.Armor, "应用此设计中启用的所有服装修改，这些修改须在自动执行中有效。"),
-        (ApplicationType.Accessories, "应用此设计中启用的所有饰品修改，这些修改须在自动执行中有效。"),
-        (ApplicationType.GearCustomization, "应用此设计中启用的所有染色和队徽修改"),
-        (ApplicationType.Weapons, "应用此设计中启用的所有武器修改，须符合当前职业，否则不生效。"),
+        ApplicationType.Customizations,
+        ApplicationType.Armor,
+        ApplicationType.Accessories,
+        ApplicationType.GearCustomization,
+        ApplicationType.Weapons,
     ];
 
     public static ApplicationCollection Collection(this ApplicationType type)
@@ -48,9 +60,10 @@ public static class ApplicationTypeExtensions
 
     public static ApplicationCollection ApplyWhat(this ApplicationType type, IDesignStandIn designStandIn)
     {
-        if(designStandIn is not DesignBase design)
+        if (designStandIn is not DesignBase design)
             return type.Collection();
-        var ret = type.Collection().Restrict(design.Application); 
+
+        var ret = type.Collection().Restrict(design.Application);
         ret.CustomizeRaw = ret.CustomizeRaw.FixApplication(design.CustomizeSet);
         return ret;
     }

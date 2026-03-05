@@ -1,26 +1,59 @@
-﻿namespace Glamourer.GameData;
+﻿using ImSharp;
+using Luna.Generators;
+
+namespace Glamourer.GameData;
 
 [Flags]
+[NamedEnum(Utf16: false)]
 public enum CustomizeParameterFlag : ushort
 {
-    SkinDiffuse           = 0x0001,
-    MuscleTone            = 0x0002,
-    SkinSpecular          = 0x0004,
-    LipDiffuse            = 0x0008,
-    HairDiffuse           = 0x0010,
-    HairSpecular          = 0x0020,
-    HairHighlight         = 0x0040,
-    LeftEye               = 0x0080,
-    RightEye              = 0x0100,
-    FeatureColor          = 0x0200,
+    [Name("皮肤颜色")]
+    SkinDiffuse = 0x0001,
+
+    [Name("肌肉强度")]
+    MuscleTone = 0x0002,
+
+    [Name("皮肤光泽")]
+    SkinSpecular = 0x0004,
+
+    [Name("嘴唇颜色")]
+    LipDiffuse = 0x0008,
+
+    [Name("头发颜色")]
+    HairDiffuse = 0x0010,
+
+    [Name("头发光泽")]
+    HairSpecular = 0x0020,
+
+    [Name("头发挑染")]
+    HairHighlight = 0x0040,
+
+    [Name("左眼瞳色")]
+    LeftEye = 0x0080,
+
+    [Name("右眼瞳色")]
+    RightEye = 0x0100,
+
+    [Name("纹身颜色")]
+    FeatureColor = 0x0200,
+
+    [Name("面妆倍增器")]
     FacePaintUvMultiplier = 0x0400,
-    FacePaintUvOffset     = 0x0800,
-    DecalColor            = 0x1000,
-    LeftLimbalIntensity   = 0x2000,
-    RightLimbalIntensity  = 0x4000,
+
+    [Name("面妆偏移")]
+    FacePaintUvOffset = 0x0800,
+
+    [Name("面妆颜色")]
+    DecalColor = 0x1000,
+
+    [Name("左瞳轮廓强度")]
+    LeftLimbalIntensity = 0x2000,
+
+    [Name("右瞳轮廓强度")]
+    RightLimbalIntensity = 0x4000,
 }
 
-public static class CustomizeParameterExtensions
+public static partial class CustomizeParameterExtensions
 {
     // Speculars are not available anymore.
     public const CustomizeParameterFlag All = (CustomizeParameterFlag)0x7FDB;
@@ -36,7 +69,9 @@ public static class CustomizeParameterExtensions
 
     public const CustomizeParameterFlag Values = CustomizeParameterFlag.FacePaintUvOffset | CustomizeParameterFlag.FacePaintUvMultiplier;
 
-    public static readonly IReadOnlyList<CustomizeParameterFlag> AllFlags        = [.. Enum.GetValues<CustomizeParameterFlag>().Where(f => All.HasFlag(f))];
+    public static readonly IReadOnlyList<CustomizeParameterFlag> AllFlags =
+        [.. CustomizeParameterFlag.Values.Where(f => All.HasFlag(f))];
+
     public static readonly IReadOnlyList<CustomizeParameterFlag> RgbaFlags       = AllFlags.Where(f => RgbaQuadruples.HasFlag(f)).ToArray();
     public static readonly IReadOnlyList<CustomizeParameterFlag> RgbFlags        = AllFlags.Where(f => RgbTriples.HasFlag(f)).ToArray();
     public static readonly IReadOnlyList<CustomizeParameterFlag> PercentageFlags = AllFlags.Where(f => Percentages.HasFlag(f)).ToArray();
@@ -50,25 +85,4 @@ public static class CustomizeParameterExtensions
 
     public static int ToInternalIndex(this CustomizeParameterFlag flag)
         => BitOperations.TrailingZeroCount((uint)flag);
-
-    public static string ToName(this CustomizeParameterFlag flag)
-        => flag switch
-        {
-            CustomizeParameterFlag.SkinDiffuse           => "皮肤颜色",
-            CustomizeParameterFlag.MuscleTone            => "肌肉强度",
-            CustomizeParameterFlag.SkinSpecular          => "皮肤光泽",
-            CustomizeParameterFlag.LipDiffuse            => "嘴唇颜色",
-            CustomizeParameterFlag.HairDiffuse           => "头发颜色",
-            CustomizeParameterFlag.HairSpecular          => "头发光泽",
-            CustomizeParameterFlag.HairHighlight         => "头发挑染",
-            CustomizeParameterFlag.LeftEye               => "左眼瞳色",
-            CustomizeParameterFlag.RightEye              => "右眼瞳色",
-            CustomizeParameterFlag.FeatureColor          => "纹身颜色",
-            CustomizeParameterFlag.FacePaintUvMultiplier => "面妆倍增器",
-            CustomizeParameterFlag.FacePaintUvOffset     => "面妆偏移",
-            CustomizeParameterFlag.DecalColor            => "面妆颜色",
-            CustomizeParameterFlag.LeftLimbalIntensity   => "左瞳轮廓强度",
-            CustomizeParameterFlag.RightLimbalIntensity  => "右瞳轮廓强度",
-            _                                            => string.Empty,
-        };
 }

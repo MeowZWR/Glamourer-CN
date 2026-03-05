@@ -1,27 +1,23 @@
-﻿using Dalamud.Bindings.ImGui;
-using Dalamud.Game.ClientState.Keys;
+﻿using Dalamud.Game.ClientState.Keys;
 using Dalamud.Interface;
-using Dalamud.Interface.Components;
-using Dalamud.Interface.Utility;
 using Dalamud.Plugin.Services;
 using Glamourer.Automation;
+using Glamourer.Config;
 using Glamourer.Designs;
 using Glamourer.Events;
+using Glamourer.Gui.Equipment;
 using Glamourer.Gui.Tabs.DesignTab;
 using Glamourer.Interop;
 using Glamourer.Interop.PalettePlus;
-using Glamourer.Interop.Penumbra;
 using Glamourer.Services;
-using OtterGui;
-using OtterGui.Raii;
-using OtterGui.Text;
-using OtterGui.Widgets;
+using ImSharp;
+using Luna;
 
 namespace Glamourer.Gui.Tabs.SettingsTab;
 
-public class SettingsTab(
+public sealed class SettingsTab(
     Configuration config,
-    DesignFileSystemSelector selector,
+    DesignFileSystemDrawer drawer,
     ContextMenuService contextMenuService,
     IUiBuilder uiBuilder,
     GlamourerChangelog changelog,
@@ -33,17 +29,22 @@ public class SettingsTab(
     Glamourer glamourer,
     AutoDesignApplier autoDesignApplier,
     AutoRedrawChanged autoRedraw,
-    PcpService pcpService)
-    : ITab
+    PredefinedTagManager predefinedTags,
+    PcpService pcpService,
+    IgnoredMods ignoredMods)
+    : ITab<MainTabType>
 {
     private readonly VirtualKey[] _validKeys = keys.GetValidVirtualKeys().Prepend(VirtualKey.NO_KEY).ToArray();
 
     public ReadOnlySpan<byte> Label
         => "插件设置"u8;
 
+    public MainTabType Identifier
+        => MainTabType.Settings;
+
     public void DrawContent()
     {
-        using var child = ImUtf8.Child("MainWindowChild"u8, default);
+        using var child = Im.Child.Begin("MainWindowChild"u8);
         if (!child)
             return;
 
@@ -54,18 +55,17 @@ public class SettingsTab(
                 config.EnableAutoDesigns = v;
                 autoDesignApplier.OnEnableAutoDesignsChanged(v);
             });
-        ImGui.NewLine();
-        ImGui.NewLine();
-        ImGui.NewLine();
-        ImGui.NewLine();
+        Im.Cursor.Y += Im.Style.FrameHeightWithSpacing * 4;
 
-        using (ImUtf8.Child("SettingsChild"u8, default))
+        using (Im.Child.Begin("SettingsChild"u8))
         {
             DrawBehaviorSettings();
             DrawDesignDefaultSettings();
             DrawInterfaceSettings();
             DrawColorSettings();
+            DrawPredefinedTags();
             overrides.Draw();
+            DrawIgnoredMods();
             codeDrawer.Draw();
         }
 
@@ -80,7 +80,7 @@ public class SettingsTab(
 
     private void DrawBehaviorSettings()
     {
-        if (!ImUtf8.CollapsingHeader("行为设置"u8))
+        if (!Im.Tree.Header("行为设置"u8))
             return;
 
         Checkbox("总是为主手应用整套武器"u8,
@@ -107,7 +107,7 @@ public class SettingsTab(
         Checkbox("防止随机设计重复"u8,
             "在使用随机设计时，防止连续两次选择相同的设计。"u8,
             config.PreventRandomRepeats, v => config.PreventRandomRepeats = v);
-        ImGui.NewLine();
+        Im.Line.New();
     }
 
     private void DrawPenumbraIntegrationSettings1()
@@ -123,11 +123,11 @@ public class SettingsTab(
             "当Penumbra创建PCP时添加角色的Glamourer状态，并在Penumbra安装PCP时尽可能创建设计并应用"u8,
             config.AttachToPcp, pcpService.Set);
         var active = config.DeleteDesignModifier.IsActive();
-        ImGui.SameLine();
-        if (ImUtf8.ButtonEx("删除所有PCP设计"u8, "从设计列表中删除所有带有'PCP'标签的设计"u8, disabled: !active))
+        Im.Line.Same();
+        if (ImEx.Button("删除所有PCP设计"u8, default, "从设计列表中删除所有带有'PCP'标签的设计。"u8, !active))
             pcpService.CleanPcpDesigns();
         if (!active)
-            ImUtf8.HoverTooltip(ImGuiHoveredFlags.AllowWhenDisabled, $"\nHold {config.DeleteDesignModifier} while clicking.");
+            Im.Tooltip.OnHover(HoveredFlags.AllowWhenDisabled, $"\nHold {config.DeleteDesignModifier} while clicking.");
     }
 
     private void DrawPenumbraIntegrationSettings2()
@@ -145,7 +145,7 @@ public class SettingsTab(
 
     private void DrawDesignDefaultSettings()
     {
-        if (!ImUtf8.CollapsingHeader("设计默认设置"))
+        if (!Im.Tree.Header("设计默认设置"u8))
             return;
 
         Checkbox("锁定设计"u8, "新创建的设计将被锁定以防止意外修改。"u8,
@@ -160,32 +160,30 @@ public class SettingsTab(
             "新创建的设计将在应用时默认配置为清除 Glamourer 应用到合集的所有高级设置。"u8,
             config.DefaultDesignSettings.ResetTemporarySettings, v => config.DefaultDesignSettings.ResetTemporarySettings = v);
 
-        var tmp = config.PcpFolder;
-        ImGui.SetNextItemWidth(0.4f * ImGui.GetContentRegionAvail().X);
-        if (ImUtf8.InputText("##pcpFolder"u8, ref tmp))
-            config.PcpFolder = tmp;
-
-        if (ImGui.IsItemDeactivatedAfterEdit())
+        Im.Item.SetNextWidth(0.4f * Im.ContentRegion.Available.X);
+        if (ImEx.InputOnDeactivation.Text("##pcpFolder"u8, config.PcpFolder, out string newPcpFolder))
+        {
+            config.PcpFolder = newPcpFolder;
             config.Save();
+        }
 
-        ImGuiUtil.LabeledHelpMarker("默认PCP组织折叠组",
-            "所有因Penumbra角色包而创建的设计在生成时将被移动到的折叠组。\n留空则导入至根目录。");
+        LunaStyle.DrawAlignedHelpMarkerLabel("默认PCP组织折叠组"u8,
+            "任何因Penumbra角色包而创建的设计在创建时将被移动到的折叠组。\n留空则导入至根目录。"u8);
 
-        tmp = config.PcpColor;
-        ImGui.SetNextItemWidth(0.4f * ImGui.GetContentRegionAvail().X);
-        if (ImUtf8.InputText("##pcpColor"u8, ref tmp))
-            config.PcpColor = tmp;
-
-        if (ImGui.IsItemDeactivatedAfterEdit())
+        Im.Item.SetNextWidth(0.4f * Im.ContentRegion.Available.X);
+        if (ImEx.InputOnDeactivation.Text("##pcpColor"u8, config.PcpColor, out string newPcpColor))
+        {
+            config.PcpColor = newPcpColor;
             config.Save();
+        }
 
-        ImGuiUtil.LabeledHelpMarker("默认PCP设计颜色",
-            "所有因Penumbra角色包而创建的设计将被分配的颜色组名称。\n留空则不指定特定颜色分配。");
+        LunaStyle.DrawAlignedHelpMarkerLabel("默认PCP设计颜色"u8,
+            "所有因Penumbra角色包而创建的设计将被分配的颜色组名称。\n留空则不指定特定颜色分配。"u8);
     }
 
     private void DrawInterfaceSettings()
     {
-        if (!ImUtf8.CollapsingHeader("界面设置"u8))
+        if (!Im.Tree.Header("界面设置"u8))
             return;
 
         EphemeralCheckbox("显示快速设计栏"u8,
@@ -194,9 +192,9 @@ public class SettingsTab(
         EphemeralCheckbox("锁定快速设计栏"u8, "防止快速设计栏被移动，将其锁定在当前位置。"u8,
             config.Ephemeral.LockDesignQuickBar,
             v => config.Ephemeral.LockDesignQuickBar = v);
-        if (Widget.ModifiableKeySelector("快速设计栏开关热键", "设置一个用于打开或关闭快速设计栏的热键。",
-                100 * ImGuiHelpers.GlobalScale,
-                config.ToggleQuickDesignBar, v => config.ToggleQuickDesignBar = v, _validKeys))
+        if (KeySelector.ModifiableKeySelector("快速设计栏开关热键"u8,
+                "设置一个用于打开或关闭快速设计栏的热键。"u8,
+                100 * Im.Style.GlobalScale, config.ToggleQuickDesignBar, v => config.ToggleQuickDesignBar = v, _validKeys))
             config.Save();
 
         Checkbox("在主窗口中显示快速设计栏"u8,
@@ -204,9 +202,9 @@ public class SettingsTab(
             config.ShowQuickBarInTabs, v => config.ShowQuickBarInTabs = v);
         DrawQuickDesignBoxes();
 
-        ImGui.Dummy(Vector2.Zero);
-        ImGui.Separator();
-        ImGui.Dummy(Vector2.Zero);
+        Im.Dummy(Vector2.Zero);
+        Im.Separator();
+        Im.Dummy(Vector2.Zero);
 
         Checkbox("启用游戏右键菜单"u8, "在可装备物品的游戏右键菜单中增加一个Glamourer试穿按钮。"u8,
             config.EnableGameContextMenu,       v =>
@@ -236,22 +234,23 @@ public class SettingsTab(
             v => config.Ephemeral.LockMainWindow = v);
         Checkbox("在游戏开始时打开主窗口"u8, "启动游戏后，Glamourer主窗口是打开还是关闭状态。"u8,
             config.OpenWindowAtStart,                v => config.OpenWindowAtStart = v);
-        ImGui.Dummy(Vector2.Zero);
-        ImGui.Separator();
-        ImGui.Dummy(Vector2.Zero);
+        Im.Dummy(Vector2.Zero);
+        Im.Separator();
+        Im.Dummy(Vector2.Zero);
 
         Checkbox("装备面板紧凑显示"u8, "使用不显示装备图标、有小染色按钮的单行视图，取代两行视图。"u8,
             config.SmallEquip,              v => config.SmallEquip = v);
         DrawHeightUnitSettings();
+        DrawRoughnessSettings();
         Checkbox("显示应用复选框"u8,
-            "显示“角色设计”选项卡下外貌和装备面板中的应用生效复选框，而不是仅在“应用规则”面板中显示。"u8,
+            "在“角色设计”选项卡下的“外貌”和“装备”面板中显示应用生效复选框，而不是仅在“应用规则”面板中显示。"u8,
             !config.HideApplyCheckmarks, v => config.HideApplyCheckmarks = !v);
-        if (Widget.DoubleModifierSelector("删除组合键",
-                "在所有的删除按钮上生效所需要的组合键。", 100 * ImGuiHelpers.GlobalScale,
+        if (KeySelector.DoubleModifier("设计删除组合键"u8,
+                "在点击删除设计按钮时，需要按住这些组合键，才能使删除操作生效。"u8, 100 * Im.Style.GlobalScale,
                 config.DeleteDesignModifier, v => config.DeleteDesignModifier = v))
             config.Save();
-        if (Widget.DoubleModifierSelector("隐身模式组合键",
-                "在点击隐身模式按钮时需要按住的组合键，才能使其生效。", 100 * ImGuiHelpers.GlobalScale,
+        if (KeySelector.DoubleModifier("隐身模式组合键"u8,
+                "在点击隐身模式按钮时需要按住这些组合键，才能使隐身模式生效。"u8, 100 * Im.Style.GlobalScale,
                 config.IncognitoModifier, v => config.IncognitoModifier = v))
             config.Save();
         DrawRenameSettings();
@@ -260,9 +259,9 @@ public class SettingsTab(
             v => config.OpenFoldersByDefault = v);
         DrawFolderSortType();
 
-        ImGui.NewLine();
-        ImUtf8.Text("在各自的标签页中显示以下面板："u8);
-        ImGui.Dummy(Vector2.Zero);
+        Im.Line.New();
+        Im.Text("在各自的标签页中显示以下面板："u8);
+        Im.Dummy(Vector2.Zero);
         DesignPanelFlagExtensions.DrawTable("##panelTable"u8, config.HideDesignPanel, config.AutoExpandDesignPanel, v =>
         {
             config.HideDesignPanel = v;
@@ -274,9 +273,9 @@ public class SettingsTab(
         });
 
 
-        ImGui.Dummy(Vector2.Zero);
-        ImGui.Separator();
-        ImGui.Dummy(Vector2.Zero);
+        Im.Dummy(Vector2.Zero);
+        Im.Separator();
+        Im.Dummy(Vector2.Zero);
 
         Checkbox("允许双击应用设计"u8,
             "在设计选择其中双击角色设计条目时，尝试将该设计应用于玩家的角色。"u8,
@@ -288,11 +287,11 @@ public class SettingsTab(
             "在执行规则中显示多个单独规则的复选框，而不是只显示一个一键开关的复选框。"u8,
             config.ShowUnlockedItemWarnings, v => config.ShowUnlockedItemWarnings = v);
         Checkbox("显示颜色显示配置"u8, "在高级外貌面板中显示颜色显示配置选项。"u8,
-            config.ShowColorConfig,             v => config.ShowColorConfig = v);
+            config.ShowColorConfig,                    v => config.ShowColorConfig = v);
         Checkbox("显示 Palette+ 导入按钮"u8,
             "在高级外貌选项部分显示导入按钮，允许您将 Palette+ 调色板导入到设计中。"u8,
             config.ShowPalettePlusImport, v => config.ShowPalettePlusImport = v);
-        using (ImRaii.PushId(1))
+        using (Im.Id.Push(1))
         {
             PaletteImportButton();
         }
@@ -304,55 +303,93 @@ public class SettingsTab(
         Checkbox("调试模式"u8, "显示调试选项卡，仅对调试和进阶用法有帮助。一般不建议使用。"u8,
             config.DebugMode,
             v => config.DebugMode = v);
-        ImGui.NewLine();
+
+        Im.Dummy(Vector2.Zero);
+        Im.Separator();
+        Im.Dummy(Vector2.Zero);
+
+        EquipmentDrawer.DrawKeepItemFilter(config);
+
+        Checkbox("Remember Design Filter Across Sessions"u8,
+            "Whether the filter in the Designs tab should remember its input and start with its list filtered identically to the last session."u8,
+            config.RememberDesignFilter, v => config.RememberDesignFilter = v);
+
+        Checkbox("Remember Actor Filter Across Sessions"u8,
+            "Whether the filter in the Actors tab should remember its input and start with its list filtered identically to the last session."u8,
+            config.RememberActorFilter, v => config.RememberActorFilter = v);
+
+        Checkbox("Remember Automation Filters Across Sessions"u8,
+            "Whether the filters in the Automation tab should remember their respective inputs and start with their list filtered identically to the last session."u8,
+            config.RememberAutomationFilter, v => config.RememberAutomationFilter = v);
+
+        Checkbox("Remember NPC Filter Across Sessions"u8,
+            "Whether the filter in the NPCs tab should remember its input and start with its list filtered identically to the last session."u8,
+            config.RememberNpcFilter, v => config.RememberNpcFilter = v);
+
+        Checkbox("Remember Unlocks Filters Across Sessions"u8,
+            "Whether the filters in the Unlocks tab should remember their respective inputs and start with its table filtered identically to the last session."u8,
+            config.RememberUnlocksFilters, v => config.RememberUnlocksFilters = v);
+
+        Im.Line.New();
     }
+
+    private readonly (StringU8, QdbButtons)[] _columns =
+    [
+        (new StringU8("Toggle Main Window"u8), QdbButtons.ToggleMainWindow),
+        (new StringU8("Apply Design"u8), QdbButtons.ApplyDesign),
+        (new StringU8("Revert All"u8), QdbButtons.RevertAll),
+        (new StringU8("Revert to Auto"u8), QdbButtons.RevertAutomation),
+        (new StringU8("Reapply Auto"u8), QdbButtons.ReapplyAutomation),
+        (new StringU8("Revert Equip"u8), QdbButtons.RevertEquip),
+        (new StringU8("Revert Customize"u8), QdbButtons.RevertCustomize),
+        (new StringU8("Revert Advanced Customization"u8), QdbButtons.RevertAdvancedCustomization),
+        (new StringU8("Revert Advanced Dyes"u8), QdbButtons.RevertAdvancedDyes),
+        (new StringU8("Reset Settings"u8), QdbButtons.ResetSettings),
+    ];
+
+    private static bool DisplayButton(QdbButtons button, bool showAuto, bool useTemporarySettings)
+        => button switch
+        {
+            QdbButtons.RevertAutomation  => showAuto,
+            QdbButtons.ReapplyAutomation => showAuto,
+            QdbButtons.ResetSettings     => useTemporarySettings,
+            _                            => true,
+        };
 
     private void DrawQuickDesignBoxes()
     {
         var showAuto   = config.EnableAutoDesigns;
-        var numColumns = 9 - (showAuto ? 0 : 2) - (config.UseTemporarySettings ? 0 : 1);
-        ImGui.NewLine();
-        ImUtf8.Text("在快速设计栏中显示以下按钮："u8);
-        ImGui.Dummy(Vector2.Zero);
-        using var table = ImUtf8.Table("##tableQdb"u8, numColumns,
-            ImGuiTableFlags.SizingFixedFit | ImGuiTableFlags.Borders | ImGuiTableFlags.NoHostExtendX);
+        var numColumns = 10 - (showAuto ? 0 : 2) - (config.UseTemporarySettings ? 0 : 1);
+        Im.Line.New();
+        Im.Text("在快速设计栏中显示以下按钮："u8);
+        Im.Dummy(Vector2.Zero);
+        using var table = Im.Table.Begin("##tableQdb"u8, numColumns, TableFlags.SizingFixedFit | TableFlags.Borders | TableFlags.NoHostExtendX);
         if (!table)
             return;
 
-        ReadOnlySpan<(string, bool, QdbButtons)> columns =
-        [
-            (" 应用设计 ", true, QdbButtons.ApplyDesign),
-            (" 全部还原 ", true, QdbButtons.RevertAll),
-            (" 恢复自动 ", showAuto, QdbButtons.RevertAutomation),
-            (" 重新应用自动 ", showAuto, QdbButtons.ReapplyAutomation),
-            (" 还原装备 ", true, QdbButtons.RevertEquip),
-            (" 还原外貌 ", true, QdbButtons.RevertCustomize),
-            (" 还原高级外貌 ", true, QdbButtons.RevertAdvancedCustomization),
-            (" 还原高级染色 ", true, QdbButtons.RevertAdvancedDyes),
-            (" 重置设置 ", config.UseTemporarySettings, QdbButtons.ResetSettings),
-        ];
 
-        for (var i = 0; i < columns.Length; ++i)
+        // ReSharper disable once PossibleMultipleEnumeration
+        foreach (var (text, flag) in _columns)
         {
-            if (!columns[i].Item2)
+            if (!DisplayButton(flag, showAuto, config.UseTemporarySettings))
                 continue;
 
-            ImGui.TableNextColumn();
-            ImUtf8.TableHeader(columns[i].Item1);
+            table.NextColumn();
+            table.Header(text);
         }
 
-        for (var i = 0; i < columns.Length; ++i)
+        // ReSharper disable once PossibleMultipleEnumeration
+        foreach (var (_, flag) in _columns)
         {
-            if (!columns[i].Item2)
+            if (!DisplayButton(flag, showAuto, config.UseTemporarySettings))
                 continue;
 
-            var       flag = columns[i].Item3;
-            using var id   = ImUtf8.PushId((int)flag);
-            ImGui.TableNextColumn();
-            var offset = (ImGui.GetContentRegionAvail().X - ImGui.GetFrameHeight()) / 2;
-            ImGui.SetCursorPosX(ImGui.GetCursorPosX() + offset);
+            using var id = Im.Id.Push((int)flag);
+            table.NextColumn();
+            var offset = (Im.ContentRegion.Available.X - Im.Style.FrameHeight) / 2;
+            Im.Cursor.X += offset;
             var value = config.QdbButtons.HasFlag(flag);
-            if (!ImUtf8.Checkbox(""u8, ref value))
+            if (!Im.Checkbox(""u8, ref value))
                 continue;
 
             var buttons = value ? config.QdbButtons | flag : config.QdbButtons & ~flag;
@@ -369,132 +406,140 @@ public class SettingsTab(
         if (!config.ShowPalettePlusImport)
             return;
 
-        ImGui.SameLine();
-        if (ImUtf8.Button("导入调色板插件 Palette+ 的设计"u8))
+        Im.Line.Same();
+        if (Im.Button("导入调色板插件 Palette+ 的设计"u8))
             paletteImport.ImportDesigns();
-        ImUtf8.HoverTooltip(
+        Im.Tooltip.OnHover(
             $"从你的调色板插件Palette+的配置中导入所有存在的数据到角色设计选项卡下，目录结构为PalettePlus/[名称]（如果还无同名设计存在）。现有调色板为：\n\n\t - {string.Join("\n\t - ", paletteImport.Data.Keys)}");
+    }
+
+    private void DrawPredefinedTags()
+    {
+        if (!Im.Tree.Header("标签设置"u8))
+            return;
+
+        var tagIdx = TagButtons.Draw("预定义标签: "u8,
+            "预定义标签，可以单击添加或删除设计。"u8, predefinedTags,
+            out var editedTag);
+
+        if (tagIdx >= 0)
+            predefinedTags.ChangeSharedTag(tagIdx, editedTag);
     }
 
     /// <summary> Draw the entire Color subsection. </summary>
     private void DrawColorSettings()
     {
-        if (!ImUtf8.CollapsingHeader("配色设置"u8))
+        if (!Im.Tree.Header("配色设置"u8))
             return;
 
-        using (var tree = ImUtf8.TreeNode("自定义设计颜色"u8))
+        using (var tree = Im.Tree.Node("自定义设计颜色"u8))
         {
             if (tree)
                 designColorUi.Draw();
         }
 
-        using (var tree = ImUtf8.TreeNode("配色"u8))
+        using (var tree = Im.Tree.Node("配色设置"u8))
         {
             if (tree)
-                foreach (var color in Enum.GetValues<ColorId>())
+                foreach (var color in ColorId.Values)
                 {
                     var (defaultColor, name, description) = color.Data();
                     var currentColor = config.Colors.GetValueOrDefault(color, defaultColor);
-                    if (Widget.ColorPicker(name, description, currentColor, c => config.Colors[color] = c, defaultColor))
-                        config.Save();
+                    if (!ImEx.ColorPicker(name, description, currentColor, out var newColor, defaultColor))
+                        continue;
+
+                    config.Colors[color] = newColor.Color;
+                    CacheManager.Instance.SetColorsDirty();
+                    config.Save();
                 }
         }
 
-        ImGui.NewLine();
+        Im.Line.New();
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private void Checkbox(ReadOnlySpan<byte> label, ReadOnlySpan<byte> tooltip, bool current, Action<bool> setter)
     {
-        using var id  = ImUtf8.PushId(label);
+        using var id  = Im.Id.Push(label);
         var       tmp = current;
-        if (ImUtf8.Checkbox(""u8, ref tmp) && tmp != current)
+        if (Im.Checkbox(""u8, ref tmp) && tmp != current)
         {
             setter(tmp);
             config.Save();
         }
 
-        ImGui.SameLine();
-        ImUtf8.LabeledHelpMarker(label, tooltip);
+        LunaStyle.DrawAlignedHelpMarkerLabel(label, tooltip);
     }
 
     [MethodImpl(MethodImplOptions.AggressiveInlining | MethodImplOptions.AggressiveOptimization)]
     private void EphemeralCheckbox(ReadOnlySpan<byte> label, ReadOnlySpan<byte> tooltip, bool current, Action<bool> setter)
     {
-        using var id  = ImUtf8.PushId(label);
+        using var id  = Im.Id.Push(label);
         var       tmp = current;
-        if (ImUtf8.Checkbox(""u8, ref tmp) && tmp != current)
+        if (Im.Checkbox(""u8, ref tmp) && tmp != current)
         {
             setter(tmp);
             config.Ephemeral.Save();
         }
 
-        ImGui.SameLine();
-        ImUtf8.LabeledHelpMarker(label, tooltip);
+        LunaStyle.DrawAlignedHelpMarkerLabel(label, tooltip);
     }
 
     /// <summary> Different supported sort modes as a combo. </summary>
     private void DrawFolderSortType()
     {
         var sortMode = config.SortMode;
-        ImGui.SetNextItemWidth(300 * ImGuiHelpers.GlobalScale);
-        using (var combo = ImUtf8.Combo("##sortMode"u8, sortMode.Name))
+        Im.Item.SetNextWidthScaled(300);
+        using (var combo = Im.Combo.Begin("##sortMode"u8, sortMode.Name))
         {
             if (combo)
-                foreach (var val in Configuration.Constants.ValidSortModes)
+                foreach (var (_, value) in ISortMode.Valid)
                 {
-                    if (ImUtf8.Selectable(val.Name, val.GetType() == sortMode.GetType()) && val.GetType() != sortMode.GetType())
+                    if (Im.Selectable(value.Name, value.GetType() == sortMode.GetType()) && value.GetType() != sortMode.GetType())
                     {
-                        config.SortMode = val;
-                        selector.SetFilterDirty();
+                        config.SortMode = value;
+                        drawer.SortMode = value;
                         config.Save();
                     }
 
-                    ImUtf8.HoverTooltip(val.Description);
+                    Im.Tooltip.OnHover(value.Description);
                 }
         }
 
-        ImUtf8.LabeledHelpMarker("排序模式"u8, "为角色设计选项卡下的设计选择器选择一个排序方式。"u8);
+        LunaStyle.DrawAlignedHelpMarkerLabel("排序模式"u8, "为角色设计选项卡下的设计选择器选择一个排序方式。"u8);
     }
 
     private void DrawRenameSettings()
     {
-        ImGui.SetNextItemWidth(300 * ImGuiHelpers.GlobalScale);
-        using (var combo = ImUtf8.Combo("##renameSettings"u8, config.ShowRename.GetData().Name))
+        Im.Item.SetNextWidthScaled(300);
+        using (var combo = Im.Combo.Begin("##renameSettings"u8, config.ShowRename.ToNameU8()))
         {
             if (combo)
-                foreach (var value in Enum.GetValues<RenameField>())
+                foreach (var value in RenameField.Values)
                 {
-                    var (name, desc) = value.GetData();
-                    if (ImGui.Selectable(name, config.ShowRename == value))
+                    if (Im.Selectable(value.ToNameU8(), config.ShowRename == value))
                     {
                         config.ShowRename = value;
-                        selector.SetRenameSearchPath(value);
                         config.Save();
                     }
 
-                    ImUtf8.HoverTooltip(desc);
+                    Im.Tooltip.OnHover(value.Tooltip());
                 }
         }
 
-        ImGui.SameLine();
-        const string tt =
-            "选择在打开设计选择器中设计右键上下文菜单时可见的两个重命名输入字段中的哪一个。";
-        ImGuiComponents.HelpMarker(tt);
-        ImGui.SameLine();
-        ImUtf8.Text("设计上下文菜单中的重命名字段"u8);
-        ImUtf8.HoverTooltip(tt);
+        LunaStyle.DrawAlignedHelpMarkerLabel("设计上下文菜单中的重命名字段"u8,
+            "选择在打开设计选择器中设计右键上下文菜单时可见的两个重命名输入字段中的哪一个。"u8);
     }
 
     private void DrawHeightUnitSettings()
     {
-        ImGui.SetNextItemWidth(300 * ImGuiHelpers.GlobalScale);
-        using (var combo = ImUtf8.Combo("##heightUnit"u8, HeightDisplayTypeName(config.HeightDisplayType)))
+        Im.Item.SetNextWidthScaled(300);
+        using (var combo = Im.Combo.Begin("##heightUnit"u8, config.HeightDisplayType.Tooltip()))
         {
             if (combo)
-                foreach (var type in Enum.GetValues<HeightDisplayType>())
+                foreach (var type in HeightDisplayType.Values)
                 {
-                    if (ImUtf8.Selectable(HeightDisplayTypeName(type), type == config.HeightDisplayType) && type != config.HeightDisplayType)
+                    if (Im.Selectable(type.Tooltip(), type == config.HeightDisplayType) && type != config.HeightDisplayType)
                     {
                         config.HeightDisplayType = type;
                         config.Save();
@@ -502,24 +547,69 @@ public class SettingsTab(
                 }
         }
 
-        ImGui.SameLine();
-        const string tt = "选择如何以真实世界单位显示角色的身高。";
-        ImGuiComponents.HelpMarker(tt);
-        ImGui.SameLine();
-        ImUtf8.Text("人物身高显示单位"u8);
-        ImUtf8.HoverTooltip(tt);
+        LunaStyle.DrawAlignedHelpMarkerLabel("人物身高显示单位"u8,
+            "选择如何以真实世界单位显示角色的身高。"u8);
     }
 
-    private static ReadOnlySpan<byte> HeightDisplayTypeName(HeightDisplayType type)
-        => type switch
+    private string _newIgnoredMod = string.Empty;
+
+    private void DrawIgnoredMods()
+    {
+        using var header = Im.Tree.HeaderId("忽略的模组"u8);
+        Im.Tooltip.OnHover("在解锁选项卡中为“modded”列添加忽略的模组。"u8);
+        if (!header)
+            return;
+
+        using var listBox = Im.ListBox.Begin("##box"u8, new Vector2(0.4f * Im.ContentRegion.Available.X, Im.Style.FrameHeightWithSpacing * 10));
+        if (!listBox)
+            return;
+
+        var       delete    = string.Empty;
+        using var alignment = ImStyleDouble.ButtonTextAlign.PushX(0);
+        foreach (var (idx, mod) in ignoredMods.Index())
         {
-            HeightDisplayType.None        => "不显示"u8,
-            HeightDisplayType.Centimetre  => "厘米（000.0 cm）"u8,
-            HeightDisplayType.Metre       => "米（0 (0.00 m)"u8,
-            HeightDisplayType.Wrong       => "英寸 (00.0 in)"u8,
-            HeightDisplayType.WrongFoot   => "英尺 (0'00'')"u8,
-            HeightDisplayType.Corgi       => "柯基 (0.0 柯基)"u8,
-            HeightDisplayType.OlympicPool => "奥林匹克标准游泳池（0.000个游泳池）"u8,
-            _                             => ""u8,
-        };
+            using var id = Im.Id.Push(idx);
+            if (ImEx.Icon.Button(LunaStyle.DeleteIcon, "删除这个忽略的模组。"u8))
+                delete = mod;
+
+            Im.Line.SameInner();
+            ImEx.TextFramed(mod, Im.ContentRegion.Available with { Y = Im.Style.FrameHeight });
+        }
+
+        if (delete.Length > 0)
+            ignoredMods.Remove(delete);
+
+        var tt = _newIgnoredMod.Length is 0      ? "请输入一个新的模组名称或模组目录来忽略。"u8 :
+            ignoredMods.Contains(_newIgnoredMod) ? "这个模组已经被忽略了。"u8 :
+                                                   "在解锁选项卡中忽略所有具有此名称或目录的模组。"u8;
+        if (ImEx.Icon.Button(LunaStyle.AddObjectIcon, tt, tt[0] is not (byte)'I'))
+        {
+            ignoredMods.Add(_newIgnoredMod);
+            _newIgnoredMod = string.Empty;
+        }
+
+        Im.Line.SameInner();
+        Im.Item.SetNextWidthFull();
+        Im.Input.Text("##newMod"u8, ref _newIgnoredMod, "忽略这个模组..."u8);
+    }
+
+    private void DrawRoughnessSettings()
+    {
+        Im.Item.SetNextWidthScaled(300);
+        using (var combo = Im.Combo.Begin("##alwaysEditAsRoughness"u8, config.RoughnessSetting.ToNameU8()))
+        {
+            if (combo)
+                foreach (var type in RoughnessSetting.Values)
+                {
+                    if (Im.Selectable(type.ToNameU8(), config.RoughnessSetting == type))
+                    {
+                        config.RoughnessSetting = type;
+                        config.Save();
+                    }
+                }
+        }
+
+        LunaStyle.DrawAlignedHelpMarkerLabel("光泽强度和粗糙度显示类型"u8,
+            "选择如何显示和编辑光泽强度和粗糙度值。\n使用的转换公式是一个近似值，并未考虑到传统着色器与PBR着色器之间的所有细微差别。"u8);
+    }
 }

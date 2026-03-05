@@ -1,7 +1,3 @@
-[submodule "OtterGui"]
-	path = OtterGui
-	url = https://github.com/MeowZWR/OtterGui.git
-	branch = cn
 [submodule "Penumbra.GameData"]
 	path = Penumbra.GameData
 	url = https://github.com/MeowZWR/Penumbra.GameData.git
@@ -18,3 +14,7 @@
 	path = Glamourer.Api
 	url = https://github.com/MeowZWR/Glamourer.Api.git
 	branch = cn
+[submodule "Luna"]
+	path = Luna
+	url = https://github.com/MeowZWR/Luna.git
+	branch = main

@@ -1,22 +1,18 @@
-﻿using Dalamud.Interface;
-using Dalamud.Interface.Utility;
-using Dalamud.Interface.Utility.Raii;
+﻿using Glamourer.Config;
 using Glamourer.Designs;
 using Glamourer.Interop.Material;
-using Dalamud.Bindings.ImGui;
-using OtterGui;
-using OtterGui.Services;
-using OtterGui.Text;
+using ImSharp;
+using Luna;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Files.MaterialStructs;
-using Penumbra.GameData.Gui;
 
 namespace Glamourer.Gui.Materials;
 
-public class MaterialDrawer(DesignManager _designManager, Configuration _config) : IService
+public class MaterialDrawer(DesignManager designManager, Configuration config) : IService
 {
-    public const float GlossWidth            = 100;
-    public const float SpecularStrengthWidth = 125;
+    public const float SliderWidth      = 90;
+    public const float ModeWidth        = 45;
+    public const float SheenSliderWidth = (2 * SliderWidth + ModeWidth) / 3;
 
     private int                _newMaterialIdx;
     private int                _newRowIdx;
@@ -27,167 +23,206 @@ public class MaterialDrawer(DesignManager _designManager, Configuration _config)
 
     public void Draw(Design design)
     {
-        var available = ImGui.GetContentRegionAvail().X;
-        _spacing    = ImGui.GetStyle().ItemInnerSpacing.X;
-        _buttonSize = new Vector2(ImGui.GetFrameHeight());
+        var available = Im.ContentRegion.Available.X;
+        _spacing    = Im.Style.ItemInnerSpacing.X;
+        _buttonSize = new Vector2(Im.Style.FrameHeight);
         var colorWidth = 4 * _buttonSize.X
-          + (GlossWidth + SpecularStrengthWidth) * ImGuiHelpers.GlobalScale
-          + 6 * _spacing
-          + ImUtf8.CalcTextSize("Revert"u8).X;
+          + (SliderWidth * 2 + ModeWidth) * Im.Style.GlobalScale
+          + 7 * _spacing
+          + Im.Font.CalculateSize("Revert"u8).X;
         DrawMultiButtons(design);
-        ImUtf8.Dummy(0);
-        ImGui.Separator();
-        ImUtf8.Dummy(0);
-        if (available > 1.95 * colorWidth)
+        Im.Dummy(0);
+        Im.Separator();
+        Im.Dummy(0);
+        if (available > 2.6f * colorWidth)
             DrawSingleRow(design);
         else
-            DrawTwoRow(design);
+            DrawMultipleRow(design);
         DrawNew(design);
     }
 
     private void DrawMultiButtons(Design design)
     {
         var any      = design.Materials.Count > 0;
-        var disabled = !_config.DeleteDesignModifier.IsActive();
-        var size     = new Vector2(200 * ImUtf8.GlobalScale, 0);
-        if (ImUtf8.ButtonEx("启用所有高级染色"u8,
+        var disabled = !config.DeleteDesignModifier.IsActive();
+        var size     = new Vector2(200 * Im.Style.GlobalScale, 0);
+        if (ImEx.Button("启用所有高级染色"u8, size,
                 any
                     ? "启用所有包含的高级染色而不删除它们。"u8
-                    : "此设计不包含任何高级染色。"u8, size,
+                    : "此设计不包含任何高级染色。"u8,
                 !any || disabled))
-            _designManager.ChangeApplyMulti(design, null, null, null, null, null, null, true, null);
-        ;
+            designManager.ChangeApplyMulti(design, null, null, null, null, null, null, true, null);
+
         if (disabled && any)
-            ImUtf8.HoverTooltip($"按住 {_config.DeleteDesignModifier} 点击以启用。");
-        ImGui.SameLine();
-        if (ImUtf8.ButtonEx("禁用所有高级染色"u8,
+            Im.Tooltip.OnHover($"按住 {config.DeleteDesignModifier} 点击以启用。");
+        Im.Line.Same();
+        if (ImEx.Button("禁用所有高级染色"u8, size,
                 any
                     ? "禁用所有包含的高级染色而不删除它们。"u8
-                    : "此设计不包含任何高级染色。"u8, size,
+                    : "此设计不包含任何高级染色。"u8,
                 !any || disabled))
-            _designManager.ChangeApplyMulti(design, null, null, null, null, null, null, false, null);
+            designManager.ChangeApplyMulti(design, null, null, null, null, null, null, false, null);
         if (disabled && any)
-            ImUtf8.HoverTooltip($"按住 {_config.DeleteDesignModifier} 点击以禁用。");
+            Im.Tooltip.OnHover($"按住 {config.DeleteDesignModifier} 点击以禁用。");
 
-        if (ImUtf8.ButtonEx("删除所有高级染色"u8, any ? ""u8 : "此设计不包含任何高级染色。"u8, size,
+        if (ImEx.Button("删除所有高级染色"u8, size, any ? StringU8.Empty : "此设计不包含任何高级染色。"u8,
                 !any || disabled))
             while (design.Materials.Count > 0)
-                _designManager.ChangeMaterialValue(design, MaterialValueIndex.FromKey(design.Materials[0].Item1), null);
+                designManager.ChangeMaterialValue(design, MaterialValueIndex.FromKey(design.Materials[0].Item1), null);
 
         if (disabled && any)
-            ImUtf8.HoverTooltip($"按住 {_config.DeleteDesignModifier} 点击以删除。");
+            Im.Tooltip.OnHover($"按住 {config.DeleteDesignModifier} 点击以删除。");
     }
 
     private void DrawName(MaterialValueIndex index)
     {
-        using var style = ImRaii.PushStyle(ImGuiStyleVar.ButtonTextAlign, new Vector2(0.05f, 0.5f));
-        ImUtf8.TextFramed(index.ToString(), 0, new Vector2((GlossWidth + SpecularStrengthWidth) * ImGuiHelpers.GlobalScale + _spacing, 0),
-            borderColor: ImGui.GetColorU32(ImGuiCol.Text));
+        using var style = ImStyleDouble.ButtonTextAlign.Push(new Vector2(0.05f, 0.5f));
+        ImEx.TextFramed($"{index}", new Vector2((SliderWidth * 2 + ModeWidth) * Im.Style.GlobalScale + _spacing * 2, 0),
+            borderColor: ImGuiColor.Text.Get());
     }
 
     private void DrawSingleRow(Design design)
     {
         for (var i = 0; i < design.Materials.Count; ++i)
         {
-            using var id = ImRaii.PushId(i);
+            using var id = Im.Id.Push(i);
             var (idx, value) = design.Materials[i];
             var key = MaterialValueIndex.FromKey(idx);
 
             DrawName(key);
-            ImGui.SameLine(0, _spacing);
+            Im.Line.Same(0, _spacing);
             DeleteButton(design, key, ref i);
-            ImGui.SameLine(0, _spacing);
-            CopyButton(value.Value);
-            ImGui.SameLine(0, _spacing);
+            Im.Line.Same(0, _spacing);
+            CopyButton(value.Value, value.Mode);
+            Im.Line.Same(0, _spacing);
             PasteButton(design, key);
-            ImGui.SameLine(0, _spacing);
-            using var disabled = ImRaii.Disabled(design.WriteProtected());
+            Im.Line.Same(0, _spacing);
+            using var disabled = Im.Disabled(design.WriteProtected());
             EnabledToggle(design, key, value.Enabled);
-            ImGui.SameLine(0, _spacing);
-            DrawRow(design, key, value.Value, value.Revert);
-            ImGui.SameLine(0, _spacing);
+            Im.Line.Same(0, _spacing);
+            DrawRow(design, key, value.Value, value.Revert, value.Mode);
+            DrawRowExtra(design, key, value.Value, value.Revert, value.Mode, true);
+            Im.Line.Same(0, _spacing);
             RevertToggle(design, key, value.Revert);
         }
     }
 
-    private void DrawTwoRow(Design design)
+    private void DrawMultipleRow(Design design)
     {
         for (var i = 0; i < design.Materials.Count; ++i)
         {
-            using var id = ImRaii.PushId(i);
+            using var id = Im.Id.Push(i);
             var (idx, value) = design.Materials[i];
             var key = MaterialValueIndex.FromKey(idx);
 
             DrawName(key);
-            ImGui.SameLine(0, _spacing);
+            Im.Line.Same(0, _spacing);
             DeleteButton(design, key, ref i);
-            ImGui.SameLine(0, _spacing);
-            CopyButton(value.Value);
-            ImGui.SameLine(0, _spacing);
+            Im.Line.Same(0, _spacing);
+            CopyButton(value.Value, value.Mode);
+            Im.Line.Same(0, _spacing);
             PasteButton(design, key);
-            ImGui.SameLine(0, _spacing);
+            Im.Line.Same(0, _spacing);
+            using var disabled = Im.Disabled(design.WriteProtected());
             EnabledToggle(design, key, value.Enabled);
 
 
-            DrawRow(design, key, value.Value, value.Revert);
-            ImGui.SameLine(0, _spacing);
+            DrawRow(design, key, value.Value, value.Revert, value.Mode);
+            Im.Line.Same(0, _spacing);
             RevertToggle(design, key, value.Revert);
-            ImGui.Separator();
+            DrawRowExtra(design, key, value.Value, value.Revert, value.Mode, false);
+            Im.Separator();
         }
     }
 
     private void DeleteButton(Design design, MaterialValueIndex index, ref int idx)
     {
-        var deleteEnabled = _config.DeleteDesignModifier.IsActive();
-        if (!ImUtf8.IconButton(FontAwesomeIcon.Trash,
-                $"删除此行颜色集。{(deleteEnabled ? string.Empty : $"\n按住{_config.DeleteDesignModifier}来删除。")}", disabled:
+        var deleteEnabled = config.DeleteDesignModifier.IsActive();
+        if (!ImEx.Icon.Button(LunaStyle.DeleteIcon,
+                $"删除此行颜色集。{(deleteEnabled ? string.Empty : $"\n按住 {config.DeleteDesignModifier} 来删除。")}",
                 !deleteEnabled || design.WriteProtected()))
             return;
 
-        _designManager.ChangeMaterialValue(design, index, null);
+        designManager.ChangeMaterialValue(design, index, null);
         --idx;
     }
 
-    private void CopyButton(in ColorRow row)
+    private void CopyButton(in ColorRow row, ColorRow.Mode mode)
     {
-        if (ImUtf8.IconButton(FontAwesomeIcon.Clipboard, "将此行导出到剪贴板。"u8))
-            ColorRowClipboard.Row = row;
+        if (ImEx.Icon.Button(LunaStyle.ToClipboardIcon, "将此行导出到剪贴板。"u8))
+        {
+            ColorRowClipboard.Row     = row;
+            ColorRowClipboard.RowMode = mode;
+        }
     }
 
     private void PasteButton(Design design, MaterialValueIndex index)
     {
-        if (ImUtf8.IconButton(FontAwesomeIcon.Paste, "将导出的高级染色数据从剪贴板导入到此行。"u8,
-                disabled: !ColorRowClipboard.IsSet || design.WriteProtected()))
-            _designManager.ChangeMaterialValue(design, index, ColorRowClipboard.Row);
+        if (ImEx.Icon.Button(LunaStyle.FromClipboardIcon, "将导出的行从剪贴板导入到此行。"u8,
+                !ColorRowClipboard.IsSet || design.WriteProtected()))
+            designManager.ChangeMaterialValue(design, index, ColorRowClipboard.Row, ColorRowClipboard.RowMode);
     }
 
     private void EnabledToggle(Design design, MaterialValueIndex index, bool enabled)
     {
-        if (ImUtf8.Checkbox("启用"u8, ref enabled))
-            _designManager.ChangeApplyMaterialValue(design, index, enabled);
+        if (Im.Checkbox("启用"u8, ref enabled))
+            designManager.ChangeApplyMaterialValue(design, index, enabled);
     }
 
     private void RevertToggle(Design design, MaterialValueIndex index, bool revert)
     {
-        if (ImUtf8.Checkbox("还原"u8, ref revert))
-            _designManager.ChangeMaterialRevert(design, index, revert);
-        ImUtf8.HoverTooltip(
-            "如果选中此项，Glamourer将尝试将此行高级染色恢复到其游戏状态，不应用此行。"u8);
+        if (Im.Checkbox("还原"u8, ref revert))
+            designManager.ChangeMaterialRevert(design, index, revert);
+        Im.Tooltip.OnHover(
+            "如果选中此项，Glamourer 将尝试将此行高级染色恢复到其游戏状态，不应用此行。"u8);
+    }
+
+    private void ModeToggle(Design design, MaterialValueIndex index, ColorRow.Mode mode)
+    {
+        if (Im.Button(ToCallsignString(mode), ImEx.ScaledVectorX(ModeWidth)))
+            designManager.ChangeMaterialMode(design, index, GetNextMode(mode));
+        Im.Tooltip.OnHover(ToTooltipString(mode));
+
+        return;
+
+        static ReadOnlySpan<byte> ToCallsignString(ColorRow.Mode mode)
+            => mode switch
+            {
+                ColorRow.Mode.Legacy    => "Lgc###mode"u8,
+                ColorRow.Mode.Dawntrail => "DT###mode"u8,
+                _                       => StringU8.Empty,
+            };
+
+        static ColorRow.Mode GetNextMode(ColorRow.Mode mode)
+            => mode switch
+            {
+                ColorRow.Mode.Legacy    => ColorRow.Mode.Dawntrail,
+                ColorRow.Mode.Dawntrail => ColorRow.Mode.Legacy,
+                _                       => ColorRow.Mode.Dawntrail,
+            };
+
+        static ReadOnlySpan<byte> ToTooltipString(ColorRow.Mode mode)
+            => mode switch
+            {
+                ColorRow.Mode.Legacy    => "此行颜色集目前包含 Legacy 材质参数。\n点击此按钮切换到 Dawntrail 材质参数。"u8,
+                ColorRow.Mode.Dawntrail => "此行颜色集目前包含 Dawntrail 材质参数。\n点击此按钮切换到 Legacy 材质参数。"u8,
+                _                       => StringU8.Empty,
+            };
     }
 
     public sealed class MaterialSlotCombo;
 
     private void DrawSlotCombo()
     {
-        var width = ImUtf8.CalcTextSize(EquipSlot.OffHand.ToName()).X + ImGui.GetFrameHeightWithSpacing();
-        ImGui.SetNextItemWidth(width);
-        using var combo = ImUtf8.Combo("##slot"u8, _newKey.SlotName());
+        var width = Im.Font.CalculateSize(EquipSlot.OffHand.ToNameU8()).X + Im.Style.FrameHeightWithSpacing;
+        Im.Item.SetNextWidth(width);
+        using var combo = Im.Combo.Begin("##slot"u8, _newKey.SlotName());
         if (combo)
         {
             var currentSlot = _newKey.ToEquipSlot();
             foreach (var tmpSlot in EquipSlotExtensions.FullSlots)
             {
-                if (ImUtf8.Selectable(tmpSlot.ToName(), tmpSlot == currentSlot) && currentSlot != tmpSlot)
+                if (Im.Selectable(tmpSlot.ToNameU8(), tmpSlot == currentSlot) && currentSlot != tmpSlot)
                     _newKey = MaterialValueIndex.FromSlot(tmpSlot) with
                     {
                         MaterialIndex = (byte)_newMaterialIdx,
@@ -198,7 +233,7 @@ public class MaterialDrawer(DesignManager _designManager, Configuration _config)
             var currentBonus = _newKey.ToBonusSlot();
             foreach (var bonusSlot in BonusExtensions.AllFlags)
             {
-                if (ImUtf8.Selectable(bonusSlot.ToName(), bonusSlot == currentBonus) && bonusSlot != currentBonus)
+                if (Im.Selectable(bonusSlot.ToNameU8(), bonusSlot == currentBonus) && bonusSlot != currentBonus)
                     _newKey = MaterialValueIndex.FromSlot(bonusSlot) with
                     {
                         MaterialIndex = (byte)_newMaterialIdx,
@@ -207,69 +242,121 @@ public class MaterialDrawer(DesignManager _designManager, Configuration _config)
             }
         }
 
-        ImUtf8.HoverTooltip("为高级染色选择一个装备类型。"u8);
+        Im.Tooltip.OnHover("为高级染色选择一个装备类型。"u8);
     }
 
     public void DrawNew(Design design)
     {
         DrawSlotCombo();
-        ImUtf8.SameLineInner();
+        Im.Line.SameInner();
         DrawMaterialIdxDrag();
-        ImUtf8.SameLineInner();
+        Im.Line.SameInner();
         DrawRowIdxDrag();
-        ImUtf8.SameLineInner();
+        Im.Line.SameInner();
         var exists = design.GetMaterialDataRef().TryGetValue(_newKey, out _);
-        if (ImUtf8.ButtonEx("添加一行"u8,
-                exists ? "所选高级染色已存在"u8 : "添加一行高级染色。"u8, Vector2.Zero,
+        if (ImEx.Button("添加一行"u8, Vector2.Zero,
+                exists ? "所选高级染色已存在"u8 : "添加一行高级染色。"u8,
                 exists || design.WriteProtected()))
-            _designManager.ChangeMaterialValue(design, _newKey, ColorRow.Empty);
+            designManager.ChangeMaterialValue(design, _newKey, ColorRow.Empty);
     }
 
     private void DrawMaterialIdxDrag()
     {
-        ImGui.SetNextItemWidth(ImUtf8.CalcTextSize("材质 AA"u8).X);
-        var format = $"材质 {(char)('A' + _newMaterialIdx)}";
-        if (ImUtf8.DragScalar("##材质"u8, ref _newMaterialIdx, format, 0, MaterialService.MaterialsPerModel - 1, 0.01f,
-                ImGuiSliderFlags.NoInput))
+        Im.Item.SetNextWidth(Im.Font.CalculateSize("材质 AA"u8).X);
+        if (Im.Drag("##Material"u8, ref _newMaterialIdx, $"材质 {(char)('A' + _newMaterialIdx)}", 0, MaterialService.MaterialsPerModel - 1,
+                0.01f, SliderFlags.NoInput))
         {
             _newMaterialIdx = Math.Clamp(_newMaterialIdx, 0, MaterialService.MaterialsPerModel - 1);
             _newKey         = _newKey with { MaterialIndex = (byte)_newMaterialIdx };
         }
 
-        ImUtf8.HoverTooltip("左右拖动以更改其值。"u8);
+        Im.Tooltip.OnHover("左右拖动以更改其值。"u8);
     }
 
     private void DrawRowIdxDrag()
     {
-        ImGui.SetNextItemWidth(ImUtf8.CalcTextSize("行 0000"u8).X);
-        var format = $"行 {_newRowIdx / 2 + 1}{(char)(_newRowIdx % 2 + 'A')}";
-        if (ImUtf8.DragScalar("##行"u8, ref _newRowIdx, format, 0, ColorTable.NumRows - 1, 0.01f, ImGuiSliderFlags.NoInput))
+        Im.Item.SetNextWidth(Im.Font.CalculateSize("行 0000"u8).X);
+        if (Im.Drag("##Row"u8, ref _newRowIdx, $"行 {_newRowIdx / 2 + 1}{(char)(_newRowIdx % 2 + 'A')}", 0, ColorTable.NumRows - 1, 0.01f,
+                SliderFlags.NoInput))
         {
             _newRowIdx = Math.Clamp(_newRowIdx, 0, ColorTable.NumRows - 1);
             _newKey    = _newKey with { RowIndex = (byte)_newRowIdx };
         }
 
-        ImUtf8.HoverTooltip("左右拖动以更改其值。"u8);
+        Im.Tooltip.OnHover("左右拖动以更改其值。"u8);
     }
 
-    private void DrawRow(Design design, MaterialValueIndex index, in ColorRow row, bool disabled)
+    private void DrawRow(Design design, MaterialValueIndex index, in ColorRow row, bool disabled, ColorRow.Mode mode)
     {
         var tmp = row;
-        using var _ = ImRaii.Disabled(disabled);
-        var applied = ImGuiUtil.ColorPicker("##diffuse", "更改此行的漫反射值。", row.Diffuse, v => tmp.Diffuse = v, "D");
-        ImUtf8.SameLineInner();
-        applied |= ImGuiUtil.ColorPicker("##specular", "更改此行的镜面反射值。", row.Specular, v => tmp.Specular = v, "S");
-        ImUtf8.SameLineInner();
-        applied |= ImGuiUtil.ColorPicker("##emissive", "更改此行的发光值。", row.Emissive, v => tmp.Emissive = v, "E");
-        ImUtf8.SameLineInner();
-        ImGui.SetNextItemWidth(GlossWidth * ImGuiHelpers.GlobalScale);
-        applied |= AdvancedDyePopup.DragGloss(ref tmp.GlossStrength);
-        ImUtf8.HoverTooltip("更改此行的光泽强度。"u8);
-        ImUtf8.SameLineInner();
-        ImGui.SetNextItemWidth(SpecularStrengthWidth * ImGuiHelpers.GlobalScale);
-        applied |= AdvancedDyePopup.DragSpecularStrength(ref tmp.SpecularStrength);
-        ImUtf8.HoverTooltip("更改此行的镜面反射强度。"u8);
+        using var _ = Im.Disabled(disabled);
+        var applied = ImEx.ColorPickerButton("##diffuse"u8, "更改此行的漫反射值。"u8, row.Diffuse, out tmp.Diffuse, 'D');
+        Im.Line.SameInner();
+        applied |= ImEx.ColorPickerButton("##specular"u8, "更改此行的镜面反射值。"u8, row.Specular, out tmp.Specular, 'S');
+        Im.Line.SameInner();
+        applied |= ImEx.ColorPickerButton("##emissive"u8, "更改此行的发光值。"u8, row.Emissive, out tmp.Emissive, 'E');
+        Im.Line.SameInner();
+        ModeToggle(design, index, mode);
+        Im.Line.SameInner();
+        Im.Item.SetNextWidthScaled(SliderWidth);
+        var editAsRoughness = config.RoughnessSetting.Get(mode is ColorRow.Mode.Dawntrail);
+        applied |= (mode, editAsRoughness) switch
+        {
+            (ColorRow.Mode.Legacy, false)    => AdvancedDyePopup.DragGloss(ref tmp.GlossStrength, true),
+            (ColorRow.Mode.Legacy, true)     => AdvancedDyePopup.DragGlossAsRoughness(ref tmp.GlossStrength, true),
+            (ColorRow.Mode.Dawntrail, false) => AdvancedDyePopup.DragRoughnessAsGloss(ref tmp.Roughness, true),
+            (ColorRow.Mode.Dawntrail, true)  => AdvancedDyePopup.DragRoughness(ref tmp.Roughness, true),
+            _                                => false,
+        };
+        Im.Tooltip.OnHover(editAsRoughness
+            ? "更改此行的粗糙度。\n按住Ctrl并单击右键可取消。"u8
+            : "更改此行的光泽强度。\n按住Ctrl并单击右键可取消。"u8);
+        if (mode is ColorRow.Mode.Dawntrail)
+        {
+            Im.Line.SameInner();
+            Im.Item.SetNextWidthScaled(SliderWidth);
+            applied |= AdvancedDyePopup.DragMetalness(ref tmp.Metalness, true);
+            Im.Tooltip.OnHover("更改此行的金属度。\n按住Ctrl并单击右键可取消。"u8);
+        }
+        else
+        {
+            Im.Line.SameInner();
+            Im.Item.SetNextWidthScaled(SliderWidth);
+            applied |= AdvancedDyePopup.DragSpecularStrength(ref tmp.SpecularStrength, true);
+            Im.Tooltip.OnHover("更改此行的镜面反射强度。\n按住Ctrl并单击右键可取消。"u8);
+        }
+
         if (applied)
-            _designManager.ChangeMaterialValue(design, index, tmp);
+            designManager.ChangeMaterialValue(design, index, tmp);
+    }
+
+    private void DrawRowExtra(Design design, MaterialValueIndex index, in ColorRow row, bool disabled, ColorRow.Mode mode, bool compact)
+    {
+        if (mode is not ColorRow.Mode.Dawntrail)
+            return;
+
+        var tmp = row;
+        using var _ = Im.Disabled(disabled);
+
+        if (!compact)
+            Im.Dummy(_buttonSize with { X = _buttonSize.X * 3 + _spacing * 2 });
+
+        Im.Line.SameInner();
+        Im.Item.SetNextWidthScaled(SheenSliderWidth);
+        var applied = AdvancedDyePopup.DragSheen(ref tmp.Sheen, true);
+        Im.Tooltip.OnHover("Change the sheen strength for this row.\nControl and Right-Click to unset."u8);
+
+        Im.Line.SameInner();
+        Im.Item.SetNextWidthScaled(SheenSliderWidth);
+        applied |= AdvancedDyePopup.DragSheenTint(ref tmp.SheenTint, true);
+        Im.Tooltip.OnHover("Change the sheen tint for this row.\nControl and Right-Click to unset."u8);
+
+        Im.Line.SameInner();
+        Im.Item.SetNextWidthScaled(SheenSliderWidth);
+        applied |= AdvancedDyePopup.DragSheenRoughness(ref tmp.SheenAperture, true);
+        Im.Tooltip.OnHover("Change the sheen roughness for this row.\nControl and Right-Click to unset."u8);
+
+        if (applied)
+            designManager.ChangeMaterialValue(design, index, tmp);
     }
 }
