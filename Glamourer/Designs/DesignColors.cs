@@ -10,10 +10,10 @@ namespace Glamourer.Designs;
 
 public sealed class DesignColors : ISavable, IReadOnlyDictionary<string, Rgba32>, IService
 {
-    public const           string   AutomaticName       = "Automatic";
+    public const           string   AutomaticName       = "自动";
     public static readonly StringU8 AutomaticNameU8     = new("Automatic"u8);
-    public const           string   MissingColorName    = "Missing Color";
-    public static readonly StringU8 MissingColorNameU8  = new("Missing Color"u8);
+    public const           string   MissingColorName    = "缺失颜色";
+    public static readonly StringU8 MissingColorNameU8  = new("缺失颜色"u8);
     public const           uint     MissingColorDefault = 0xFF0000D0;
 
     private readonly SaveService                _saveService;

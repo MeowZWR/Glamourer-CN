@@ -287,14 +287,14 @@ public partial class CustomizationDrawer
 
     private void ApplyCheckbox()
     {
-        if (UiHelpers.DrawCheckbox("##apply"u8, $"应用[{_currentOption}]的外貌到这个设计。"u8, _currentApply, out _, _locked))
+        if (UiHelpers.DrawCheckbox("##apply"u8, $"应用[{_currentOption}]的外貌到这个设计。", _currentApply, out _, _locked))
             ToggleApply();
     }
 
     private void ApplyCheckbox(CustomizeIndex index)
     {
         using var id = SetId(index);
-        if (UiHelpers.DrawCheckbox("##apply"u8, $"应用[{_currentOption}]的外貌到这个设计。"u8, _currentApply, out _, _locked))
+        if (UiHelpers.DrawCheckbox("##apply"u8, $"应用[{_currentOption}]的外貌到这个设计。", _currentApply, out _, _locked))
             ToggleApply();
     }
 

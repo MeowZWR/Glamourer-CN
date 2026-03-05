@@ -7,40 +7,40 @@ namespace Glamourer.Config;
 [NamedEnum(Utf16: false)]
 public enum DesignPanelFlag : uint
 {
-    [Name("Customization")]
+    [Name("外貌")]
     Customization = 0x0001,
 
-    [Name("Equipment")]
+    [Name("装备")]
     Equipment = 0x0002,
 
-    [Name("Advanced Customization")]
+    [Name("高级外貌")]
     AdvancedCustomizations = 0x0004,
 
-    [Name("Advanced Dyes")]
+    [Name("高级染色")]
     AdvancedDyes = 0x0008,
 
-    [Name("Appearance Details")]
+    [Name("外观详情")]
     AppearanceDetails = 0x0010,
 
-    [Name("Design Details")]
+    [Name("设计详情")]
     DesignDetails = 0x0020,
 
-    [Name("Mod Associations")]
+    [Name("模组关联")]
     ModAssociations = 0x0040,
 
-    [Name("Design Links")]
+    [Name("设计链接")]
     DesignLinks = 0x0080,
 
-    [Name("Application Rules")]
+    [Name("应用规则")]
     ApplicationRules = 0x0100,
 
-    [Name("Debug Data")]
+    [Name("调试数据")]
     DebugData = 0x0200,
 }
 
 public static partial class DesignPanelFlagExtensions
 {
-    private static readonly StringU8 Expand = new("Expand"u8);
+    private static readonly StringU8 Expand = new("展开"u8);
 
     public static Im.HeaderDisposable Header(this DesignPanelFlag flag, Configuration config)
     {
@@ -67,12 +67,12 @@ public static partial class DesignPanelFlagExtensions
 
         var headerColor    = Im.Color.Get(ImGuiColor.TableHeaderBackground);
         var checkBoxOffset = (checkBoxWidth - Im.Style.FrameHeight) / 2;
-        table.SetupColumn("Panel##1"u8,  TableColumnFlags.WidthFixed, textWidth);
-        table.SetupColumn("Show##1"u8,   TableColumnFlags.WidthFixed, checkBoxWidth);
-        table.SetupColumn("Expand##1"u8, TableColumnFlags.WidthFixed, checkBoxWidth);
-        table.SetupColumn("Panel##2"u8,  TableColumnFlags.WidthFixed, textWidth);
-        table.SetupColumn("Show##2"u8,   TableColumnFlags.WidthFixed, checkBoxWidth);
-        table.SetupColumn("Expand##2"u8, TableColumnFlags.WidthFixed, checkBoxWidth);
+        table.SetupColumn("面板##1"u8,  TableColumnFlags.WidthFixed, textWidth);
+        table.SetupColumn("显示##1"u8,   TableColumnFlags.WidthFixed, checkBoxWidth);
+        table.SetupColumn("展开##1"u8, TableColumnFlags.WidthFixed, checkBoxWidth);
+        table.SetupColumn("面板##2"u8,  TableColumnFlags.WidthFixed, textWidth);
+        table.SetupColumn("显示##2"u8,   TableColumnFlags.WidthFixed, checkBoxWidth);
+        table.SetupColumn("展开##2"u8, TableColumnFlags.WidthFixed, checkBoxWidth);
 
         table.HeaderRow();
         foreach (var panel in DesignPanelFlag.Values)
@@ -89,13 +89,13 @@ public static partial class DesignPanelFlagExtensions
             if (Im.Checkbox("##show"u8, ref isShown))
                 setterHide.Invoke(isShown ? hidden & ~panel : hidden | panel);
             Im.Tooltip.OnHover(
-                "Show this panel and associated functionality in all relevant tabs.\n\nToggling this off does NOT disable any functionality, just the display of it, so hide panels at your own risk."u8);
+                "在所有相关选项卡中显示此面板及相关功能。\n\n注意：关闭此项并不会禁用功能本身，仅隐藏其界面显示。请自行承担隐藏面板带来的操作风险。"u8);
 
             table.NextColumn();
             Im.Cursor.X += checkBoxOffset;
             if (Im.Checkbox("##expand"u8, ref isExpanded))
                 setterExpand.Invoke(isExpanded ? expanded | panel : expanded & ~panel);
-            Im.Tooltip.OnHover("Expand this panel by default in all relevant tabs."u8);
+            Im.Tooltip.OnHover("在所有相关选项卡中默认展开此面板。"u8);
         }
     }
 }

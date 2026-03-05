@@ -30,7 +30,7 @@ public sealed class ApplyCharacterButton(
         => true;
 
     public override void DrawTooltip()
-        => Im.Text("Overwrite this design with your character's current state."u8);
+        => Im.Text("覆盖此设计为当前角色状态。"u8);
 
     public override void OnClick()
     {
@@ -39,17 +39,17 @@ public sealed class ApplyCharacterButton(
         {
             var (player, actor) = objects.PlayerData;
             if (!player.IsValid || !actor.Valid || !stateManager.GetOrCreate(player, actor.Objects[0], out var state))
-                throw new Exception("No player state available.");
+                throw new Exception("没有可用的玩家状态。");
 
             var design = converter.Convert(state, ApplicationRules.FromModifiers(state))
-             ?? throw new Exception("The clipboard did not contain valid data.");
+             ?? throw new Exception("剪贴板不包含有效数据。");
             selection.GetMaterialDataRef().Clear();
             manager.ApplyDesign(selection, design);
         }
         catch (Exception ex)
         {
-            Glamourer.Messager.NotificationMessage(ex, $"Could not apply player state to {selection.Name}.",
-                $"Could not apply player state to design {selection.Identifier}", NotificationType.Error, false);
+            Glamourer.Messager.NotificationMessage(ex, $"无法应用玩家状态到 {selection.Name}。",
+                $"无法应用玩家状态到设计 {selection.Identifier}", NotificationType.Error, false);
         }
     }
 }

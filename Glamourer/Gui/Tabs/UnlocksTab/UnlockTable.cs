@@ -72,7 +72,7 @@ public sealed class UnlockTable : TableBase<UnlockCacheItem, UnlockTable.Cache>,
     {
         ImEx.TextFrameAligned($"{cache.Count} / {cache.AllItems.Count} 个物品可见");
         Im.Line.Same();
-        if (Im.Checkbox("仅显示每种模型类型的一个物品", _config.GroupUnlocksByModel))
+        if (Im.Checkbox("仅显示每种模型类型的一个物品"u8, _config.GroupUnlocksByModel))
         {
             _config.GroupUnlocksByModel ^= true;
             cache.SetFilterDirty();
@@ -81,14 +81,14 @@ public sealed class UnlockTable : TableBase<UnlockCacheItem, UnlockTable.Cache>,
         Im.Tooltip.OnHover("根据当前的排序和过滤规则，隐藏所有模型数据相同重复项（仅保留首项）。"u8);
 
         Im.Line.Same();
-        if (Im.Checkbox("忽略变体", _config.GroupUnlocksIgnoreVariants))
+        if (Im.Checkbox("忽略变体"u8, _config.GroupUnlocksIgnoreVariants))
         {
             _config.GroupUnlocksIgnoreVariants ^= true;
             cache.SetFilterDirty();
         }
 
         Im.Tooltip.OnHover(
-            "在按部位和模型数据进行分组时，系统将忽略“变体”（即模型数据的最后一位数字）。\n\n通常，不同变体仅代表细微差异的项目（如配色不同或微调细节）；但在某些情况下，变体也可能导致显著变化（例如眼镜类装备）。");
+            "在按部位和模型数据进行分组时，系统将忽略“变体”（即模型数据的最后一位数字）。\n\n通常，不同变体仅代表细微差异的项目（如配色不同或微调细节）；但在某些情况下，变体也可能导致显著变化（例如眼镜类装备）。"u8);
 
         Im.Line.Same();
         DrawScrollCombo(cache);
@@ -97,7 +97,7 @@ public sealed class UnlockTable : TableBase<UnlockCacheItem, UnlockTable.Cache>,
     private void DrawScrollCombo(in Cache cache)
     {
         Im.Item.SetNextWidthFull();
-        Im.Combo.DrawPreview("##select"u8, _currentItem.Item.Valid ? _currentItem.Name.Utf8 : "在这里滚动滚轮"u8, out _, out _,
+        Im.Combo.DrawPreview("##select"u8, _currentItem.Item.Valid ? _currentItem.Name.Utf8 : "在这里滚动滚轮。"u8, out _, out _,
             ComboFlags.NoArrowButton);
         if (!Im.Item.Hovered())
             return;

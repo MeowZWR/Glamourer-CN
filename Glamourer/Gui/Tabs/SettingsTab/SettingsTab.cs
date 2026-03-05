@@ -310,24 +310,24 @@ public sealed class SettingsTab(
 
         EquipmentDrawer.DrawKeepItemFilter(config);
 
-        Checkbox("Remember Design Filter Across Sessions"u8,
-            "Whether the filter in the Designs tab should remember its input and start with its list filtered identically to the last session."u8,
+        Checkbox("跨会话保留设计筛选"u8,
+            "是否在“设计”选项卡中记录筛选输入，并在下次启动时恢复到与上次运行相同的筛选状态。"u8,
             config.RememberDesignFilter, v => config.RememberDesignFilter = v);
 
-        Checkbox("Remember Actor Filter Across Sessions"u8,
-            "Whether the filter in the Actors tab should remember its input and start with its list filtered identically to the last session."u8,
+        Checkbox("跨会话保留角色筛选"u8,
+            "是否在“角色”选项卡中记录筛选输入，并在下次启动时恢复到与上次运行相同的筛选状态。"u8,
             config.RememberActorFilter, v => config.RememberActorFilter = v);
 
-        Checkbox("Remember Automation Filters Across Sessions"u8,
-            "Whether the filters in the Automation tab should remember their respective inputs and start with their list filtered identically to the last session."u8,
+        Checkbox("跨会话保留自动执行筛选"u8,
+            "是否在“自动执行”选项卡中记录筛选输入，并在下次启动时恢复到与上次运行相同的筛选状态。"u8,
             config.RememberAutomationFilter, v => config.RememberAutomationFilter = v);
 
-        Checkbox("Remember NPC Filter Across Sessions"u8,
-            "Whether the filter in the NPCs tab should remember its input and start with its list filtered identically to the last session."u8,
+        Checkbox("跨会话保留NPC筛选"u8,
+            "是否在“NPC”选项卡中记录筛选输入，并在下次启动时恢复到与上次运行相同的筛选状态。"u8,
             config.RememberNpcFilter, v => config.RememberNpcFilter = v);
 
-        Checkbox("Remember Unlocks Filters Across Sessions"u8,
-            "Whether the filters in the Unlocks tab should remember their respective inputs and start with its table filtered identically to the last session."u8,
+        Checkbox("跨会话保留已解锁筛选"u8,
+            "是否在“已解锁”选项卡中记录筛选输入，并在下次启动时恢复到与上次运行相同的筛选状态。"u8,
             config.RememberUnlocksFilters, v => config.RememberUnlocksFilters = v);
 
         Im.Line.New();
@@ -335,16 +335,16 @@ public sealed class SettingsTab(
 
     private readonly (StringU8, QdbButtons)[] _columns =
     [
-        (new StringU8("Toggle Main Window"u8), QdbButtons.ToggleMainWindow),
-        (new StringU8("Apply Design"u8), QdbButtons.ApplyDesign),
-        (new StringU8("Revert All"u8), QdbButtons.RevertAll),
-        (new StringU8("Revert to Auto"u8), QdbButtons.RevertAutomation),
-        (new StringU8("Reapply Auto"u8), QdbButtons.ReapplyAutomation),
-        (new StringU8("Revert Equip"u8), QdbButtons.RevertEquip),
-        (new StringU8("Revert Customize"u8), QdbButtons.RevertCustomize),
-        (new StringU8("Revert Advanced Customization"u8), QdbButtons.RevertAdvancedCustomization),
-        (new StringU8("Revert Advanced Dyes"u8), QdbButtons.RevertAdvancedDyes),
-        (new StringU8("Reset Settings"u8), QdbButtons.ResetSettings),
+        (new StringU8("开关主窗口"u8), QdbButtons.ToggleMainWindow),
+        (new StringU8("应用设计"u8), QdbButtons.ApplyDesign),
+        (new StringU8("恢复所有"u8), QdbButtons.RevertAll),
+        (new StringU8("恢复到自动"u8), QdbButtons.RevertAutomation),
+        (new StringU8("重新应用自动"u8), QdbButtons.ReapplyAutomation),
+        (new StringU8("恢复装备"u8), QdbButtons.RevertEquip),
+        (new StringU8("恢复外貌"u8), QdbButtons.RevertCustomize),
+        (new StringU8("恢复高级外貌"u8), QdbButtons.RevertAdvancedCustomization),
+        (new StringU8("恢复高级染色"u8), QdbButtons.RevertAdvancedDyes),
+        (new StringU8("重置设置"u8), QdbButtons.ResetSettings),
     ];
 
     private static bool DisplayButton(QdbButtons button, bool showAuto, bool useTemporarySettings)

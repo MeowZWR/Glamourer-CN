@@ -54,37 +54,37 @@ public sealed class ActorFilter : TextFilterBase<ActorCacheItem>, IUiService
             return ret;
 
         using var tt = Im.Tooltip.Begin();
-        Im.Text("Filter for names containing the input."u8);
+        Im.Text("筛选包含输入名称的角色。"u8);
         Im.Dummy(new Vector2(0, Im.Style.TextHeight / 2));
-        Im.Text("Special filters are:"u8);
+        Im.Text("可按类型筛选："u8);
         var color = ColorId.HeaderButtons.Value();
         Im.Text("<p>"u8, color);
         Im.Line.NoSpacing();
-        Im.Text(": show only player characters."u8);
+        Im.Text(": 仅显示玩家角色。"u8);
 
 
         Im.Text("<o>"u8, color);
         Im.Line.NoSpacing();
-        Im.Text(": show only owned game objects."u8);
+        Im.Text(": 仅显示所属游戏对象。"u8);
 
         Im.Text("<n>"u8, color);
         Im.Line.NoSpacing();
-        Im.Text(": show only NPCs."u8);
+        Im.Text(": 仅显示NPC。"u8);
 
         Im.Text("<r>"u8, color);
         Im.Line.NoSpacing();
-        Im.Text(": show only retainers."u8);
+        Im.Text(": 仅显示雇员。"u8);
 
         Im.Text("<s>"u8, color);
         Im.Line.NoSpacing();
-        Im.Text(": show only special screen characters."u8);
+        Im.Text(": 仅显示特殊屏幕角色。"u8);
 
         Im.Text("<w>"u8, color);
         Im.Line.NoSpacing();
-        Im.Text(": show only players from your world."u8);
+        Im.Text(": 仅显示你的服务器的玩家。"u8);
 
         if (Text.Length > 0)
-            Im.Text("\nMiddle-click to clear filters."u8);
+            Im.Text("\n中键点击清除筛选。"u8);
         return ret;
     }
 

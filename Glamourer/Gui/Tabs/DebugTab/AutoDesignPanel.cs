@@ -27,7 +27,7 @@ public sealed class AutoDesignPanel(AutoDesignManager autoDesignManager) : IGame
 
             table.DrawDataPair("Name"u8,    set.Name);
             table.DrawDataPair("Index"u8,   idx);
-            table.DrawDataPair("Enabled"u8, set.Enabled);
+            table.DrawDataPair("启用"u8, set.Enabled);
             table.DrawDataPair("Actor"u8,   set.Identifiers[0]);
 
             foreach (var (designIdx, design) in set.Designs.Index())

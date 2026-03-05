@@ -6,7 +6,7 @@ namespace Glamourer.Gui.Tabs.UnlocksTab;
 
 public readonly struct UnlockCacheItem(in EquipItem item, in EquipItem offhand, in EquipItem gauntlets, in JobGroup jobs)
 {
-    private static readonly StringU8 Always = new("Always"u8);
+    private static readonly StringU8 Always = new("始终解锁"u8);
 
     [Flags]
     public enum Dyability : byte

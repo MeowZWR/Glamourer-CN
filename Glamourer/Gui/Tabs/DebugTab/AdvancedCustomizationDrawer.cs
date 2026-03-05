@@ -8,7 +8,7 @@ namespace Glamourer.Gui.Tabs.DebugTab;
 public sealed unsafe class AdvancedCustomizationDrawer(ActorObjectManager objects) : IGameDataDrawer
 {
     public ReadOnlySpan<byte> Label
-        => "Advanced Customizations"u8;
+        => "高级外貌"u8;
 
     public bool Disabled
         => false;
@@ -18,14 +18,14 @@ public sealed unsafe class AdvancedCustomizationDrawer(ActorObjectManager object
         var (_, data) = objects.PlayerData;
         if (!data.Valid)
         {
-            Im.Text("Invalid player."u8);
+            Im.Text("无效玩家。"u8);
             return;
         }
 
         var model = data.Objects[0].Model;
         if (!model.IsHuman)
         {
-            Im.Text("Invalid model."u8);
+            Im.Text("无效模型。"u8);
             return;
         }
 

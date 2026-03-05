@@ -16,7 +16,7 @@ public sealed class ImportDesignButton(DesignConverter converter, DesignManager 
         => true;
 
     public override void DrawTooltip()
-        => Im.Text("Try to import a design from your clipboard."u8);
+        => Im.Text("尝试从剪贴板导入设计。"u8);
 
     public override void OnClick()
     {

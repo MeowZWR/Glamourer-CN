@@ -332,7 +332,7 @@ public sealed class SetPanel(
         var tt = config.UnlockedItemMode
             ? "\n这些物品将在自动应用时被跳过。\n\n要更改此设置，请禁用“已获取物品模式”。"
             : string.Empty;
-        DrawWarning(sb, config.UnlockedItemMode ? 0xA03030F0 : 0x0, size, tt, "所有待应用的物品均已解锁。");
+        DrawWarning(sb, config.UnlockedItemMode ? 0xA03030F0 : 0x0, size, tt, "所有待应用的物品均已解锁。"u8);
 
         sb.Clear();
         var sb2       = new StringBuilder();

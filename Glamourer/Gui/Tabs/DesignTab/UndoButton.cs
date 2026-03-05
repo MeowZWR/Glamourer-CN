@@ -20,7 +20,7 @@ public sealed class UndoButton(DesignFileSystem fileSystem, EditorHistory histor
         => true;
 
     public override void DrawTooltip()
-        => Im.Text("Undo the last change."u8);
+        => Im.Text("撤销上一次更改。"u8);
 
     public override void OnClick()
         => history.Undo((Design)fileSystem.Selection.Selection!.Value);

@@ -22,7 +22,7 @@ public sealed class SaveAsDesignButton(ActorSelection selection, DesignConverter
 
     public override void DrawTooltip()
         => Im.Text(
-            "Save the current state as a design.\nHold Control to disable applying of customizations for the saved design.\nHold Shift to disable applying of gear for the saved design."u8);
+            "将当前状态保存为设计。\n按住 Ctrl 键以禁用保存设计的外貌。\n按住 Shift 键以禁用保存设计的装备。"u8);
 
     private string      _newName = string.Empty;
     private DesignBase? _newDesign;

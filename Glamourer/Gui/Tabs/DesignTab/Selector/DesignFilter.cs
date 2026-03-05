@@ -21,29 +21,29 @@ public sealed class DesignFilter : TokenizedFilter<DesignFilterTokenType, Design
 
         using var tt             = Im.Tooltip.Begin();
         var       highlightColor = ColorId.EnabledAutoSet.Value().ToVector();
-        Im.Text("Filter designs for those where their full paths or names contain the given strings, split by spaces."u8);
-        ImEx.TextMultiColored("Enter "u8).Then("m:[string]"u8, highlightColor)
-            .Then(" to filter for designs with a mod association containing the string."u8).End();
-        ImEx.TextMultiColored("Enter "u8).Then("t:[string]"u8, highlightColor).Then(" to filter for designs set to specific tags."u8).End();
-        ImEx.TextMultiColored("Enter "u8).Then("c:[string]"u8, highlightColor)
-            .Then(" to filter for designs set to specific colors."u8).End();
-        ImEx.TextMultiColored("Enter "u8).Then("i:[string]"u8, highlightColor).Then(" to filter for designs containing specific items."u8)
+        Im.Text("根据路径或名称中的关键词进行筛选，多个关键词请用空格分隔。"u8);
+        ImEx.TextMultiColored("输入 "u8).Then("m:[关键词]"u8, highlightColor)
+            .Then(" 筛选包含指定模组关联的设计。"u8).End();
+        ImEx.TextMultiColored("输入 "u8).Then("t:[string]"u8, highlightColor).Then(" 以根据特定标签 (Tag) 进行筛选。"u8).End();
+        ImEx.TextMultiColored("输入 "u8).Then("c:[string]"u8, highlightColor)
+            .Then(" 以根据特定的颜色设置进行筛选。"u8).End();
+        ImEx.TextMultiColored("输入 "u8).Then("i:[string]"u8, highlightColor).Then(" 以筛选包含特定物品的设计。"u8)
             .End();
-        ImEx.TextMultiColored("Enter "u8).Then("n:[string]"u8, highlightColor).Then(" to filter only for design names, ignoring the paths."u8)
+        ImEx.TextMultiColored("输入 "u8).Then("n:[string]"u8, highlightColor).Then(" 仅根据设计名称筛选，忽略路径。"u8)
             .End();
-        ImEx.TextMultiColored("Enter "u8).Then("f:[string]"u8, highlightColor).Then(
-                " to filter for designs containing the text in name, path, description, tags, mod associations, colors or contained items."u8)
+        ImEx.TextMultiColored("输入 "u8).Then("f:[string]"u8, highlightColor).Then(
+                " 在名称、路径、描述、标签、关联模组、颜色或包含物品中全局筛选文本。"u8)
             .End();
         Im.Line.New();
-        ImEx.TextMultiColored("Use "u8).Then("None"u8, highlightColor).Then(" as a placeholder value that only matches empty lists or names."u8)
+        ImEx.TextMultiColored("使用 "u8).Then("None"u8, highlightColor).Then(" 作为占位符，仅筛选空列表或空名称。"u8)
             .End();
-        Im.Text("Regularly, a design has to match all supplied criteria separately."u8);
-        ImEx.TextMultiColored("Put a "u8).Then("'-'"u8, highlightColor)
-            .Then(" in front of a search token to search only for designs not matching the criterion."u8).End();
-        ImEx.TextMultiColored("Put a "u8).Then("'?'"u8, highlightColor)
-            .Then(" in front of a search token to search for designs matching at least one of the '?'-criteria."u8).End();
-        ImEx.TextMultiColored("Wrap spaces in "u8).Then("\"[string with space]\""u8, highlightColor)
-            .Then(" to match this exact combination of words."u8).End();
+        Im.Text("通常情况下，设计必须同时满足所有提供的筛选条件。"u8);
+        ImEx.TextMultiColored("在筛选关键词前加上"u8).Then("'-'"u8, highlightColor)
+            .Then("以筛选不符合该条件的条目（反向筛选）。"u8).End();
+        ImEx.TextMultiColored("在多个关键词前加上 "u8).Then("'?'"u8, highlightColor)
+            .Then(" 以筛选符合其中至少一个条件的条目（逻辑或筛选）。"u8).End();
+        ImEx.TextMultiColored("对于带空格的词组，请使用 "u8).Then("\"[带有空格的关键词]\""u8, highlightColor)
+            .Then(" 进行完整匹配。"u8).End();
     }
 
     protected override bool Matches(in DesignFilterToken token, in DesignFileSystemCache.DesignData cacheItem)

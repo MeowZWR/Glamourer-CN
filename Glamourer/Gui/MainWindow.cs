@@ -104,7 +104,7 @@ public sealed class MainWindow : Window, IDisposable
         var width = new Vector2(Im.Font.CalculateSize(SupportInfoButtonText).X + Im.Style.FramePadding.X * 2, 0);
         var xPos  = Im.Window.Width - width.X;
         Im.Cursor.Position = new Vector2(xPos, 0);
-        SupportButton.Discord(Glamourer.Messager, width.X);
+        SupportButton.DiscordSplit(Glamourer.Messager, width);
 
         Im.Cursor.Position = new Vector2(xPos, Im.Style.FrameHeightWithSpacing);
         DrawSupportButton(glamourer);

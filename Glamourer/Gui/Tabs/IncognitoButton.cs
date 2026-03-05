@@ -17,9 +17,9 @@ public sealed class IncognitoButton(Configuration config) : BaseIconButton<Aweso
     public override void DrawTooltip()
     {
         var hold = config.IncognitoModifier.IsActive();
-        Im.Text(config.Ephemeral.IncognitoMode ? "Toggle incognito mode off."u8 : "Toggle incognito mode on."u8);
+        Im.Text(config.Ephemeral.IncognitoMode ? "关闭匿名模式。"u8 : "开启匿名模式。"u8);
         if (!hold)
-            Im.Text($"\nHold {config.IncognitoModifier} while clicking to toggle.");
+            Im.Text($"\n按住 {config.IncognitoModifier} 键并单击以切换。");
     }
 
     public override void OnClick()

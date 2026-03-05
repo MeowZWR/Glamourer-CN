@@ -19,7 +19,7 @@ public sealed class UndoButton(ActorSelection selection, EditorHistory editorHis
         => true;
 
     public override void DrawTooltip()
-        => Im.Text("Undo the last change."u8);
+        => Im.Text("撤销上一次更改。"u8);
 
     public override void OnClick()
         => editorHistory.Undo(selection.State!);

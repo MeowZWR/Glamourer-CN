@@ -187,7 +187,7 @@ public sealed class UnlockOverview(
                 Im.Text($"{item.Id.Id}");
                 Im.Text($"{item.PrimaryId.Id}-{item.Variant.Id}");
                 // TODO
-                Im.Text("Always Unlocked"u8); // : $"Unlocked on {time:g}" : "Not Unlocked.");
+                Im.Text("始终解锁"u8); // : $"Unlocked on {time:g}" : "Not Unlocked.");
                 // TODO
                 //tooltip.CreateTooltip(item, string.Empty, false);
                 DrawModTooltip(mods);
@@ -243,29 +243,29 @@ public sealed class UnlockOverview(
                 else
                     Im.Text(slot is EquipSlot.MainHand ? $"{item.Weapon()}" : $"{item.Armor()}");
                 Im.Text(
-                    unlocked ? time == DateTimeOffset.MinValue ? "Always Unlocked"u8 : $"Unlocked on {time:g}" : "Not Unlocked."u8);
+                    unlocked ? time == DateTimeOffset.MinValue ? "始终解锁"u8 : $"解锁于 {time:g}" : "未解锁。"u8);
 
                 if (item.Level.Value <= 1)
                 {
                     if (item.JobRestrictions.Id <= 1 || item.JobRestrictions.Id >= jobs.AllJobGroups.Count)
-                        Im.Text("For Everyone"u8);
+                        Im.Text("适用于所有人"u8);
                     else
-                        Im.Text($"For all {jobs.AllJobGroups[item.JobRestrictions.Id].Name}");
+                        Im.Text($"适用于所有 {jobs.AllJobGroups[item.JobRestrictions.Id].Name}");
                 }
                 else
                 {
                     if (item.JobRestrictions.Id <= 1 || item.JobRestrictions.Id >= jobs.AllJobGroups.Count)
-                        Im.Text($"For Everyone of at least Level {item.Level}");
+                        Im.Text($"适用于至少等级 {item.Level} 的人");
                     else
-                        Im.Text($"For all {jobs.AllJobGroups[item.JobRestrictions.Id].Name} of at least Level {item.Level}");
+                        Im.Text($"适用于所有至少等级 {item.Level} 的 {jobs.AllJobGroups[item.JobRestrictions.Id].Name}");
                 }
 
                 if (item.Flags.HasFlag(ItemFlags.IsDyable1))
-                    Im.Text(item.Flags.HasFlag(ItemFlags.IsDyable2) ? "Dyable (2 Slots)"u8 : "Dyable"u8);
+                    Im.Text(item.Flags.HasFlag(ItemFlags.IsDyable2) ? "可染色（2 个槽位）"u8 : "可染色"u8);
                 if (item.Flags.HasFlag(ItemFlags.IsTradable))
-                    Im.Text("Tradable"u8);
+                    Im.Text("可交易"u8);
                 if (item.Flags.HasFlag(ItemFlags.IsCrestWorthy))
-                    Im.Text("Can apply Crest"u8);
+                    Im.Text("可应用队徽"u8);
                 DrawModTooltip(mods);
                 tooltip.CreateTooltip(item, string.Empty, false);
             }
@@ -298,12 +298,12 @@ public sealed class UnlockOverview(
         {
             case 0: return;
             case 1:
-                Im.Text("Modded by: "u8, _moddedColor);
+                Im.Text("被 Mod 修改："u8, _moddedColor);
                 Im.Line.NoSpacing();
                 Im.Text(mods[0].ModName);
                 return;
             default:
-                Im.Text("Modded by:"u8, _moddedColor);
+                Im.Text("被 Mod 修改："u8, _moddedColor);
                 foreach (var (_, mod) in mods)
                     Im.BulletText(mod);
                 return;

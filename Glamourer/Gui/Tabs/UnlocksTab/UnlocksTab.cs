@@ -66,18 +66,18 @@ public sealed class UnlocksTab : Window, ITab<MainTabType>
         if (DetailMode)
             buttonSize.X -= Im.Style.FrameHeight / 2;
 
-        if (ImEx.Button("总览模式", buttonSize, "显示已解锁物品的图标。", !DetailMode))
+        if (ImEx.Button("总览模式"u8, buttonSize, "显示已解锁物品的图标。"u8, !DetailMode))
             DetailMode = false;
 
         Im.Line.Same();
-        if (ImEx.Button("详情模式", buttonSize, "显示所有解锁数据为可筛选和排序的组合表格。",
+        if (ImEx.Button("详情模式"u8, buttonSize, "显示所有解锁数据为可筛选和排序的组合表格。"u8,
                 DetailMode))
             DetailMode = true;
 
         if (DetailMode)
         {
             Im.Line.Same();
-            if (ImEx.Icon.Button(LunaStyle.AutoResizeIcon, "将所有列恢复到其原始大小。"))
+            if (ImEx.Icon.Button(LunaStyle.AutoResizeIcon, "将所有列恢复到其原始大小。"u8))
                 _table.Flags &= ~TableFlags.Resizable;
         }
 

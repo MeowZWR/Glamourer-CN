@@ -20,12 +20,12 @@ public sealed class DesignColorUi(DesignColors colors, Configuration config) : I
 
         table.SetupColumn("##Delete"u8,   TableColumnFlags.WidthFixed, Im.Style.FrameHeight);
         table.SetupColumn("##Select"u8,   TableColumnFlags.WidthFixed, Im.Style.FrameHeight);
-        table.SetupColumn("Color Name"u8, TableColumnFlags.WidthStretch);
+        table.SetupColumn("颜色名称"u8, TableColumnFlags.WidthStretch);
 
         table.HeaderRow();
 
         table.NextColumn();
-        if (ImEx.Icon.Button(LunaStyle.RefreshIcon, "Revert the color used for missing design colors to its default."u8,
+        if (ImEx.Icon.Button(LunaStyle.RefreshIcon, "恢复缺失设计颜色的默认颜色。"u8,
                 colors.MissingColor == DesignColors.MissingColorDefault))
         {
             changeString = DesignColors.MissingColorName;
@@ -42,7 +42,7 @@ public sealed class DesignColorUi(DesignColors colors, Configuration config) : I
         table.NextColumn();
         Im.Cursor.X += Im.Style.FramePadding.X;
         Im.Text(DesignColors.MissingColorNameU8);
-        Im.Tooltip.OnHover("This color is used when the color specified in a design is not available."u8);
+        Im.Tooltip.OnHover("当设计中指定的颜色不可用时使用此颜色。"u8);
 
         var disabled = !config.DeleteDesignModifier.IsActive();
         foreach (var (idx, (name, color)) in colors.Index())
@@ -50,14 +50,14 @@ public sealed class DesignColorUi(DesignColors colors, Configuration config) : I
             using var id = Im.Id.Push(idx);
             table.NextColumn();
 
-            if (ImEx.Icon.Button(LunaStyle.DeleteIcon, "Delete this color. This does not remove it from designs using it."u8, disabled))
+            if (ImEx.Icon.Button(LunaStyle.DeleteIcon, "删除此颜色。这不会从使用它的设计中删除它。"u8, disabled))
             {
                 changeString = name;
                 changeValue  = null;
             }
 
             if (disabled)
-                Im.Tooltip.OnHover($"\nHold {config.DeleteDesignModifier} to delete.");
+                Im.Tooltip.OnHover($"\n按住 {config.DeleteDesignModifier} 删除。");
 
             table.NextColumn();
             if (DrawColorButton(name, color, out newColor))
@@ -73,12 +73,12 @@ public sealed class DesignColorUi(DesignColors colors, Configuration config) : I
 
         table.NextColumn();
         (var tt, disabled) = _newName.Length == 0
-            ? ("Specify a name for a new color first.", true)
+            ? ("首先指定一个新颜色的名称。", true)
             : _newName is DesignColors.MissingColorName or DesignColors.AutomaticName
-                ? ($"You can not use the name {DesignColors.MissingColorName} or {DesignColors.AutomaticName}, choose a different one.", true)
+                ? ($"不能使用名称 {DesignColors.MissingColorName} 或 {DesignColors.AutomaticName}，请选择一个不同的名称。", true)
                 : colors.ContainsKey(_newName)
-                    ? ($"The color {_newName} already exists, please choose a different name.", true)
-                    : ($"Add a new color {_newName} to your list.", false);
+                    ? ($"颜色 {_newName} 已存在，请选择一个不同的名称。", true)
+                    : ($"将新颜色 {_newName} 添加到您的列表中。", false);
         if (ImEx.Icon.Button(LunaStyle.AddObjectIcon, tt, disabled))
         {
             changeString = _newName;
@@ -88,7 +88,7 @@ public sealed class DesignColorUi(DesignColors colors, Configuration config) : I
         table.NextColumn();
         table.NextColumn();
         Im.Item.SetNextWidth(Im.ContentRegion.Available.X);
-        if (Im.Input.Text("##newDesignColor"u8, ref _newName, "New Color Name..."u8, InputTextFlags.EnterReturnsTrue))
+        if (Im.Input.Text("##newDesignColor"u8, ref _newName, "新颜色名称..."u8, InputTextFlags.EnterReturnsTrue))
         {
             changeString = _newName;
             changeValue  = 0xFFFFFFFF;

@@ -1,4 +1,4 @@
-﻿using Dalamud.Interface.ImGuiNotification;
+using Dalamud.Interface.ImGuiNotification;
 using Glamourer.Config;
 using Glamourer.Designs;
 using Glamourer.Gui.Tabs.SettingsTab;

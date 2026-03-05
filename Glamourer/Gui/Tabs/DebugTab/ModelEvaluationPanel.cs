@@ -230,7 +230,7 @@ public sealed unsafe class ModelEvaluationPanel(
 
     private void DrawEquip(in Im.TableDisposable table, Actor actor, Model model)
     {
-        using var id = Im.Id.Push("Equipment"u8);
+        using var id = Im.Id.Push("装备"u8);
         foreach (var slot in EquipSlotExtensions.EqdpSlots)
         {
             id.Push((int)slot);

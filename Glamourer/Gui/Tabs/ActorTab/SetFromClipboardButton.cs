@@ -22,7 +22,7 @@ public sealed class SetFromClipboardButton(ActorSelection selection, DesignConve
         => true;
 
     public override void DrawTooltip()
-        => Im.Text("Try to apply a design from your clipboard.\nHold Control to only apply gear.\nHold Shift to only apply customizations."u8);
+        => Im.Text("尝试从剪贴板应用设计。\n按住 Ctrl 键仅应用装备。\n按住 Shift 键仅应用外貌。"u8);
 
     public override void OnClick()
     {
@@ -31,13 +31,13 @@ public sealed class SetFromClipboardButton(ActorSelection selection, DesignConve
             var (applyGear, applyCustomize) = UiHelpers.ConvertKeysToBool();
             var text = Im.Clipboard.GetUtf16();
             var design = converter.FromBase64(text, applyCustomize, applyGear, out _)
-             ?? throw new Exception("The clipboard did not contain valid data.");
+             ?? throw new Exception("剪贴板不包含有效数据。");
             stateManager.ApplyDesign(selection.State!, design, ApplySettings.ManualWithLinks with { IsFinal = true });
         }
         catch (Exception ex)
         {
-            Glamourer.Messager.NotificationMessage(ex, $"Could not apply clipboard to {selection.Identifier}.",
-                $"Could not apply clipboard to design {selection.Identifier.Incognito(null)}", NotificationType.Error, false);
+            Glamourer.Messager.NotificationMessage(ex, $"无法应用剪贴板数据到 {selection.Identifier}。",
+                $"无法应用剪贴板数据到设计 {selection.Identifier.Incognito(null)}", NotificationType.Error, false);
         }
     }
 }

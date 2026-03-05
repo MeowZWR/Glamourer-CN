@@ -17,7 +17,7 @@ public sealed class ExportToClipboardButton(DesignFileSystem fileSystem, DesignC
         => true;
 
     public override void DrawTooltip()
-        => Im.Text("Copy the current design to your clipboard."u8);
+        => Im.Text("复制当前设计到剪贴板。"u8);
 
     public override void OnClick()
     {
@@ -29,8 +29,8 @@ public sealed class ExportToClipboardButton(DesignFileSystem fileSystem, DesignC
         }
         catch (Exception ex)
         {
-            Glamourer.Messager.NotificationMessage(ex, $"Could not copy {design.Name} data to clipboard.",
-                $"Could not copy data from design {design.Identifier} to clipboard", NotificationType.Error, false);
+            Glamourer.Messager.NotificationMessage(ex, $"无法复制 {design.Name} 数据到剪贴板。",
+                $"无法复制设计 {design.Identifier} 数据到剪贴板", NotificationType.Error, false);
         }
     }
 }

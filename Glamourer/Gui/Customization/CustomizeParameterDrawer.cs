@@ -1,4 +1,4 @@
-﻿using Glamourer.Config;
+using Glamourer.Config;
 using Glamourer.Designs;
 using Glamourer.GameData;
 using Glamourer.Interop.PalettePlus;
@@ -155,16 +155,7 @@ public class CustomizeParameterDrawer(Configuration config, PaletteImport import
 
     private void DrawColorFormatOptions(bool withApply)
     {
-        var width = _width
-          - (Im.Font.CalculateSize("浮点数"u8).X
-              + Im.Font.CalculateButtonSize("整数"u8).X
-              + 2 * Im.Style.ItemSpacing.X)
-          + Im.Style.ItemInnerSpacing.X
-          + Im.Item.Size.X;
-        if (!withApply)
-            width -= Im.Style.FrameHeight + Im.Style.ItemInnerSpacing.X;
-
-        Im.Line.Same(0, width);
+        Im.Line.SameInner();
         if (Im.RadioButton("浮点数"u8, config.UseFloatForColors) && !config.UseFloatForColors)
         {
             config.UseFloatForColors = true;

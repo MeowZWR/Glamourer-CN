@@ -21,7 +21,7 @@ public sealed class DesignUndoButton(DesignFileSystem fileSystem, DesignManager 
 
     public override void DrawTooltip()
         => Im.Text(
-            "Undo the last time you applied an entire design onto this design, if you accidentally overwrote your design with a different one."u8);
+            "撤销上一次将完整设计应用到此设计的操作（如果您不小心用其他设计覆盖了当前设计）。"u8);
 
     public override void OnClick()
     {

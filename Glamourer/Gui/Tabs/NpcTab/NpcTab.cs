@@ -20,7 +20,7 @@ public sealed class NpcTab : TwoPanelLayout, ITab<MainTabType>
     }
 
     public override ReadOnlySpan<byte> Label
-        => "非玩家角色"u8;
+        => "NPC"u8;
 
     public MainTabType Identifier
         => MainTabType.Npcs;

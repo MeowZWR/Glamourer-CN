@@ -90,8 +90,8 @@ public sealed class DesignHeader : SplitButtonHeader, IDisposable
 
         public override void DrawTooltip()
             => Im.Text(((Design)fileSystem.Selection.Selection!.Value).WriteProtected()
-                ? "Make this design editable."u8
-                : "Write-protect this design."u8);
+                ? "取消锁定，允许编辑此设计。"u8
+                : "启用锁定，防止修改此设计。"u8);
 
         public override void OnClick()
             => manager.SetWriteProtection((Design)fileSystem.Selection.Selection!.Value,

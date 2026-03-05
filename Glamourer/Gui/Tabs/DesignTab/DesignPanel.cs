@@ -1,4 +1,4 @@
-﻿using Dalamud.Interface.ImGuiFileDialog;
+using Dalamud.Interface.ImGuiFileDialog;
 using Dalamud.Interface.ImGuiNotification;
 using FFXIVClientStructs.FFXIV.Client.System.Framework;
 using Glamourer.Api.Enums;
@@ -508,7 +508,7 @@ public class DesignPanel : IPanel
     {
         var (id, data) = _objects.PlayerData;
         if (!ImEx.Button("应用到自己"u8, Vector2.Zero,
-                "将当前设计按其中设置应用到你的角色。\n按住CTRL仅应用装备。\n按住Shift仅应用外貌。",
+                "将当前设计按其中设置应用到你的角色。\n按住CTRL仅应用装备。\n按住Shift仅应用外貌。"u8,
                 !data.Valid))
             return;
 

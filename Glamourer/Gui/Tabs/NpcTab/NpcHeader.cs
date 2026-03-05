@@ -65,7 +65,7 @@ public sealed class NpcHeader : SplitButtonHeader
 
         public override void DrawTooltip()
             => Im.Text(
-                "Copy the current NPCs appearance to your clipboard.\nHold Control to disable applying of customizations for the copied design.\nHold Shift to disable applying of gear for the copied design."u8);
+                "复制当前NPC的外貌到剪贴板。\n按住 Ctrl 键以禁用复制设计的外貌。\n按住 Shift 键以禁用复制设计的装备。"u8);
 
         public override AwesomeIcon Icon
             => LunaStyle.ToClipboardIcon;

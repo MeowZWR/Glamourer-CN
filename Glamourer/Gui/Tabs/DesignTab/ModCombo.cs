@@ -24,7 +24,7 @@ public sealed class ModCombo(PenumbraService penumbra, DesignFileSystem fileSyst
         public readonly bool DifferingNames = string.Equals(mod.Name, mod.DirectoryName, StringComparison.CurrentCultureIgnoreCase);
     }
 
-    public StringPair  SelectionName { get; private set; } = new("Select new Mod...", new StringU8("Select new Mod..."u8));
+    public StringPair  SelectionName { get; private set; } = new("选择新模组...", new StringU8("选择新模组..."u8));
     public string      Selection     { get; private set; } = string.Empty;
     public ModSettings Settings      { get; private set; } = ModSettings.Empty;
 
@@ -68,10 +68,10 @@ public sealed class ModCombo(PenumbraService penumbra, DesignFileSystem fileSyst
         using (Im.Group())
         {
             if (item.DifferingNames)
-                Im.Text("Directory Name"u8);
-            Im.Text("Enabled"u8);
-            Im.Text("Priority"u8);
-            Im.Text("Affected Design Items"u8);
+                Im.Text("目录名称"u8);
+            Im.Text("启用"u8);
+            Im.Text("优先级"u8);
+            Im.Text("影响的设计物品"u8);
             DrawSettingsLeft(item.Settings);
         }
 
@@ -102,7 +102,7 @@ public sealed class ModCombo(PenumbraService penumbra, DesignFileSystem fileSyst
         foreach (var setting in settings.Settings)
         {
             if (setting.Value.Count is 0)
-                Im.Text("<None Enabled>"u8);
+                Im.Text("<未启用>"u8);
             else
                 foreach (var option in setting.Value)
                     Im.Text(option);
