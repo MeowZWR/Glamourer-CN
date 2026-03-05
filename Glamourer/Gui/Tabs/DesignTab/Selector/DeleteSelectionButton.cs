@@ -23,10 +23,10 @@ public sealed class DeleteSelectionButton(DesignFileSystem fileSystem, DesignMan
         var modifier    = Enabled;
 
         Im.Text(anySelected
-            ? "Delete the currently selected designs entirely from your drive\nThis can not be undone."u8
-            : "No designs selected."u8);
+            ? "删除所选设计，无法撤销。"u8
+            : "未选择设计。"u8);
         if (!modifier)
-            Im.Text($"\nHold {config.DeleteDesignModifier} while clicking to delete the designs.");
+            Im.Text($"\n按住 {config.DeleteDesignModifier} 点击以删除设计。");
     }
 
     /// <inheritdoc/>

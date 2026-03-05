@@ -14,9 +14,9 @@ public sealed class SelectTargetButton(ActorObjectManager objects, ActorSelectio
     {
         var (id, data) = objects.TargetData;
         if (data.Valid && data.Objects[0].Model.IsCharacterBase)
-            Im.Text($"Select the current target {id} in the list.");
+            Im.Text($"在列表中选中当前目标：{id}。");
         else
-            Im.Text("No valid target selected."u8);
+            Im.Text("未选择有效目标。"u8);
     }
 
     public override bool HasTooltip

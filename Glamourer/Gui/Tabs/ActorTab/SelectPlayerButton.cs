@@ -11,7 +11,7 @@ public sealed class SelectPlayerButton(ActorObjectManager objects, ActorSelectio
         => FontAwesomeIcon.UserCircle;
 
     public override void DrawTooltip()
-        => Im.Text("Select the local player character."u8);
+        => Im.Text("选择本地玩家角色。"u8);
 
     public override bool HasTooltip
         => true;

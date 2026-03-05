@@ -18,7 +18,7 @@ public sealed class DuplicateDesignButton(DesignFileSystem fileSystem, DesignMan
         => fileSystem.Selection.Selection is not null;
 
     public override void DrawTooltip()
-        => Im.Text(fileSystem.Selection.Selection is null ? "No design selected."u8 : "Clone the currently selected design to a duplicate."u8);
+        => Im.Text(fileSystem.Selection.Selection is null ? "未选择设计。"u8 : "复制当前选中的设计。"u8);
 
     public override void OnClick()
     {

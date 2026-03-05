@@ -29,14 +29,14 @@ public sealed class SaveAsDesignButton(ActorSelection selection, DesignConverter
 
     public override void OnClick()
     {
-        Im.Popup.Open("Save as Design"u8);
+        Im.Popup.Open("保存为设计"u8);
         _newName   = selection.State!.Identifier.ToName();
         _newDesign = converter.Convert(selection.State, ApplicationRules.FromModifiers(selection.State));
     }
 
     protected override void PostDraw()
     {
-        if (!InputPopup.Open("Save as Design"u8, _newName, out var newName, "Enter Design Name..."u8))
+        if (!InputPopup.Open("保存为设计"u8, _newName, out var newName, "输入设计名称..."u8))
             return;
 
         if (_newDesign is not null && newName.Length > 0)

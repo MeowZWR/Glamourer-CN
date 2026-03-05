@@ -5,13 +5,13 @@ namespace Glamourer.Config;
 [NamedEnum(Utf16: false)]
 public enum RoughnessSetting
 {
-    [Name("As-Is")]
+    [Name("保持原样")]
     AsIs,
 
-    [Name("Always Roughness")]
+    [Name("始终作为粗糙度")]
     AlwaysRoughness,
 
-    [Name("Always Gloss Strength")]
+    [Name("始终作为光泽强度")]
     AlwaysGloss,
 }
 

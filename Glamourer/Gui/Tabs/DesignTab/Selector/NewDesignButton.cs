@@ -13,7 +13,7 @@ public sealed class NewDesignButton(DesignManager designManager) : BaseIconButto
         => true;
 
     public override void DrawTooltip()
-        => Im.Text("Create a new design with default configuration."u8);
+        => Im.Text("按默认配置创建一个新设计。"u8);
 
     public override void OnClick()
         => Im.Popup.Open("##NewDesign"u8);
