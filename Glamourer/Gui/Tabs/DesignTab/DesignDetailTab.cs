@@ -67,27 +67,24 @@ public sealed class DesignDetailTab : IUiService
         table.DrawFrameColumn("唯一标识符"u8);
         table.NextColumn();
         var fileName = _saveService.FileNames.DesignFile(Selected);
-        using (Im.Font.PushMono())
-        {
-            if (Im.Button(identifier, width))
-                try
-                {
-                    Process.Start(new ProcessStartInfo(fileName) { UseShellExecute = true });
-                }
-                catch (Exception ex)
-                {
-                    Glamourer.Messager.NotificationMessage(ex, $"无法打开文件 {fileName} 。", $"无法打开文件 {fileName}",
-                        NotificationType.Warning);
-                }
+        if (Im.Button(identifier, width))
+            try
+            {
+                Process.Start(new ProcessStartInfo(fileName) { UseShellExecute = true });
+            }
+            catch (Exception ex)
+            {
+                Glamourer.Messager.NotificationMessage(ex, $"无法打开文件 {fileName} 。", $"无法打开文件 {fileName}",
+                    NotificationType.Warning);
+            }
 
-            if (Im.Item.RightClicked())
-                Im.Clipboard.Set(identifier);
-        }
+        if (Im.Item.RightClicked())
+            Im.Clipboard.Set(identifier);
 
         Im.Tooltip.OnHover(
             $"打开此文件：\n\t{fileName}\n在您选择的.json编辑器中包控制此设计。\n\n右键单击可将标识符复制到剪贴板。");
 
-        table.DrawFrameColumn("完整选择器路径"u8);
+        table.DrawFrameColumn("完整路径"u8);
         table.NextColumn();
         Im.Item.SetNextWidth(width.X);
         if (ImEx.InputOnDeactivation.Text("##Path"u8, Selected.Path.CurrentPath, out string newPath))
