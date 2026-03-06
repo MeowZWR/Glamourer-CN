@@ -87,7 +87,7 @@ public sealed class MultiDesignPanel(
     private void DrawDesignList()
     {
         ResetCounts();
-        using var tree = Im.Tree.Node("当前选中的对象"u8, TreeNodeFlags.DefaultOpen | TreeNodeFlags.NoTreePushOnOpen);
+        using var tree = Im.Tree.Node("当前选中的设计"u8, TreeNodeFlags.DefaultOpen | TreeNodeFlags.NoTreePushOnOpen);
         Im.Separator();
         if (!tree)
             return;
@@ -350,7 +350,7 @@ public sealed class MultiDesignPanel(
             }
 
         if (!enabled && _numDesignsWithAdvancedDyes is not 0)
-            Im.Tooltip.OnHover(HoveredFlags.AllowWhenDisabled, $"按住 {config.DeleteDesignModifier} 点击以删除。");
+            Im.Tooltip.OnHover(HoveredFlags.AllowWhenDisabled, $"按住 {config.DeleteDesignModifier} 点击删除。");
         Im.Separator();
     }
 
@@ -373,7 +373,7 @@ public sealed class MultiDesignPanel(
             }
 
             if (!enabled)
-                Im.Tooltip.OnHover(HoveredFlags.AllowWhenDisabled, $"Hold {config.DeleteDesignModifier} while clicking.");
+                Im.Tooltip.OnHover(HoveredFlags.AllowWhenDisabled, $"按住 {config.DeleteDesignModifier} 点击。");
 
             Im.Line.SameInner();
             if (ImEx.Button("启用所有"u8, width,
@@ -386,7 +386,7 @@ public sealed class MultiDesignPanel(
             }
 
             if (!enabled)
-                Im.Tooltip.OnHover(HoveredFlags.AllowWhenDisabled, $"Hold {config.DeleteDesignModifier} while clicking.");
+                Im.Tooltip.OnHover(HoveredFlags.AllowWhenDisabled, $"按住 {config.DeleteDesignModifier} 点击。");
 
             if (ImEx.Button("仅装备"u8, width,
                     fileSystem.Selection.DataNodes.Count > 0
@@ -398,7 +398,7 @@ public sealed class MultiDesignPanel(
             }
 
             if (!enabled)
-                Im.Tooltip.OnHover(HoveredFlags.AllowWhenDisabled, $"Hold {config.DeleteDesignModifier} while clicking.");
+                Im.Tooltip.OnHover(HoveredFlags.AllowWhenDisabled, $"按住 {config.DeleteDesignModifier} 点击。");
 
             Im.Line.SameInner();
             if (ImEx.Button("仅外貌"u8, width,

@@ -167,14 +167,14 @@ public sealed unsafe class AdvancedDyePopup(
         using var hoverColor = ImGuiColor.ButtonHovered.Push(Im.Style[ImGuiColor.TabHovered]);
 
         hoverColor.Push(ImGuiColor.Button, Im.Style[_rowOffset is 0 ? ImGuiColor.TabSelected : ImGuiColor.Tab]);
-        if (ImEx.ButtonCorners("颜色对 1-8 "u8, buttonSize, ButtonFlags.MouseButtonLeft, Corners.Left))
+        if (ImEx.ButtonCorners("颜色集 #1-8 "u8, buttonSize, ButtonFlags.MouseButtonLeft, Corners.Left))
             _rowOffset = 0;
         hoverColor.Pop();
 
         Im.Line.NoSpacing();
 
         hoverColor.Push(ImGuiColor.Button, Im.Style[_rowOffset is RowsPerPage ? ImGuiColor.TabSelected : ImGuiColor.Tab]);
-        if (ImEx.ButtonCorners("颜色对 9-16"u8, buttonSize, ButtonFlags.MouseButtonLeft, Corners.Right))
+        if (ImEx.ButtonCorners("颜色集 #9-16"u8, buttonSize, ButtonFlags.MouseButtonLeft, Corners.Right))
             _rowOffset = RowsPerPage;
         hoverColor.Pop();
 
@@ -341,7 +341,7 @@ public sealed unsafe class AdvancedDyePopup(
         Im.Line.Same();
         using (Im.Font.PushMono())
         {
-            ImEx.TextFrameAligned("所有颜色对 (1-16)"u8);
+            ImEx.TextFrameAligned("所有颜色集 (1-16)"u8);
         }
 
         var spacing = Im.Style.ItemInnerSpacing.X;

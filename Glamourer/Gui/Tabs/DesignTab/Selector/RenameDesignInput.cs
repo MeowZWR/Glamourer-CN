@@ -18,11 +18,11 @@ public sealed class RenameDesignInput(DesignFileSystemDrawer fileSystem) : BaseB
         var       currentName = design.Name;
         using var style       = Im.Style.PushDefault(ImStyleDouble.FramePadding);
         MenuSeparator.DrawSeparator();
-        Im.Text("Rename Design:"u8);
+        Im.Text("重命名设计:"u8);
         if (Im.Window.Appearing)
             Im.Keyboard.SetFocusHere();
         var ret = Im.Input.Text(Label(data), ref currentName, flags: InputTextFlags.EnterReturnsTrue);
-        Im.Tooltip.OnHover("Enter a new name here to rename the changed design."u8);
+        Im.Tooltip.OnHover("输入一个新名称来重命名这个设计。"u8);
         if (!ret)
             return false;
 

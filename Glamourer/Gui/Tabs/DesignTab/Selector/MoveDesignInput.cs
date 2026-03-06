@@ -16,12 +16,12 @@ public sealed class MoveDesignInput(DesignFileSystemDrawer fileSystem) : BaseBut
         var       currentPath = data.FullPath;
         using var style       = Im.Style.PushDefault(ImStyleDouble.FramePadding);
         MenuSeparator.DrawSeparator();
-        Im.Text("Move Design:"u8);
+        Im.Text("移动设计:"u8);
         if (Im.Window.Appearing)
             Im.Keyboard.SetFocusHere();
         var ret = Im.Input.Text(Label(data), ref currentPath, flags: InputTextFlags.EnterReturnsTrue);
         Im.Tooltip.OnHover(
-            "Enter a full path here to move the design or change its search path. Creates all required parent directories, if possible."u8);
+            "输入一个完整路径来移动设计或更改其搜索路径。并按情况创建所有必需的父目录。"u8);
         if (!ret)
             return false;
 

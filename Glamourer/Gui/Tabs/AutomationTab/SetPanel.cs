@@ -1,4 +1,4 @@
-using Glamourer.Automation;
+﻿using Glamourer.Automation;
 using Glamourer.Designs;
 using Glamourer.Designs.Special;
 using Glamourer.Interop;
@@ -153,7 +153,7 @@ public sealed class SetPanel(
 
         table.HeaderRow();
         Im.Table.NextColumn();
-        Im.Table.NextColumn();
+        table.DrawFrameColumn("筛选"u8);
         Im.Table.NextColumn();
         _nameFilter.DrawFilter("筛选设计..."u8, Im.ContentRegion.Available with { Y = Im.Style.FrameHeight });
         if (singleRow)

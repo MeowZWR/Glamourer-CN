@@ -57,12 +57,12 @@ public sealed class DesignHeader : SplitButtonHeader, IDisposable
         }
         else if (_fileSystem.Selection.OrderedNodes.Count > 0)
         {
-            _header    = new StringU8($"{_fileSystem.Selection.OrderedNodes.Count} Objects Selected");
+            _header    = new StringU8($"已选择 {_fileSystem.Selection.OrderedNodes.Count} 个设计");
             _incognito = _header;
         }
         else
         {
-            _header    = new StringU8("No Selection"u8);
+            _header    = new StringU8("未选择"u8);
             _incognito = _header;
         }
     }

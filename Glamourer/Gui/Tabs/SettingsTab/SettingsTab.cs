@@ -127,7 +127,7 @@ public sealed class SettingsTab(
         if (ImEx.Button("删除所有PCP设计"u8, default, "从设计列表中删除所有带有'PCP'标签的设计。"u8, !active))
             pcpService.CleanPcpDesigns();
         if (!active)
-            Im.Tooltip.OnHover(HoveredFlags.AllowWhenDisabled, $"\nHold {config.DeleteDesignModifier} while clicking.");
+            Im.Tooltip.OnHover(HoveredFlags.AllowWhenDisabled, $"\n按住 {config.DeleteDesignModifier} 点击。");
     }
 
     private void DrawPenumbraIntegrationSettings2()
@@ -145,7 +145,7 @@ public sealed class SettingsTab(
 
     private void DrawDesignDefaultSettings()
     {
-        if (!Im.Tree.Header("设计默认设置"u8))
+        if (!Im.Tree.Header("设计设置"u8))
             return;
 
         Checkbox("锁定设计"u8, "新创建的设计将被锁定以防止意外修改。"u8,
@@ -555,7 +555,7 @@ public sealed class SettingsTab(
 
     private void DrawIgnoredMods()
     {
-        using var header = Im.Tree.HeaderId("忽略的模组"u8);
+        using var header = Im.Tree.HeaderId("忽略模组"u8);
         Im.Tooltip.OnHover("在解锁选项卡中为“modded”列添加忽略的模组。"u8);
         if (!header)
             return;
