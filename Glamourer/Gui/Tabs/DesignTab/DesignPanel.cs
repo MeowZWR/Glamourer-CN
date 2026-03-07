@@ -10,7 +10,7 @@ using Glamourer.Gui.Customization;
 using Glamourer.Gui.Equipment;
 using Glamourer.Gui.Materials;
 using Glamourer.Interop;
-using Glamourer.State;
+using Glamourer.Services;
 using ImSharp;
 using Luna;
 using Penumbra.GameData.Enums;
@@ -25,7 +25,6 @@ public class DesignPanel : IPanel
     private readonly DesignFileSystem         _fileSystem;
     private readonly DesignManager            _manager;
     private readonly ActorObjectManager       _objects;
-    private readonly StateManager             _state;
     private readonly EquipmentDrawer          _equipmentDrawer;
     private readonly ModAssociationsTab       _modAssociations;
     private readonly Configuration            _config;
@@ -35,12 +34,12 @@ public class DesignPanel : IPanel
     private readonly CustomizeParameterDrawer _parameterDrawer;
     private readonly DesignLinkDrawer         _designLinkDrawer;
     private readonly MaterialDrawer           _materials;
+    private readonly DesignApplier            _designApplier;
 
 
     public DesignPanel(CustomizationDrawer customizationDrawer,
         DesignManager manager,
         ActorObjectManager objects,
-        StateManager state,
         EquipmentDrawer equipmentDrawer,
         ModAssociationsTab modAssociations,
         Configuration config,
@@ -51,12 +50,12 @@ public class DesignPanel : IPanel
         CustomizeParameterDrawer parameterDrawer,
         DesignLinkDrawer designLinkDrawer,
         MaterialDrawer materials,
-        DesignFileSystem fileSystem)
+        DesignFileSystem fileSystem,
+        DesignApplier designApplier)
     {
         _customizationDrawer = customizationDrawer;
         _manager             = manager;
         _objects             = objects;
-        _state               = state;
         _equipmentDrawer     = equipmentDrawer;
         _modAssociations     = modAssociations;
         _config              = config;
@@ -67,6 +66,7 @@ public class DesignPanel : IPanel
         _designLinkDrawer    = designLinkDrawer;
         _materials           = materials;
         _fileSystem          = fileSystem;
+        _designApplier       = designApplier;
     }
 
 
@@ -507,34 +507,36 @@ public class DesignPanel : IPanel
     private void DrawApplyToSelf()
     {
         var (id, data) = _objects.PlayerData;
-        if (!ImEx.Button("应用到自己"u8, Vector2.Zero,
-                "将当前设计按其中设置应用到你的角色。\n按住CTRL仅应用装备。\n按住Shift仅应用外貌。"u8,
-                !data.Valid))
-            return;
-
-        if (_state.GetOrCreate(id, data.Objects[0], out var state))
+        var canApply = _designApplier.CanApplyTo(Selection.DesignData, id, data);
+        var tt = canApply switch
         {
-            using var _ = Selection.TemporarilyRestrictApplication(ApplicationCollection.FromKeys());
-            _state.ApplyDesign(state, Selection, ApplySettings.ManualWithLinks with { IsFinal = true });
-        }
+            DeniedApplicationReason.None =>
+                "将当前设计按其中设置应用到你自己的角色。\n按住CTRL仅应用装备。\n按住Shift仅应用外貌。"u8,
+            DeniedApplicationReason.SourceNonHuman                                             => "无法应用非人类对象的设计。"u8,
+            DeniedApplicationReason.TargetInvalid or DeniedApplicationReason.TargetUnavailable => "你的角色不可用。"u8,
+            _                                                                                  => ""u8,
+        };
+
+        if (ImEx.Button("应用到自己"u8, Vector2.Zero, tt, canApply is not DeniedApplicationReason.None))
+            _designApplier.ApplyTo(Selection, id, data, true);
     }
 
     private void DrawApplyToTarget()
     {
         var (id, data) = _objects.TargetData;
-        var tt = id.IsValid
-            ? data.Valid
-                ? "将当前设计按其中设置应用到你的目标。\n按住CTRL仅应用装备。\n按住Shift仅应用外貌。"u8
-                : "当前目标无法操作。"u8
-            : "未选中有效目标。"u8;
-        if (!ImEx.Button("应用到目标"u8, Vector2.Zero, tt, !data.Valid))
-            return;
-
-        if (_state.GetOrCreate(id, data.Objects[0], out var state))
+        var canApply = _designApplier.CanApplyTo(Selection.DesignData, id, data);
+        var tt = canApply switch
         {
-            using var _ = Selection.TemporarilyRestrictApplication(ApplicationCollection.FromKeys());
-            _state.ApplyDesign(state, Selection, ApplySettings.ManualWithLinks with { IsFinal = true });
-        }
+            DeniedApplicationReason.None =>
+                "将当前设计按其中设置应用到你的目标。\n按住CTRL仅应用装备。\n按住Shift仅应用外貌。"u8,
+            DeniedApplicationReason.TargetUnavailable => "当前目标无法操作。"u8,
+            DeniedApplicationReason.TargetInvalid     => "未选择有效的目标。"u8,
+            DeniedApplicationReason.SourceNonHuman    => "无法应用非人类对象的设计。"u8,
+            DeniedApplicationReason.TargetNonHuman    => "无法将设计应用于非人类对象。"u8,
+            _                                         => ""u8,
+        };
+        if (ImEx.Button("应用到目标"u8, Vector2.Zero, tt, canApply is not DeniedApplicationReason.None))
+            _designApplier.ApplyTo(Selection, id, data, true);
     }
 
     private void DrawSaveToDat()

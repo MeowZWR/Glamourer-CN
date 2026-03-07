@@ -8,6 +8,7 @@ using Glamourer.Gui.Customization;
 using Glamourer.Gui.Equipment;
 using Glamourer.Gui.Materials;
 using Glamourer.Interop;
+using Glamourer.Services;
 using Glamourer.State;
 using ImSharp;
 using Luna;
@@ -26,39 +27,40 @@ public sealed class ActorPanel : IPanel
     private readonly EquipmentDrawer          _equipmentDrawer;
     private readonly AutoDesignApplier        _autoDesignApplier;
     private readonly Configuration            _config;
-    private readonly DesignConverter          _converter;
     private readonly ActorObjectManager       _objects;
     private readonly ImportService            _importService;
     private readonly DictModelChara           _modelChara;
     private readonly CustomizeParameterDrawer _parameterDrawer;
     private readonly AdvancedDyePopup         _advancedDyes;
+    private readonly DesignApplier            _designApplier;
 
     public ActorPanel(StateManager stateManager,
         CustomizationDrawer customizationDrawer,
         EquipmentDrawer equipmentDrawer,
         AutoDesignApplier autoDesignApplier,
         Configuration config,
-        DesignConverter converter,
         ActorObjectManager objects,
         DesignManager designManager,
         ImportService importService,
         DictModelChara modelChara,
         CustomizeParameterDrawer parameterDrawer,
         AdvancedDyePopup advancedDyes,
-        EditorHistory editorHistory, ActorSelection selection)
+        EditorHistory editorHistory,
+        ActorSelection selection,
+        DesignApplier designApplier)
     {
         _stateManager        = stateManager;
         _customizationDrawer = customizationDrawer;
         _equipmentDrawer     = equipmentDrawer;
         _autoDesignApplier   = autoDesignApplier;
         _config              = config;
-        _converter           = converter;
         _objects             = objects;
         _importService       = importService;
         _modelChara          = modelChara;
         _parameterDrawer     = parameterDrawer;
         _advancedDyes        = advancedDyes;
         _selection           = selection;
+        _designApplier       = designApplier;
     }
 
     private CustomizeFlag CustomizeApplicationFlags
@@ -353,30 +355,37 @@ public sealed class ActorPanel : IPanel
     private void DrawApplyToSelf()
     {
         var (id, data) = _objects.PlayerData;
-        if (!ImEx.Button("应用到自己"u8, Vector2.Zero,
-                "应用当前状态到你自己的角色。\n按住CTRL仅应用装备。\n按住Shift仅应用外貌。"u8,
-                !data.Valid || id == _selection.Identifier || _selection.State!.ModelData.ModelId is not 0))
-            return;
+        var canApply  = _designApplier.CanApplyTo(_selection.State?.ModelData, id, data);
+        var selfApply = id == _selection.Identifier;
+        var tt = canApply switch
+        {
+            DeniedApplicationReason.None =>
+                "将当前状态应用到你自己的角色。\n按住CTRL仅应用装备。\n按住Shift仅应用外貌。"u8,
+            DeniedApplicationReason.SourceNonHuman => "无法应用非人类状态。"u8,
+            DeniedApplicationReason.TargetInvalid or DeniedApplicationReason.TargetUnavailable => "你的角色不可用。"u8,
+            _ when selfApply => "你不能将你自己的状态应用到你自己。"u8,
+            _ => ""u8,
+        };
 
-        if (_stateManager.GetOrCreate(id, data.Objects[0], out var state))
-            _stateManager.ApplyDesign(state, _converter.Convert(_selection.State!, ApplicationRules.FromModifiers(_selection.State!)),
-                ApplySettings.Manual with { IsFinal = true });
+        if (ImEx.Button("应用到自己"u8, Vector2.Zero, tt, canApply is not DeniedApplicationReason.None || selfApply))
+            _designApplier.ApplyTo(_selection.State!, id, data, ApplicationRules.FromModifiers(_selection.State!));
     }
 
     private void DrawApplyToTarget()
     {
         var (id, data) = _objects.TargetData;
-        var tt = id.IsValid
-            ? data.Valid
-                ? "应用当前状态到你选中的目标。\n按住CTRL仅应用装备。\n按住Shift仅应用外貌。"u8
-                : "当前目标无法操作。"u8
-            : "没有选中有效的目标。"u8;
-        if (!ImEx.Button("应用到目标"u8, Vector2.Zero, tt,
-                !data.Valid || id == _selection.Identifier || _selection.State!.ModelData.ModelId is not 0))
-            return;
-
-        if (_stateManager.GetOrCreate(id, data.Objects[0], out var state))
-            _stateManager.ApplyDesign(state, _converter.Convert(_selection.State!, ApplicationRules.FromModifiers(_selection.State!)),
-                ApplySettings.Manual with { IsFinal = true });
+        var canApply = _designApplier.CanApplyTo(_selection.State?.ModelData, id, data);
+        var tt = canApply switch
+        {
+            DeniedApplicationReason.None =>
+                "将当前状态应用到你的目标。\n按住CTRL仅应用装备。\n按住Shift仅应用外貌。"u8,
+            DeniedApplicationReason.TargetUnavailable => "当前目标无法操作。"u8,
+            DeniedApplicationReason.TargetInvalid     => "未选择有效的目标。"u8,
+            DeniedApplicationReason.SourceNonHuman    => "无法应用非人类状态。"u8,
+            DeniedApplicationReason.TargetNonHuman    => "无法将状态应用于非人类对象。"u8,
+            _                                         => ""u8,
+        };
+        if (ImEx.Button("应用到目标"u8, Vector2.Zero, tt, canApply is not DeniedApplicationReason.None))
+            _designApplier.ApplyTo(_selection.State!, id, data, ApplicationRules.FromModifiers(_selection.State!));
     }
 }

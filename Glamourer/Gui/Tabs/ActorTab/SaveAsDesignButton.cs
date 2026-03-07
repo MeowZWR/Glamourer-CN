@@ -36,7 +36,8 @@ public sealed class SaveAsDesignButton(ActorSelection selection, DesignConverter
 
     protected override void PostDraw()
     {
-        if (!InputPopup.Open("保存为设计"u8, _newName, out var newName, "输入设计名称..."u8))
+        using var style = Im.Style.PushDefault();
+        if (!InputPopup.OpenName("保存为设计"u8, _newName, out var newName))
             return;
 
         if (_newDesign is not null && newName.Length > 0)

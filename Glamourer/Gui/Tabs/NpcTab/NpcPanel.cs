@@ -5,7 +5,7 @@ using Glamourer.Gui.Customization;
 using Glamourer.Gui.Equipment;
 using Glamourer.Gui.Tabs.DesignTab;
 using Glamourer.Gui.Tabs.SettingsTab;
-using Glamourer.State;
+using Glamourer.Services;
 using ImSharp;
 using Luna;
 using Penumbra.GameData.Enums;
@@ -19,9 +19,9 @@ public sealed class NpcPanel(
     CustomizationDrawer customizeDrawer,
     EquipmentDrawer equipmentDrawer,
     ActorObjectManager objects,
-    StateManager stateManager,
     LocalNpcAppearanceData favorites,
-    DesignColors designColors) : IPanel
+    DesignColors designColors,
+    DesignApplier designApplier) : IPanel
 {
     private readonly DesignColorCombo _combo = new(designColors, true);
 
@@ -96,36 +96,35 @@ public sealed class NpcPanel(
     private void DrawApplyToSelf()
     {
         var (id, data) = objects.PlayerData;
-        if (!ImEx.Button("应用到自己"u8, Vector2.Zero,
-                "将当前NPC外观应用于你的角色。\n按住Ctrl仅应用装备。\n按住Shift仅应用外貌。"u8,
-                !data.Valid))
-            return;
-
-        if (stateManager.GetOrCreate(id, data.Objects[0], out var state))
+        var canApply = designApplier.CanApplyTo(id, data);
+        var tt = canApply switch
         {
-            var design = selection.ToDesignBase();
-            stateManager.ApplyDesign(state, design, ApplySettings.Manual with { IsFinal = true });
-        }
+            DeniedApplicationReason.None =>
+                "将当前NPC外观应用于你的角色。\n按住Ctrl仅应用装备。\n按住Shift仅应用外貌。"u8,
+            DeniedApplicationReason.TargetInvalid or DeniedApplicationReason.TargetUnavailable => "你的角色不可用。"u8,
+            _                                                                                  => ""u8,
+        };
+
+        if (ImEx.Button("应用到自己"u8, Vector2.Zero, tt, canApply is not DeniedApplicationReason.None))
+            designApplier.ApplyTo(selection.ToDesignBase(), id, data, false);
     }
 
     private void DrawApplyToTarget()
     {
         var (id, data) = objects.TargetData;
-        var tt = id.IsValid
-            ? data.Valid
-                ? "将当前NPC外观应用于你的目标。\n按住Ctrl仅应用装备。\n按住Shift仅应用外貌。"u8
-                : "当前目标无法操作。"u8
-            : "未选择有效的目标。"u8;
-        if (!ImEx.Button("应用到目标"u8, Vector2.Zero, tt, !data.Valid))
-            return;
-
-        if (stateManager.GetOrCreate(id, data.Objects[0], out var state))
+        var canApply = designApplier.CanApplyTo(id, data);
+        var tt = canApply switch
         {
-            var design = selection.ToDesignBase();
-            stateManager.ApplyDesign(state, design, ApplySettings.Manual with { IsFinal = true });
-        }
+            DeniedApplicationReason.None =>
+                "将当前NPC外观应用于你的目标。\n按住Ctrl仅应用装备。\n按住Shift仅应用外貌。"u8,
+            DeniedApplicationReason.TargetUnavailable => "当前目标无法操作。"u8,
+            DeniedApplicationReason.TargetInvalid     => "未选择有效的目标。"u8,
+            DeniedApplicationReason.TargetNonHuman    => "无法将设计应用于非人类对象。"u8,
+            _                                         => ""u8,
+        };
+        if (ImEx.Button("应用到目标"u8, Vector2.Zero, tt, canApply is not DeniedApplicationReason.None))
+            designApplier.ApplyTo(selection.ToDesignBase(), id, data, false);
     }
-
 
     private void DrawAppearanceInfo()
     {
