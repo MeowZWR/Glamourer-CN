@@ -163,7 +163,7 @@ public sealed class MainWindow : Window, IDisposable
 
         Im.Line.New();
         Im.Line.New();
-        SupportButton.Discord(Glamourer.Messager, 0);
+        SupportButton.DiscordSplit(Glamourer.Messager, new Vector2(150, 0));
         Im.Line.Same();
         Im.Line.New();
         Im.Line.New();
