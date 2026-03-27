@@ -12,7 +12,7 @@ public sealed class AutomationTab : TwoPanelLayout, ITab<MainTabType>
         Configuration config)
     {
         _config    = config;
-        LeftHeader = new FilterHeader<AutomationCacheItem>(filter, new StringU8("Filter..."u8));
+        LeftHeader = new FilterHeader<AutomationCacheItem>(filter, new StringU8("筛选..."u8));
         LeftPanel  = selector;
         LeftFooter = buttons;
 

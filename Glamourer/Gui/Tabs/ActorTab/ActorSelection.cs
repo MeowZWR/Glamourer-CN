@@ -12,7 +12,7 @@ namespace Glamourer.Gui.Tabs.ActorTab;
 
 public sealed class ActorSelection(StateManager manager, ActorObjectManager objects, ICondition conditions, UiConfig config) : IUiService
 {
-    private static readonly StringU8 NoSelection = new("No Actor Selected"u8);
+    private static readonly StringU8 NoSelection = new("未选中角色"u8);
 
     public ActorIdentifier Identifier    { get; private set; }
     public ActorState?     State         { get; private set; }

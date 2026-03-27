@@ -102,8 +102,8 @@ public sealed class SetPanel(
             Im.Item.SetNextWidthScaled(330);
             if (ImEx.InputOnDeactivation.Scalar("##Priority"u8, _selection.Set.Priority, out var newPriority))
                 manager.ChangePriority(_selection.Index, newPriority);
-            LunaStyle.DrawAlignedHelpMarkerLabel("Priority"u8,
-                "Priority is only relevant when using secondary identifiers and can be left at 0 otherwise."u8);
+            LunaStyle.DrawAlignedHelpMarkerLabel("优先级"u8,
+                "优先级仅在使用次要标识符时相关，否则可以留为 0。"u8);
 
             DrawIdentifierSelection(_selection.Index);
 
@@ -112,10 +112,10 @@ public sealed class SetPanel(
                 Im.Cursor.Y += Im.Style.ItemInnerSpacing.Y;
                 Im.Separator();
                 Im.Cursor.Y += Im.Style.ItemInnerSpacing.Y;
-                Im.Text("Secondary Identifiers"u8);
+                Im.Text("次要标识符"u8);
                 Im.Line.SameInner();
                 LunaStyle.DrawHelpMarker(
-                    "Secondary identifiers are added in order of set priority after the primary identifiers have been handled.\nAny primary identifier on an enabled set will take precedence before all secondary identifiers."u8,
+                    "次要标识符按设置优先级顺序添加，在主标识符处理完成后。\n任何启用集上的主标识符将优先于所有次要标识符。"u8,
                     ColorParameter.Default, Im.Item.Hovered());
                 using var list = Im.ListBox.Begin("##lb"u8, Im.ContentRegion.Available with { Y = 8 * Im.Style.FrameHeightWithSpacing });
                 if (list)
@@ -125,10 +125,10 @@ public sealed class SetPanel(
                     {
                         using var id         = Im.Id.Push(i);
                         var       identifier = _selection.Set!.SecondaryIdentifiers[i][0];
-                        if (ImEx.Icon.Button(LunaStyle.DeleteIcon, "Delete this secondary identifier."u8, !active))
+                        if (ImEx.Icon.Button(LunaStyle.DeleteIcon, "删除此次要标识符。"u8, !active))
                             manager.RemoveSecondaryIdentifier(_selection.Index, i--);
                         if (!active)
-                            Im.Tooltip.OnHover($"Hold {config.DeleteDesignModifier} to delete.");
+                            Im.Tooltip.OnHover($"按住 {config.DeleteDesignModifier} 键删除。");
 
                         Im.Line.Same();
                         ImEx.TextFrameAligned(config.Ephemeral.IncognitoMode ? identifier.Incognito(null) : identifier.ToName());
@@ -506,50 +506,53 @@ public sealed class SetPanel(
     private void DrawIdentifierSelection(int setIndex)
     {
         using var id = Im.Id.Push("Identifiers"u8);
+        var       singleRow = IsSingleRowLayout();
         identifierDrawer.DrawWorld(130);
         Im.Line.Same();
         identifierDrawer.DrawName(200 - Im.Style.ItemSpacing.X);
         identifierDrawer.DrawNpcs(330);
-        var buttonWidth = new Vector2(165 * Im.Style.GlobalScale - Im.Style.ItemSpacing.X / 2, 0);
+        var buttonWidth = new Vector2(100 * Im.Style.GlobalScale - Im.Style.ItemSpacing.X / 2, 0);
 
-        var contained = IdentifierButton("添加玩家"u8, "设为玩家"u8, buttonWidth, setIndex, identifierDrawer.PlayerIdentifier);
-        IdentifierTooltip("将所选玩家标识添加到此集合的次级标识中。"u8,
-            "将此集合的主标识设为所选玩家标识。"u8,
+        var contained = IdentifierButton("添加玩家"u8, "分配给玩家"u8, buttonWidth, setIndex, identifierDrawer.PlayerIdentifier);
+        IdentifierTooltip("将所选玩家标识添加到此合集的次级标识中。"u8,
+            "将此合集的主标识设为所选玩家标识。"u8,
             "当前输入未提供有效的玩家标识。"u8, StringU8.Empty, identifierDrawer.PlayerIdentifier, contained);
         Im.Line.Same();
-        contained = IdentifierButton("添加NPC"u8, "设为NPC"u8, buttonWidth, setIndex, identifierDrawer.NpcIdentifier);
-        IdentifierTooltip("将所选NPC标识添加到此集合的次级标识中。"u8,
-            "将此集合的主标识设为所选NPC标识。"u8,
+        contained = IdentifierButton("添加NPC"u8, "分配给NPC"u8, buttonWidth, setIndex, identifierDrawer.NpcIdentifier);
+        IdentifierTooltip("将所选NPC标识添加到此合集的次级标识中。"u8,
+            "将此合集的主标识设为所选NPC标识。"u8,
             "当前输入未提供有效的NPC标识。"u8, StringU8.Empty, identifierDrawer.NpcIdentifier, contained);
-
-        contained = IdentifierButton("添加雇员"u8, "设为雇员"u8, buttonWidth, setIndex, identifierDrawer.RetainerIdentifier);
-        IdentifierTooltip("将所选雇员标识添加到此集合的次级标识中。"u8,
-            "将此集合的主标识设为所选雇员标识。"u8,
+        Im.Line.Same();
+        contained = IdentifierButton("添加雇员"u8, "分配给雇员"u8, buttonWidth, setIndex, identifierDrawer.RetainerIdentifier);
+        IdentifierTooltip("将所选雇员标识添加到此合集的次级标识中。"u8,
+            "将此合集的主标识设为所选雇员标识。"u8,
             "当前输入未提供有效的雇员标识。"u8, StringU8.Empty, identifierDrawer.RetainerIdentifier,
             contained);
         Im.Line.Same();
-        contained = IdentifierButton("添加服装模特"u8, "设为服装模特"u8, buttonWidth, setIndex, identifierDrawer.MannequinIdentifier);
-        IdentifierTooltip("将所选服装模特标识添加到此集合的次级标识中。"u8,
-            "将此集合的主标识设为所选服装模特标识。"u8,
+        contained = IdentifierButton("添加服装模特"u8, "分配给服装模特"u8, buttonWidth, setIndex, identifierDrawer.MannequinIdentifier);
+        IdentifierTooltip("将所选服装模特标识添加到此合集的次级标识中。"u8,
+            "将此合集的主标识设为所选服装模特标识。"u8,
             "当前输入未提供有效的服装模特标识。"u8, StringU8.Empty, identifierDrawer.MannequinIdentifier,
             contained);
-
-        contained = IdentifierButton("添加所属NPC"u8, "设为所属NPC"u8, buttonWidth, setIndex, identifierDrawer.OwnedIdentifier);
-        IdentifierTooltip("将所选所属NPC标识添加到此集合的次级标识中。"u8,
-            "将此集合的主标识设为所选所属NPC标识。"u8,
+        if (singleRow)
+            Im.Line.Same();
+        contained = IdentifierButton("添加所属NPC"u8, "分配给所属NPC"u8, buttonWidth, setIndex, identifierDrawer.OwnedIdentifier);
+        IdentifierTooltip("将所选所属NPC标识添加到此合集的次级标识中。"u8,
+            "将此合集的主标识设为所选所属NPC标识。"u8,
             "当前输入未提供有效的所属NPC标识。"u8, StringU8.Empty, identifierDrawer.OwnedIdentifier, contained);
-
+        if (!singleRow)
+            Im.Line.Same();
         var player = actors.PlayerData.Identifier;
-        contained = IdentifierButton("添加当前玩家"u8, "设为当前玩家"u8, buttonWidth, setIndex, player);
-        IdentifierTooltip("将你的当前玩家角色添加到此集合的次级标识中。"u8,
-            "将此集合的主标识设为你的当前玩家角色。"u8, "你的玩家角色不可用。"u8,
-            StringU8.Empty,                                       player, contained);
+        contained = IdentifierButton("添加当前玩家"u8, "分配给当前玩家"u8, buttonWidth, setIndex, player);
+        IdentifierTooltip("将你的当前玩家角色添加到此合集的次级标识中。"u8,
+            "将此合集的主标识设为你的当前玩家角色。"u8, "你的玩家角色不可用。"u8,
+            StringU8.Empty,                                                               player, contained);
 
         Im.Line.Same();
         var (target, data) = actors.TargetData;
         var targetValid = data.Valid && data.Objects[0].IsHuman(humans);
-        contained = IdentifierButton("添加当前目标"u8, "设为当前目标"u8, buttonWidth, setIndex, target, targetValid);
-        IdentifierTooltip("将你的当前目标添加到此集合的次级标识中。"u8,
+        contained = IdentifierButton("添加当前目标"u8, "分配给当前目标"u8, buttonWidth, setIndex, target, targetValid);
+        IdentifierTooltip("将你的当前目标添加到此合集的次级标识中。"u8,
             "将此集合的主标识设为你的当前目标。"u8, "你尚未选择有效目标。"u8,
             targetValid ? StringU8.Empty : "你的当前目标不是自动执行可用的有效目标。"u8, target, contained);
     }

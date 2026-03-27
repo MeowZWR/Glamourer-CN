@@ -11,7 +11,7 @@ public sealed class NpcTab : TwoPanelLayout, ITab<MainTabType>
     public NpcTab(NpcFilter filter, NpcSelector selector, NpcPanel panel, NpcHeader header, UiConfig uiConfig)
     {
         _uiConfig   = uiConfig;
-        LeftHeader  = new FilterHeader<NpcCacheItem>(filter, new StringU8("Filter..."u8));
+        LeftHeader  = new FilterHeader<NpcCacheItem>(filter, new StringU8("筛选..."u8));
         LeftPanel   = selector;
         LeftFooter  = NopHeaderFooter.Instance;
         RightHeader = header;
