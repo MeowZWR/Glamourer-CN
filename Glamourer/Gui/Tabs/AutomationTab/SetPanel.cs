@@ -8,7 +8,10 @@ using Glamourer.Config;
 using Glamourer.Events;
 using ImSharp;
 using Luna;
+using Penumbra.GameData.Actors;
+using Penumbra.GameData.DataContainers;
 using Penumbra.GameData.Enums;
+using Penumbra.GameData.Interop;
 using Penumbra.GameData.Structs;
 
 namespace Glamourer.Gui.Tabs.AutomationTab;
@@ -24,7 +27,9 @@ public sealed class SetPanel(
     Configuration config,
     RandomRestrictionDrawer randomDrawer,
     AutomationSelection selection,
-    AutomationChanged automationChanged) : IPanel
+    AutomationChanged automationChanged,
+    ActorObjectManager actors,
+    HumanModelList humans) : IPanel
 {
     private readonly AutomationSelection _selection         = selection;
     private readonly AutomationChanged   _automationChanged = automationChanged;
@@ -94,8 +99,42 @@ public sealed class SetPanel(
             if (ImEx.InputOnDeactivation.Text("重命名执行集##Name"u8, _selection.Name, out string newName, default, flags))
                 manager.Rename(_selection.Index, newName);
 
+            Im.Item.SetNextWidthScaled(330);
+            if (ImEx.InputOnDeactivation.Scalar("##Priority"u8, _selection.Set.Priority, out var newPriority))
+                manager.ChangePriority(_selection.Index, newPriority);
+            LunaStyle.DrawAlignedHelpMarkerLabel("Priority"u8,
+                "Priority is only relevant when using secondary identifiers and can be left at 0 otherwise."u8);
 
             DrawIdentifierSelection(_selection.Index);
+
+            if (_selection.Set.SecondaryIdentifiers.Count > 0)
+            {
+                Im.Cursor.Y += Im.Style.ItemInnerSpacing.Y;
+                Im.Separator();
+                Im.Cursor.Y += Im.Style.ItemInnerSpacing.Y;
+                Im.Text("Secondary Identifiers"u8);
+                Im.Line.SameInner();
+                LunaStyle.DrawHelpMarker(
+                    "Secondary identifiers are added in order of set priority after the primary identifiers have been handled.\nAny primary identifier on an enabled set will take precedence before all secondary identifiers."u8,
+                    ColorParameter.Default, Im.Item.Hovered());
+                using var list = Im.ListBox.Begin("##lb"u8, Im.ContentRegion.Available with { Y = 8 * Im.Style.FrameHeightWithSpacing });
+                if (list)
+                {
+                    var active = config.DeleteDesignModifier.IsActive();
+                    for (var i = 0; i < _selection.Set!.SecondaryIdentifiers.Count; ++i)
+                    {
+                        using var id         = Im.Id.Push(i);
+                        var       identifier = _selection.Set!.SecondaryIdentifiers[i][0];
+                        if (ImEx.Icon.Button(LunaStyle.DeleteIcon, "Delete this secondary identifier."u8, !active))
+                            manager.RemoveSecondaryIdentifier(_selection.Index, i--);
+                        if (!active)
+                            Im.Tooltip.OnHover($"Hold {config.DeleteDesignModifier} to delete.");
+
+                        Im.Line.Same();
+                        ImEx.TextFrameAligned(config.Ephemeral.IncognitoMode ? identifier.Incognito(null) : identifier.ToName());
+                    }
+                }
+            }
         }
 
         Im.Dummy(Vector2.Zero);
@@ -173,13 +212,16 @@ public sealed class SetPanel(
         Im.Table.NextRow();
 
         table.NextColumn();
-        table.DrawFrameColumn($"#{_selection.Set!.Designs.Count + 1}"); 
+        table.DrawFrameColumn($"#{_selection.Set!.Designs.Count + 1}");
         table.NextColumn();
         designCombo.Draw(_selection.Set!, null, -1);
         table.DrawFrameColumn("添加新设计"u8);
 
+        var height = singleRow
+            ? Im.Style.FrameHeight + 2 * Im.Style.CellPadding.Y
+            : 2 * Im.Style.FrameHeight + Im.Style.ItemSpacing.Y + 2 * Im.Style.CellPadding.Y;
         var       cache = CacheManager.Instance.GetOrCreateCache(Im.Id.Current, () => new AutoDesignCache(this));
-        using var clip  = new Im.ListClipper(cache.Count, singleRow ? Im.Style.FrameHeightWithSpacing : 2 * Im.Style.FrameHeightWithSpacing);
+        using var clip  = new Im.ListClipper(cache.Count, height);
         foreach (var cacheItem in clip.Iterate(cache))
         {
             using var id = Im.Id.Push(cacheItem.Index);
@@ -436,7 +478,7 @@ public sealed class SetPanel(
         {
             void Box(int idx)
             {
-                var type = ApplicationTypeExtensions.Types[idx];
+                var       type  = ApplicationTypeExtensions.Types[idx];
                 using var id    = Im.Id.Push((uint)type);
                 var       value = design.Type.HasFlag(type);
                 if (Im.Checkbox(StringU8.Empty, ref value))
@@ -464,28 +506,104 @@ public sealed class SetPanel(
     private void DrawIdentifierSelection(int setIndex)
     {
         using var id = Im.Id.Push("Identifiers"u8);
-        var       singleRow = IsSingleRowLayout();
         identifierDrawer.DrawWorld(130);
         Im.Line.Same();
         identifierDrawer.DrawName(200 - Im.Style.ItemSpacing.X);
         identifierDrawer.DrawNpcs(330);
-        var buttonWidth = new Vector2(100 * Im.Style.GlobalScale - Im.Style.ItemSpacing.X / 2, 0);
-        if (ImEx.Button("分配给玩家"u8, buttonWidth, StringU8.Empty, !identifierDrawer.CanSetPlayer))
-            manager.ChangeIdentifier(setIndex, identifierDrawer.PlayerIdentifier);
-        Im.Line.Same();
-        if (ImEx.Button("分配给NPC"u8, buttonWidth, StringU8.Empty, !identifierDrawer.CanSetNpc))
-            manager.ChangeIdentifier(setIndex, identifierDrawer.NpcIdentifier);
-        Im.Line.Same();
-        if (ImEx.Button("分配给雇员"u8, buttonWidth, StringU8.Empty, !identifierDrawer.CanSetRetainer))
-            manager.ChangeIdentifier(setIndex, identifierDrawer.RetainerIdentifier);
+        var buttonWidth = new Vector2(165 * Im.Style.GlobalScale - Im.Style.ItemSpacing.X / 2, 0);
 
-        if (singleRow)
-            Im.Line.Same();
-        if (ImEx.Button("分配给服装模特"u8, buttonWidth, StringU8.Empty, !identifierDrawer.CanSetRetainer))
-            manager.ChangeIdentifier(setIndex, identifierDrawer.MannequinIdentifier);
+        var contained = IdentifierButton("添加玩家"u8, "设为玩家"u8, buttonWidth, setIndex, identifierDrawer.PlayerIdentifier);
+        IdentifierTooltip("将所选玩家标识添加到此集合的次级标识中。"u8,
+            "将此集合的主标识设为所选玩家标识。"u8,
+            "当前输入未提供有效的玩家标识。"u8, StringU8.Empty, identifierDrawer.PlayerIdentifier, contained);
         Im.Line.Same();
-        if (ImEx.Button("分配给所属NPC"u8, buttonWidth, StringU8.Empty, !identifierDrawer.CanSetOwned))
-            manager.ChangeIdentifier(setIndex, identifierDrawer.OwnedIdentifier);
+        contained = IdentifierButton("添加NPC"u8, "设为NPC"u8, buttonWidth, setIndex, identifierDrawer.NpcIdentifier);
+        IdentifierTooltip("将所选NPC标识添加到此集合的次级标识中。"u8,
+            "将此集合的主标识设为所选NPC标识。"u8,
+            "当前输入未提供有效的NPC标识。"u8, StringU8.Empty, identifierDrawer.NpcIdentifier, contained);
+
+        contained = IdentifierButton("添加雇员"u8, "设为雇员"u8, buttonWidth, setIndex, identifierDrawer.RetainerIdentifier);
+        IdentifierTooltip("将所选雇员标识添加到此集合的次级标识中。"u8,
+            "将此集合的主标识设为所选雇员标识。"u8,
+            "当前输入未提供有效的雇员标识。"u8, StringU8.Empty, identifierDrawer.RetainerIdentifier,
+            contained);
+        Im.Line.Same();
+        contained = IdentifierButton("添加服装模特"u8, "设为服装模特"u8, buttonWidth, setIndex, identifierDrawer.MannequinIdentifier);
+        IdentifierTooltip("将所选服装模特标识添加到此集合的次级标识中。"u8,
+            "将此集合的主标识设为所选服装模特标识。"u8,
+            "当前输入未提供有效的服装模特标识。"u8, StringU8.Empty, identifierDrawer.MannequinIdentifier,
+            contained);
+
+        contained = IdentifierButton("添加所属NPC"u8, "设为所属NPC"u8, buttonWidth, setIndex, identifierDrawer.OwnedIdentifier);
+        IdentifierTooltip("将所选所属NPC标识添加到此集合的次级标识中。"u8,
+            "将此集合的主标识设为所选所属NPC标识。"u8,
+            "当前输入未提供有效的所属NPC标识。"u8, StringU8.Empty, identifierDrawer.OwnedIdentifier, contained);
+
+        var player = actors.PlayerData.Identifier;
+        contained = IdentifierButton("添加当前玩家"u8, "设为当前玩家"u8, buttonWidth, setIndex, player);
+        IdentifierTooltip("将你的当前玩家角色添加到此集合的次级标识中。"u8,
+            "将此集合的主标识设为你的当前玩家角色。"u8, "你的玩家角色不可用。"u8,
+            StringU8.Empty,                                       player, contained);
+
+        Im.Line.Same();
+        var (target, data) = actors.TargetData;
+        var targetValid = data.Valid && data.Objects[0].IsHuman(humans);
+        contained = IdentifierButton("添加当前目标"u8, "设为当前目标"u8, buttonWidth, setIndex, target, targetValid);
+        IdentifierTooltip("将你的当前目标添加到此集合的次级标识中。"u8,
+            "将此集合的主标识设为你的当前目标。"u8, "你尚未选择有效目标。"u8,
+            targetValid ? StringU8.Empty : "你的当前目标不是自动执行可用的有效目标。"u8, target, contained);
+    }
+
+    private void IdentifierTooltip(ReadOnlySpan<byte> addTooltip, ReadOnlySpan<byte> setTooltip, ReadOnlySpan<byte> invalidIdentifierLine,
+        ReadOnlySpan<byte> additionalLine, ActorIdentifier identifier, bool contained)
+    {
+        if (!Im.Item.Hovered(HoveredFlags.AllowWhenDisabled))
+            return;
+
+        using var tt   = Im.Tooltip.Begin();
+        var       ctrl = Im.Io.KeyControl;
+        Im.Text(ctrl ? addTooltip : setTooltip);
+        if (!ctrl)
+        {
+            Im.Cursor.Y += Im.Style.ItemSpacing.Y;
+            Im.Text("按住 Ctrl 可将标识添加到此集合的次级标识，而不是设置主标识。"u8);
+        }
+
+
+        var line = !identifier.IsValid
+            ? invalidIdentifierLine
+            : additionalLine.Length > 0
+                ? additionalLine
+                : contained
+                    ? ctrl
+                        ? "此自动化集合的次级标识已包含所选标识。"u8
+                        : "此自动化集合的主标识已是所选标识。"u8
+                    : StringU8.Empty;
+        if (line.Length > 0)
+        {
+            Im.Cursor.Y += Im.Style.ItemInnerSpacing.Y;
+            Im.Separator();
+            Im.Cursor.Y += Im.Style.ItemInnerSpacing.Y;
+            Im.Text(line);
+        }
+    }
+
+    private bool IdentifierButton(ReadOnlySpan<byte> addLabel, ReadOnlySpan<byte> setLabel, Vector2 width, int setIndex,
+        ActorIdentifier identifier, bool additionalCondition = true)
+    {
+        var ctrl = Im.Io.KeyControl;
+        var contained = ctrl
+            ? manager[setIndex].SecondaryIdentifiers.Any(g => g.Contains(identifier))
+            : manager[setIndex].Identifiers.Contains(identifier);
+        if (ImEx.Button(ctrl ? addLabel : setLabel, width, StringU8.Empty, !identifier.IsValid || !additionalCondition || contained))
+        {
+            if (ctrl)
+                manager.AddSecondaryIdentifier(setIndex, identifier);
+            else
+                manager.ChangeIdentifier(setIndex, identifier);
+        }
+
+        return contained;
     }
 
     private sealed class JobGroupCombo(AutoDesignManager manager, JobService jobs)

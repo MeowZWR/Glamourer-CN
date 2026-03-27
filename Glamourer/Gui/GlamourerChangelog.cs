@@ -47,6 +47,7 @@ public sealed class GlamourerChangelog : IUiService
         Add1_4_0_0(Changelog);
         Add1_5_0_0(Changelog);
         Add1_5_1_0(Changelog);
+        AddDummy(Changelog);
         Add1_6_0_0(Changelog);
     }
 
@@ -79,7 +80,9 @@ public sealed class GlamourerChangelog : IUiService
             .RegisterEntry(
                 "Glamourer 现在可以记住你输入的大部分筛选器状态——如果你更希望每次筛选器都重置，也可以在设置里关闭这项功能。"u8,
                 1)
-            .RegisterHighlight("高级染色现在支持 Dawntrail 材质上的更多参数，比如粗糙度和光泽度（感谢 Ny！）。"u8)
+            .RegisterHighlight("装备区现在新增了一个开关，可控制是否记住物品筛选条件。"u8)
+            .RegisterEntry("开启后，可将鼠标滚轮切换范围限制为符合筛选条件的物品。"u8, 1)
+            .RegisterHighlight("高级染色现在支持 7.0 材质上的更多参数，比如粗糙度和光泽度（感谢 Ny！）。"u8)
             .RegisterEntry("快速设计栏现在可以显示一个按钮，用于切换主窗口的显示与隐藏（感谢 Ny！）。"u8)
             .RegisterHighlight(
                 "你现在可以添加“忽略的 Mod”，这些 Mod 不会被计入解锁表中的“是否为 Mod 化”状态（例如通用的高清化 / 放大材质 Mod）。"u8)
@@ -88,7 +91,17 @@ public sealed class GlamourerChangelog : IUiService
                 "已移除非人型 NPC 上的“变成人类（Turn Human）”按钮。该功能会与同步工具产生严重冲突，在使用时甚至可能导致更糟糕的问题，比如崩溃或向服务器发送错误的数据。"u8)
             .RegisterEntry(
                 "这一功能最初是为了摆拍用途而设计的，但它的用途已经被摆拍工具自身的“生成额外角色”功能所取代，因此继续保留它只会带来更多问题而非价值。"u8,
-                1);
+                1)
+            .RegisterEntry("“Dye all Items” 框现在更明显地表现为非复选框。"u8)
+            .RegisterEntry("自动设计套装的详情页现在可以按指定设计进行筛选。"u8)
+            .RegisterHighlight("解锁标签页的详情面板现在可设置为每个模型 ID 仅显示一件物品，也可选择同时忽略变体。"u8)
+            .RegisterEntry("另外，还新增了一个下拉框，可在你当前角色身上通过鼠标滚轮浏览当前显示的物品。"u8)
+            .RegisterEntry("修复了当主手武器不允许副手时，设计中的副手染色仍会被应用的问题。"u8)
+            .RegisterHighlight("自动设计套装新增了次级标识和优先级。"u8)
+            .RegisterEntry("启用套装的次级标识会按优先级顺序应用到对应角色；前提是该角色尚未被分配任何启用套装。"u8, 1)
+            .RegisterEntry("例如，你可以把同一 NPC 的多个版本，或你自己角色的多个版本，归到同一个设计中。"u8, 1)
+            .RegisterEntry("修复了重绘时维埃拉耳朵状态未正确应用的问题。"u8)
+            .RegisterEntry("现已遵循 Dalamud 的全局季节活动设置：当全局设置不建议启用时，Glamourer 不会应用自身季节活动，也不会再询问你是否应用。"u8);
 
     private static void Add1_5_1_0(Changelog log)
         => log.NextVersion("Version 1.5.1.0"u8)

@@ -95,9 +95,9 @@ public sealed class SettingsTab(
         Checkbox("编辑自动化时尊重手动更改"u8,
             "对当前任何处于活动状态的自动执行组进行更改，在重新应用修改后的自动执行时是否保留手动作出的更改。"u8,
             config.RespectManualOnAutomationUpdate, v => config.RespectManualOnAutomationUpdate = v);
-        Checkbox("启动节日彩蛋"u8,
-            "Glamourer也许会在一些特别的日子做一些有趣的事情。如果你觉得这会影响你的体验，请禁用此选项。"u8,
-            config.DisableFestivals == 0, v => config.DisableFestivals = v ? (byte)0 : (byte)2);
+        Checkbox("启用节日彩蛋"u8,
+            "Glamourer 也许会在一些特别的日子做一些有趣的事情。如果你觉得这会影响你的体验，请禁用此选项。全局的 Dalamud 设置优先于此设置。"u8,
+            config.DisableFestivals is 0, v => config.DisableFestivals = v ? (byte)0 : (byte)2);
         DrawPenumbraIntegrationSettings1();
         Checkbox("在更换区域时撤销手动更改"u8,
             "当你更换区域时，撤销你对角色进行的手动更改，恢复到游戏基础状态或自动执行状态。"u8,

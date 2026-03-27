@@ -101,7 +101,7 @@ public partial class CustomizationDrawer
                         favorites.TryAdd(_set.Gender, _set.Clan, _currentIndex, custom.Value);
 
                 if (hasIcon)
-                    Im.Tooltip.ImageOnHover(wrap!.Id, _iconSize,
+                    Im.Tooltip.ImageOnHover(wrap!.Id, wrap!.Size,
                         FavoriteManager.TypeAllowed(_currentIndex) ? "右键单击可切换收藏。"u8 : StringU8.Empty);
 
                 var text      = new StringU8($"{custom.Value.Value}");
