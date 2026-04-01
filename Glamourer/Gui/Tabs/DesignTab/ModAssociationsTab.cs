@@ -25,7 +25,7 @@ public sealed class ModAssociationsTab(PenumbraService penumbra, DesignFileSyste
         Im.Tooltip.OnHover(
             "此面板可以存储与该设计关联的特定模组的信息。\n\n"u8
           + "它不会自动更改任何模组设置，尽管有手动应用所需模组设置的功能。\n"u8
-          + "你也可以使用它快速打开关联的模组页面在 Penumbra 中。\n\n"u8
+          + "你也可以使用它跳转到关联模组的 Penumbra 页面。\n\n"u8
           + "在一般情况下，不太可能自动应用这些更改，因为没有办法恢复这些更改并同时处理多个生效的设计。"u8);
         if (!h)
             return;
