@@ -71,13 +71,13 @@ public sealed class GlamourerChangelog : IUiService
 
     private static void Add1_6_1_0(Changelog log)
         => log.NextVersion("Version 1.6.1.0"u8)
-            .RegisterHighlight("Added per-slot application of items and dyes to the current player character in all tabs (1.6.0.2)."u8)
-            .RegisterEntry("Fixed an issue when applying advanced dyes on equivalent left and right rings (1.6.0.2)."u8)
-            .RegisterEntry("Fixed the saving of design colors and sort modes (1.6.0.2)."u8)
-            .RegisterEntry("Fixed the context menu rename selection (1.6.0.2)."u8)
-            .RegisterEntry("Fixed an exception when a tab selector became too small somehow (1.6.0.2)."u8)
-            .RegisterEntry("Fixed disabled header buttons and lock color (1.6.0.2)."u8)
-            .RegisterEntry("Fixed multiple issues with the NPC tab and combo (1.6.0.2)."u8);
+            .RegisterHighlight("在所有标签页中新增了将特定槽位的物品和染色应用至当前玩家角色的功能。（1.6.0.2）"u8)
+            .RegisterEntry("修复了在左右对戒上应用高级染色时出现的问题。（1.6.0.2）"u8)
+            .RegisterEntry("修复了设计颜色（方案颜色）和排序模式无法保存的问题。（1.6.0.2）"u8)
+            .RegisterEntry("修复了右键菜单中重命名选择框的问题。（1.6.0.2）"u8)
+            .RegisterEntry("修复了当标签页选择器因某种原因变得过小时触发的程序异常。（1.6.0.2）"u8)
+            .RegisterEntry("修复了禁用的标题栏按钮以及锁定状态下的颜色显示问题。（1.6.0.2）"u8)
+            .RegisterEntry("修复了 NPC 标签页及其下拉组合框的多个问题。（1.6.0.2）"u8);
             
 
     private static void Add1_6_0_0(Changelog log)

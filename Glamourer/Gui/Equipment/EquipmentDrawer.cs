@@ -722,14 +722,14 @@ public sealed class EquipmentDrawer : IUiService, IDisposable
         using var tt = Im.Tooltip.Begin();
         if (!enabled)
         {
-            Im.Text("No current player character available to apply to."u8);
+            Im.Text("当前没有可应用的角色。"u8);
         }
         else
         {
             Im.Text(
-                "Click to apply only this slot and all related dyes and advanced dyes to your current character, according to the application rules."u8);
-            Im.Text("Control + Click to apply only the item itself and no dyes, regardless of application rules."u8);
-            Im.Text("Shift + Click to apply only the dyes and advanced dyes and not the item, regardless of application rules."u8);
+                "点击：按规则应用此槽位及其关联染色（含高级染色）。"u8);
+            Im.Text("Ctrl + 点击：强制仅应用物品，忽略染色。"u8);
+            Im.Text("Shift + 点击：强制仅应用染色，忽略物品。"u8);
         }
 
         if (!hasAdvancedDyes)
@@ -738,6 +738,6 @@ public sealed class EquipmentDrawer : IUiService, IDisposable
         Im.Cursor.Y += Im.Style.ItemInnerSpacing.Y;
         Im.Separator();
         Im.Cursor.Y += Im.Style.ItemInnerSpacing.Y;
-        Im.Text("This design has advanced dyes setup for this slot."u8);
+        Im.Text("此设计为该槽位设置了高级染色。"u8);
     }
 }
