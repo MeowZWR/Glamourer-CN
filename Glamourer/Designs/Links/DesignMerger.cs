@@ -92,7 +92,7 @@ public class DesignMerger(
 
     private static void ReduceCustomizePlusAssociation(Design? design, ApplicationType type, MergedDesign ret)
     {
-        if (design == null || !type.HasFlag(ApplicationType.CustomizePlusProfile) || !design.ApplyCustomizePlusAssociation
+        if (design == null || type is 0 || !design.ApplyCustomizePlusAssociation
          || !design.CustomizePlusAssociation.IsSet || ret.ApplyCustomizePlusAssociation)
             return;
 

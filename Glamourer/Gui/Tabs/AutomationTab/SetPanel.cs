@@ -498,8 +498,6 @@ public sealed class SetPanel(
             Box(3);
             Im.Line.Same();
             Box(4);
-            Im.Line.Same();
-            Box(5);
         }
 
         manager.ChangeApplicationType(set, autoDesignIndex, newType);
