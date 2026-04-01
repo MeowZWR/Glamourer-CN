@@ -1,5 +1,6 @@
-﻿using Dalamud.Interface.ImGuiNotification;
+using Dalamud.Interface.ImGuiNotification;
 using Glamourer.Automation;
+using Glamourer.Designs.CustomizePlus;
 using Glamourer.Designs.Links;
 using Glamourer.Interop.Material;
 using Glamourer.Interop.Penumbra;
@@ -34,12 +35,17 @@ public sealed class Design : DesignBase, ISavable, IDesignStandIn, IFileSystemVa
         ForcedRedraw           = other.ForcedRedraw;
         ResetAdvancedDyes      = other.ResetAdvancedDyes;
         ResetTemporarySettings = other.ResetTemporarySettings;
-        Color                  = other.Color;
-        AssociatedMods         = new SortedList<Mod, ModSettings>(other.AssociatedMods);
-        Links                  = Links.Clone();
+        ApplyCustomizePlusAssociation = other.ApplyCustomizePlusAssociation;
+        Color                         = other.Color;
+        AssociatedMods                = new SortedList<Mod, ModSettings>(other.AssociatedMods);
+        CustomizePlusAssociation      = other.CustomizePlusAssociation.Clone();
+        Links                         = Links.Clone();
     }
 
-    // Metadata
+    /// <summary>
+    /// Written to disk as <c>FileVersion</c> 2 so stock Glamourer accepts the file; Customize+ fields are extra JSON keys it ignores.
+    /// When merging upstream: if they introduce a new <c>FileVersion</c>, extend <see cref="LoadDesign"/> (add their branch) without reusing that number for fork-only semantics.
+    /// </summary>
     public new const int FileVersion = 2;
 
     public Guid                         Identifier             { get; internal init; }
@@ -53,9 +59,11 @@ public sealed class Design : DesignBase, ISavable, IDesignStandIn, IFileSystemVa
     public bool                         ForcedRedraw           { get; internal set; }
     public bool                         ResetAdvancedDyes      { get; internal set; }
     public bool                         ResetTemporarySettings { get; internal set; }
+    public bool                         ApplyCustomizePlusAssociation { get; internal set; }
     public bool                         QuickDesign            { get; internal set; } = true;
     public string                       Color                  { get; internal set; } = string.Empty;
     public SortedList<Mod, ModSettings> AssociatedMods         { get; private set; }  = [];
+    public CustomizePlusAssociation     CustomizePlusAssociation { get; private set; } = new();
     public LinkContainer                Links                  { get; private set; }  = [];
     public DataPath                     Path                   { get; }               = new();
 
@@ -113,6 +121,7 @@ public sealed class Design : DesignBase, ISavable, IDesignStandIn, IFileSystemVa
             ["ForcedRedraw"]           = ForcedRedraw,
             ["ResetAdvancedDyes"]      = ResetAdvancedDyes,
             ["ResetTemporarySettings"] = ResetTemporarySettings,
+            ["ApplyCustomizePlusAssociation"] = ApplyCustomizePlusAssociation,
             ["Color"]                  = Color,
             ["QuickDesign"]            = QuickDesign,
             ["Tags"]                   = JArray.FromObject(Tags),
@@ -123,6 +132,7 @@ public sealed class Design : DesignBase, ISavable, IDesignStandIn, IFileSystemVa
             ["Parameters"]             = SerializeParameters(),
             ["Materials"]              = SerializeMaterials(),
             ["Mods"]                   = SerializeMods(),
+            ["CustomizePlusAssociation"] = CustomizePlusAssociation.Serialize(),
             ["Links"]                  = Links.Serialize(),
         };
         if (Path.Folder.Length > 0)
@@ -166,6 +176,7 @@ public sealed class Design : DesignBase, ISavable, IDesignStandIn, IFileSystemVa
 
     #region Deserialization
 
+    /// <remarks> After upstream merges: extend the switch for their new format. </remarks>
     public static Design LoadDesign(SaveService saveService, CustomizeService customizations, ItemManager items, DesignLinkLoader linkLoader,
         JObject json)
     {
@@ -273,6 +284,8 @@ public sealed class Design : DesignBase, ISavable, IDesignStandIn, IFileSystemVa
         design.ForcedRedraw           = json["ForcedRedraw"]?.ToObject<bool>() ?? false;
         design.ResetAdvancedDyes      = json["ResetAdvancedDyes"]?.ToObject<bool>() ?? false;
         design.ResetTemporarySettings = json["ResetTemporarySettings"]?.ToObject<bool>() ?? false;
+        design.ApplyCustomizePlusAssociation = json["ApplyCustomizePlusAssociation"]?.ToObject<bool>() ?? false;
+        design.CustomizePlusAssociation = CustomizePlusAssociation.Load(json["CustomizePlusAssociation"]);
         return design;
 
         static string[] ParseTags(JObject json)
@@ -335,6 +348,12 @@ public sealed class Design : DesignBase, ISavable, IDesignStandIn, IFileSystemVa
     }
 
     #endregion
+
+    internal bool SetCustomizePlusAssociation(CustomizePlusAssociation association)
+        => CustomizePlusAssociation.Update(association);
+
+    internal bool ClearCustomizePlusAssociation()
+        => CustomizePlusAssociation.Clear();
 
     #region ISavable
 

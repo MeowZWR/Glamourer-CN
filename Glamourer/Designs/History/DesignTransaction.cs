@@ -1,4 +1,5 @@
 using Glamourer.GameData;
+using Glamourer.Designs.CustomizePlus;
 using Glamourer.Interop.Material;
 using Glamourer.Interop.Penumbra;
 using Penumbra.GameData.Enums;
@@ -115,6 +116,28 @@ public record ModUpdatedTransaction(Mod Mod, ModSettings Old, ModSettings New)
 
     public void Revert(IDesignEditor editor, object data)
         => ((DesignManager)editor).UpdateMod((Design)data, Mod, Old);
+}
+
+/// <remarks> Only Designs. </remarks>
+public record CustomizePlusAssociationTransaction(CustomizePlusAssociation Old, CustomizePlusAssociation New)
+    : ITransaction
+{
+    public ITransaction? Merge(ITransaction older)
+        => older is CustomizePlusAssociationTransaction other ? new CustomizePlusAssociationTransaction(other.Old.Clone(), New.Clone()) : null;
+
+    public void Revert(IDesignEditor editor, object data)
+        => ((DesignManager)editor).ChangeCustomizePlusAssociation((Design)data, Old);
+}
+
+/// <remarks> Only Designs. </remarks>
+public record ApplyCustomizePlusAssociationTransaction(bool Old, bool New)
+    : ITransaction
+{
+    public ITransaction? Merge(ITransaction older)
+        => older is ApplyCustomizePlusAssociationTransaction other ? new ApplyCustomizePlusAssociationTransaction(other.Old, New) : null;
+
+    public void Revert(IDesignEditor editor, object data)
+        => ((DesignManager)editor).ChangeApplyCustomizePlusAssociation((Design)data, Old);
 }
 
 /// <remarks> Only Designs. </remarks>

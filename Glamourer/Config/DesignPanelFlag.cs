@@ -1,4 +1,4 @@
-﻿using ImSharp;
+using ImSharp;
 using Luna.Generators;
 
 namespace Glamourer.Config;
@@ -36,6 +36,9 @@ public enum DesignPanelFlag : uint
 
     [Name("调试数据")]
     DebugData = 0x0200,
+
+    [Name("Customize+")]
+    CustomizePlusAssociations = 0x0400,
 }
 
 public static partial class DesignPanelFlagExtensions
@@ -61,7 +64,7 @@ public static partial class DesignPanelFlagExtensions
           + 2 * Im.Style.WindowPadding.X
           + 2 * Im.Style.FrameBorderThickness;
         using var table = Im.Table.Begin(label, 6, TableFlags.RowBackground | TableFlags.Borders,
-            new Vector2(tableSize, 6 * Im.Style.FrameHeight));
+            new Vector2(tableSize, DesignPanelFlag.Values.Count * Im.Style.FrameHeight));
         if (!table)
             return;
 

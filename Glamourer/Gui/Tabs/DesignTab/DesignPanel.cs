@@ -27,6 +27,7 @@ public class DesignPanel : IPanel
     private readonly ActorObjectManager       _objects;
     private readonly EquipmentDrawer          _equipmentDrawer;
     private readonly ModAssociationsTab       _modAssociations;
+    private readonly CustomizePlusAssociationsTab _customizePlusAssociations;
     private readonly Configuration            _config;
     private readonly DesignDetailTab          _designDetails;
     private readonly ImportService            _importService;
@@ -42,6 +43,7 @@ public class DesignPanel : IPanel
         ActorObjectManager objects,
         EquipmentDrawer equipmentDrawer,
         ModAssociationsTab modAssociations,
+        CustomizePlusAssociationsTab customizePlusAssociations,
         Configuration config,
         DesignDetailTab designDetails,
         DesignConverter converter,
@@ -58,6 +60,7 @@ public class DesignPanel : IPanel
         _objects             = objects;
         _equipmentDrawer     = equipmentDrawer;
         _modAssociations     = modAssociations;
+        _customizePlusAssociations = customizePlusAssociations;
         _config              = config;
         _designDetails       = designDetails;
         _importService       = importService;
@@ -228,7 +231,21 @@ public class DesignPanel : IPanel
                 _manager.ChangeApplyCrest(Selection, flag, apply);
         }
     }
+    private void DrawCustomizePlusApplication()
+    {
+        using var id = Im.Id.Push("CustomizePlusAssociation"u8);
 
+        var apply = Selection.ApplyCustomizePlusAssociation;
+        if (Im.Checkbox("应用 C+ 关联配置"u8, ref apply))
+        {
+            _manager.ChangeApplyCustomizePlusAssociation(Selection, apply);
+        }
+
+        Im.Tooltip.OnHover(
+            Selection.CustomizePlusAssociation.IsSet
+                ? "允许此设计在手动应用和自动执行时尝试应用已关联的 Customize+ 角色配置。"u8
+                : "当前设计尚未关联任何 Customize+ 配置。"u8);
+    }
     private void DrawApplicationRules()
     {
         using var h = DesignPanelFlag.ApplicationRules.Header(_config);
@@ -241,6 +258,8 @@ public class DesignPanel : IPanel
 
         using (Im.Group())
         {
+            DrawCustomizePlusApplication();
+            Im.FrameDummy();
             DrawCustomizeApplication();
             Im.FrameDummy();
             DrawCrestApplication();
@@ -490,6 +509,7 @@ public class DesignPanel : IPanel
         DrawApplicationRules();
         _modAssociations.Draw();
         _designLinkDrawer.Draw();
+        _customizePlusAssociations.Draw();
     }
 
     private void DrawButtonRow()

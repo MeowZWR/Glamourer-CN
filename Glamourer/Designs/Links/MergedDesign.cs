@@ -1,4 +1,5 @@
-﻿using Glamourer.Interop.Penumbra;
+using Glamourer.Interop.Penumbra;
+using Glamourer.Designs.CustomizePlus;
 using Glamourer.State;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Structs;
@@ -93,11 +94,19 @@ public sealed class MergedDesign
     {
         foreach (var (mod, settings) in design.AssociatedMods)
             AssociatedMods[mod] = settings;
+
+        if (design.ApplyCustomizePlusAssociation && design.CustomizePlusAssociation.IsSet)
+        {
+            ApplyCustomizePlusAssociation = true;
+            CustomizePlusAssociation = design.CustomizePlusAssociation.Clone();
+        }
     }
 
     public readonly DesignBase                   Design;
     public readonly WeaponList                   Weapons        = new();
     public readonly SortedList<Mod, ModSettings> AssociatedMods = [];
+    public          CustomizePlusAssociation?    CustomizePlusAssociation;
+    public          bool                         ApplyCustomizePlusAssociation;
     public          StateSources                 Sources        = new();
     public          bool                         ForcedRedraw;
     public          bool                         ResetAdvancedDyes;

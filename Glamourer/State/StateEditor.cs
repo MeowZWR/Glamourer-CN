@@ -5,6 +5,7 @@ using Glamourer.Designs.History;
 using Glamourer.Designs.Links;
 using Glamourer.Events;
 using Glamourer.GameData;
+using Glamourer.Interop.CustomizePlus;
 using Glamourer.Interop.Material;
 using Glamourer.Interop.Penumbra;
 using Glamourer.Services;
@@ -23,7 +24,9 @@ public class StateEditor(
     Configuration config,
     ItemManager items,
     DesignMerger merger,
+    ActorObjectManager objects,
     ModSettingApplier modApplier,
+    CustomizePlusAssociationApplier customizePlusApplier,
     GPoseService gPose) : IDesignEditor
 {
     protected readonly InternalStateEditor Editor         = editor;
@@ -32,6 +35,8 @@ public class StateEditor(
     protected readonly StateFinalized      StateFinalized = stateFinalized;
     protected readonly Configuration       Config         = config;
     protected readonly ItemManager         Items          = items;
+    protected readonly ActorObjectManager  Objects        = objects;
+    protected readonly CustomizePlusAssociationApplier CustomizePlusApplier = customizePlusApplier;
 
     readonly List<FullEquipType> CraftMainHands = new()
     {
@@ -439,6 +444,7 @@ public class StateEditor(
 
         Glamourer.Log.Verbose(
             $"Applied design to {state.Identifier.Incognito(null)}. [Affecting {actors.ToLazyString("nothing")}.]");
+        ApplyCustomizePlusAssociation(state, mergedDesign);
         StateChanged.Invoke(new StateChanged.Arguments(StateChangeType.Design, state.Sources[MetaIndex.Wetness], state, actors)); // FIXME: maybe later
         if (settings.IsFinal)
             StateFinalized.Invoke(new StateFinalized.Arguments(StateFinalizationType.DesignApplied, actors));
@@ -494,5 +500,16 @@ public class StateEditor(
         if (mh is { Type: FullEquipType.Fists } && Items.ItemData.Tertiary.TryGetValue(mh.ItemId, out var gauntlets))
             ChangeEquip(state, EquipSlot.Hands, newMainhand != null ? gauntlets : state.ModelData.Item(EquipSlot.Hands),
                 stains,        settings);
+    }
+
+    private void ApplyCustomizePlusAssociation(ActorState state, MergedDesign mergedDesign)
+    {
+        if (!Objects.TryGetValue(state.Identifier, out var data) || !data.Valid)
+        {
+            CustomizePlusApplier.Restore(state.Identifier);
+            return;
+        }
+
+        CustomizePlusApplier.Apply(state.Identifier, data.Objects[0].Index, mergedDesign);
     }
 }

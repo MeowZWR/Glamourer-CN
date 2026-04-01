@@ -1,4 +1,4 @@
-﻿using Dalamud.Game.ClientState.Objects.Enums;
+using Dalamud.Game.ClientState.Objects.Enums;
 using Dalamud.Interface.ImGuiNotification;
 using Glamourer.Designs;
 using Glamourer.Designs.Special;
@@ -650,6 +650,11 @@ public sealed class AutoDesignManager : ISavable, IReadOnlyList<AutoDesignSet>, 
             Design = design,
             Type   = applicationType & ApplicationType.All,
         };
+
+        // Before CustomizePlusProfile (0x20), "apply all" in automation was stored as 0x1F.
+        if (ret.Type == (ApplicationType)0x1F)
+            ret.Type = ApplicationType.All;
+
         return ParseConditions(setName, jObj, ret) ? ret : null;
     }
 

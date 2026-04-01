@@ -1,10 +1,12 @@
-﻿using Dalamud.Plugin.Services;
+using System.Diagnostics;
+using Dalamud.Plugin.Services;
 using FFXIVClientStructs.FFXIV.Client.UI.Misc;
 using Glamourer.Config;
 using Glamourer.Designs;
 using Glamourer.Designs.Links;
 using Glamourer.Events;
 using Glamourer.Interop;
+using Glamourer.Interop.CustomizePlus;
 using Glamourer.Interop.Material;
 using Glamourer.State;
 using Luna;
@@ -28,14 +30,17 @@ public sealed class AutoDesignApplier : IDisposable, IRequiredService
     private readonly ActorObjectManager _objects;
     private readonly WeaponLoading      _weapons;
     private readonly HumanModelList     _humans;
-    private readonly DesignMerger       _designMerger;
-    private readonly IClientState       _clientState;
+    private readonly DesignMerger                 _designMerger;
+    private readonly IClientState                 _clientState;
+    private readonly CustomizePlusAssociationApplier _customizePlus;
+    private readonly DesignChanged                 _designChanged;
 
     private readonly JobChangeState _jobChangeState;
 
     public AutoDesignApplier(Configuration config, AutoDesignManager manager, StateManager state, JobService jobs, ActorManager actors,
         AutomationChanged @event, ActorObjectManager objects, WeaponLoading weapons, HumanModelList humans, IClientState clientState,
-        EquippedGearset equippedGearset, DesignMerger designMerger, JobChangeState jobChangeState)
+        EquippedGearset equippedGearset, DesignMerger designMerger, JobChangeState jobChangeState,
+        CustomizePlusAssociationApplier customizePlus, DesignChanged designChanged)
     {
         _config          =  config;
         _manager         =  manager;
@@ -50,10 +55,13 @@ public sealed class AutoDesignApplier : IDisposable, IRequiredService
         _equippedGearset =  equippedGearset;
         _designMerger    =  designMerger;
         _jobChangeState  =  jobChangeState;
+        _customizePlus   =  customizePlus;
+        _designChanged   =  designChanged;
         _jobs.JobChanged += OnJobChange;
         _event.Subscribe(OnAutomationChange, AutomationChanged.Priority.AutoDesignApplier);
         _weapons.Subscribe(OnWeaponLoading, WeaponLoading.Priority.AutoDesignApplier);
         _equippedGearset.Subscribe(OnEquippedGearset, EquippedGearset.Priority.AutoDesignApplier);
+        _designChanged.Subscribe(OnDesignChanged, DesignChanged.Priority.AutoDesignApplier);
     }
 
     public void OnEnableAutoDesignsChanged(bool value)
@@ -61,8 +69,11 @@ public sealed class AutoDesignApplier : IDisposable, IRequiredService
         if (value)
             return;
 
-        foreach (var state in _state.Values)
+        foreach (var (id, state) in _state)
+        {
             state.Sources.RemoveFixedDesignSources();
+            _customizePlus.RestoreUnavailable(id);
+        }
     }
 
     public void Dispose()
@@ -70,7 +81,38 @@ public sealed class AutoDesignApplier : IDisposable, IRequiredService
         _weapons.Unsubscribe(OnWeaponLoading);
         _event.Unsubscribe(OnAutomationChange);
         _equippedGearset.Unsubscribe(OnEquippedGearset);
+        _designChanged.Unsubscribe(OnDesignChanged);
         _jobs.JobChanged -= OnJobChange;
+    }
+
+    private void OnDesignChanged(in DesignChanged.Arguments arguments)
+    {
+        if (!_config.EnableAutoDesigns)
+            return;
+
+        if (arguments.Type is not DesignChanged.Type.CustomizePlusAssociation and not DesignChanged.Type.ApplyCustomizePlusAssociation)
+            return;
+
+        var design = arguments.Design;
+        foreach (var (id, set) in _manager.EnabledSets)
+        {
+            if (!set.Designs.Any(ad => AutomationUsesDesign(ad.Design, design)))
+                continue;
+
+            ApplyNew(id, set);
+        }
+    }
+
+    private static bool AutomationUsesDesign(IDesignStandIn root, Design target)
+    {
+        if (ReferenceEquals(root, target))
+            return true;
+
+        foreach (var (link, _, _) in root.AllLinks(true))
+            if (link is Design d && d.Identifier == target.Identifier)
+                return true;
+
+        return false;
     }
 
     private void OnWeaponLoading(in WeaponLoading.Arguments arguments)
@@ -159,39 +201,43 @@ public sealed class AutoDesignApplier : IDisposable, IRequiredService
                 return;
             default: return;
         }
+    }
 
-        void ApplyNew(ActorIdentifier id, AutoDesignSet? set)
+    private void ApplyNew(ActorIdentifier id, AutoDesignSet? set)
+    {
+        if (set is null)
         {
-            if (set is null)
-                return;
+            _customizePlus.RestoreUnavailable(id);
+            return;
+        }
 
-            Debug.Assert(set.Enabled, "Set added to enabled sets is not marked enabled.");
+        Debug.Assert(set.Enabled, "Set added to enabled sets is not marked enabled.");
 
-            if (_objects.TryGetValue(id, out var data))
+        if (_objects.TryGetValue(id, out var data))
+        {
+            if (_state.GetOrCreate(id, data.Objects[0], out var state))
             {
-                if (_state.GetOrCreate(id, data.Objects[0], out var state))
-                {
-                    Reduce(data.Objects[0], state, set, _config.RespectManualOnAutomationUpdate, false, true, out var forcedRedraw);
-                    foreach (var actor in data.Objects)
-                        _state.ReapplyAutomationState(actor, forcedRedraw, false, StateSource.Fixed);
-                }
-            }
-            else if (_objects.TryGetValueAllWorld(id, out data) || _objects.TryGetValueNonOwned(id, out data))
-            {
+                Reduce(data.Objects[0], state, set, _config.RespectManualOnAutomationUpdate, false, true, out var forcedRedraw);
                 foreach (var actor in data.Objects)
+                    _state.ReapplyAutomationState(actor, forcedRedraw, false, StateSource.Fixed);
+            }
+        }
+        else if (_objects.TryGetValueAllWorld(id, out data) || _objects.TryGetValueNonOwned(id, out data))
+        {
+            foreach (var actor in data.Objects)
+            {
+                var specificId = actor.GetIdentifier(_actors);
+                if (_state.GetOrCreate(specificId, actor, out var state))
                 {
-                    var specificId = actor.GetIdentifier(_actors);
-                    if (_state.GetOrCreate(specificId, actor, out var state))
-                    {
-                        Reduce(actor, state, set, _config.RespectManualOnAutomationUpdate, false, true, out var forcedRedraw);
-                        _state.ReapplyAutomationState(actor, forcedRedraw, false, StateSource.Fixed);
-                    }
+                    Reduce(actor, state, set, _config.RespectManualOnAutomationUpdate, false, true, out var forcedRedraw);
+                    _state.ReapplyAutomationState(actor, forcedRedraw, false, StateSource.Fixed);
                 }
             }
-            else if (_state.TryGetValue(id, out var state))
-            {
-                state.Sources.RemoveFixedDesignSources();
-            }
+        }
+        else if (_state.TryGetValue(id, out var state))
+        {
+            state.Sources.RemoveFixedDesignSources();
+            _customizePlus.RestoreUnavailable(id);
         }
     }
 
@@ -204,6 +250,7 @@ public sealed class AutoDesignApplier : IDisposable, IRequiredService
         {
             if (_state.TryGetValue(id, out var s))
                 s.LastJob = newJob.Id;
+            _customizePlus.RestoreUnavailable(id);
             return;
         }
 
@@ -247,6 +294,7 @@ public sealed class AutoDesignApplier : IDisposable, IRequiredService
         {
             if (state.UpdateTerritory(_clientState.TerritoryType) && _config.RevertManualChangesOnZoneChange)
                 _state.ResetState(state, StateSource.Game);
+            _customizePlus.RestoreUnavailable(identifier);
             return true;
         }
 
@@ -349,7 +397,13 @@ public sealed class AutoDesignApplier : IDisposable, IRequiredService
         if (!player.IsValid)
             return;
 
-        if (!GetPlayerSet(player, out var set) || !_state.TryGetValue(player, out var state))
+        if (!GetPlayerSet(player, out var set))
+        {
+            _customizePlus.RestoreUnavailable(player);
+            return;
+        }
+
+        if (!_state.TryGetValue(player, out var state))
             return;
 
         var respectManual = arguments.PriorId == arguments.Id;

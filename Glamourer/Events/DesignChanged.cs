@@ -48,6 +48,9 @@ public sealed class DesignChanged(Logger log)
         /// <summary> An existing design had an existing associated mod updated. </summary>
         UpdatedMod,
 
+        /// <summary> An existing design had its Customize+ association changed. </summary>
+        CustomizePlusAssociation,
+
         /// <summary> An existing design had a link to a different design added, removed or moved. </summary>
         ChangedLink,
 
@@ -93,6 +96,9 @@ public sealed class DesignChanged(Logger log)
         /// <summary> An existing design had changed whether it always resets all prior temporary settings or not. </summary>
         ResetTemporarySettings,
 
+        /// <summary> An existing design had changed whether its Customize+ association should be applied. </summary>
+        ApplyCustomizePlusAssociation,
+
         /// <summary> An existing design changed whether a specific customization is applied. </summary>
         ApplyCustomize,
 
@@ -131,6 +137,9 @@ public sealed class DesignChanged(Logger log)
 
         /// <seealso cref="Automation.AutoDesignManager.OnDesignChange"/>
         AutoDesignManager = 1,
+
+        /// <seealso cref="Automation.AutoDesignApplier.OnDesignChanged"/>
+        AutoDesignApplier = 2,
 
         /// <seealso cref="DesignFileSystem.OnDesignChanged"/>
         DesignFileSystem = 0,

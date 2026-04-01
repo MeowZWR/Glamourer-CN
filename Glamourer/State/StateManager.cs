@@ -1,4 +1,4 @@
-﻿using Dalamud.Plugin.Services;
+using Dalamud.Plugin.Services;
 using Glamourer.Api.Enums;
 using Glamourer.Config;
 using Glamourer.Designs;
@@ -6,6 +6,7 @@ using Glamourer.Designs.Links;
 using Glamourer.Events;
 using Glamourer.GameData;
 using Glamourer.Interop;
+using Glamourer.Interop.CustomizePlus;
 using Glamourer.Interop.Material;
 using Glamourer.Interop.Penumbra;
 using Glamourer.Interop.Structs;
@@ -32,9 +33,12 @@ public sealed class StateManager(
     Configuration config,
     JobChangeState jobChange,
     DesignMerger merger,
+    ActorObjectManager objects,
     ModSettingApplier modApplier,
+    CustomizePlusAssociationApplier customizePlusApplier,
     GPoseService gPose)
-    : StateEditor(editor, applier, changeEvent, finalizeEvent, jobChange, config, items, merger, modApplier, gPose),
+    : StateEditor(editor, applier, changeEvent, finalizeEvent, jobChange, config, items, merger, objects, modApplier,
+        customizePlusApplier, gPose),
         IReadOnlyDictionary<ActorIdentifier, ActorState>, IService
 {
     private readonly Dictionary<ActorIdentifier, ActorState> _states = [];

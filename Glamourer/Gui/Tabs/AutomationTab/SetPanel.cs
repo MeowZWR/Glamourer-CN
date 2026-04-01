@@ -1,4 +1,4 @@
-﻿using Glamourer.Automation;
+using Glamourer.Automation;
 using Glamourer.Designs;
 using Glamourer.Designs.Special;
 using Glamourer.Interop;
@@ -267,8 +267,8 @@ public sealed class SetPanel(
     {
         var (numCheckboxes, numSpacing) = (config.ShowAllAutomatedApplicationRules, config.ShowUnlockedItemWarnings) switch
         {
-            (true, true)   => (9, 14),
-            (true, false)  => (7, 10),
+            (true, true)   => (10, 14),
+            (true, false)  => (8, 10),
             (false, true)  => (4, 4),
             (false, false) => (2, 0),
         };
@@ -498,6 +498,8 @@ public sealed class SetPanel(
             Box(3);
             Im.Line.Same();
             Box(4);
+            Im.Line.Same();
+            Box(5);
         }
 
         manager.ChangeApplicationType(set, autoDesignIndex, newType);

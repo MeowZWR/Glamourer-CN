@@ -1,6 +1,7 @@
-﻿using Glamourer.Api.Enums;
+using Glamourer.Api.Enums;
 using Glamourer.Automation;
 using Glamourer.Config;
+using Glamourer.Designs.CustomizePlus;
 using Glamourer.GameData;
 using Glamourer.Interop.Material;
 using Glamourer.Services;
@@ -54,6 +55,7 @@ public class DesignMerger(
             ReduceCrests(data, collection.Crest, ret, source);
             ReduceParameters(data, collection.Parameters, ret, source);
             ReduceMods(design as Design, ret, modAssociations);
+            ReduceCustomizePlusAssociation(design as Design, type, ret);
             if (type.HasFlag(ApplicationType.GearCustomization))
                 ReduceMaterials(design, ret);
             if (design.ForcedRedraw)
@@ -86,6 +88,16 @@ public class DesignMerger(
 
         foreach (var (mod, settings) in design.AssociatedMods)
             ret.AssociatedMods.TryAdd(mod, settings);
+    }
+
+    private static void ReduceCustomizePlusAssociation(Design? design, ApplicationType type, MergedDesign ret)
+    {
+        if (design == null || !type.HasFlag(ApplicationType.CustomizePlusProfile) || !design.ApplyCustomizePlusAssociation
+         || !design.CustomizePlusAssociation.IsSet || ret.ApplyCustomizePlusAssociation)
+            return;
+
+        ret.ApplyCustomizePlusAssociation = true;
+        ret.CustomizePlusAssociation = design.CustomizePlusAssociation.Clone();
     }
 
     private static void ReduceMeta(in DesignData design, MetaFlag applyMeta, MergedDesign ret, StateSource source)

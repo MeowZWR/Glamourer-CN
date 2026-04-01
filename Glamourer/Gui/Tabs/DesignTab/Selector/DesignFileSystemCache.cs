@@ -1,4 +1,4 @@
-﻿using Glamourer.Designs;
+using Glamourer.Designs;
 using Glamourer.Events;
 using ImSharp;
 using Luna;
@@ -36,6 +36,8 @@ public sealed class DesignFileSystemCache : FileSystemCache<DesignFileSystemCach
             case DesignChanged.Type.AddedMod:
             case DesignChanged.Type.RemovedMod:
             case DesignChanged.Type.UpdatedMod:
+            case DesignChanged.Type.CustomizePlusAssociation:
+            case DesignChanged.Type.ApplyCustomizePlusAssociation:
             case DesignChanged.Type.ChangedLink:
             case DesignChanged.Type.Equip:
             case DesignChanged.Type.BonusItem:

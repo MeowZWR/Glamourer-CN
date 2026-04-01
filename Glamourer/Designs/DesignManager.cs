@@ -1,5 +1,6 @@
-﻿using Dalamud.Utility;
+using Dalamud.Utility;
 using Glamourer.Config;
+using Glamourer.Designs.CustomizePlus;
 using Glamourer.Designs.History;
 using Glamourer.Designs.Links;
 using Glamourer.Events;
@@ -309,6 +310,34 @@ public sealed class DesignManager : DesignEditor, IService
         }
     }
 
+    /// <summary> Change the associated Customize+ profile of a design. </summary>
+    public void ChangeCustomizePlusAssociation(Design design, CustomizePlusAssociation association)
+    {
+        var oldAssociation = design.CustomizePlusAssociation.Clone();
+        if (!design.SetCustomizePlusAssociation(association))
+            return;
+
+        design.LastEdit = DateTimeOffset.UtcNow;
+        SaveService.QueueSave(design);
+        Glamourer.Log.Debug($"Changed Customize+ association of design {design.Identifier} to {design.CustomizePlusAssociation.ProfileId}.");
+        DesignChanged.Invoke(new DesignChanged.Arguments(DesignChanged.Type.CustomizePlusAssociation, design,
+            new CustomizePlusAssociationTransaction(oldAssociation, design.CustomizePlusAssociation.Clone())));
+    }
+
+    /// <summary> Remove the associated Customize+ profile from a design. </summary>
+    public void ClearCustomizePlusAssociation(Design design)
+    {
+        var oldAssociation = design.CustomizePlusAssociation.Clone();
+        if (!design.ClearCustomizePlusAssociation())
+            return;
+
+        design.LastEdit = DateTimeOffset.UtcNow;
+        SaveService.QueueSave(design);
+        Glamourer.Log.Debug($"Cleared Customize+ association from design {design.Identifier}.");
+        DesignChanged.Invoke(new DesignChanged.Arguments(DesignChanged.Type.CustomizePlusAssociation, design,
+            new CustomizePlusAssociationTransaction(oldAssociation, design.CustomizePlusAssociation.Clone())));
+    }
+
     /// <summary> Set the write protection status of a design. </summary>
     public void SetWriteProtection(Design design, bool value)
     {
@@ -368,6 +397,19 @@ public sealed class DesignManager : DesignEditor, IService
         SaveService.QueueSave(design);
         Glamourer.Log.Debug($"Set {design.Identifier} to {(resetTemporarySettings ? string.Empty : "not")} reset temporary settings.");
         DesignChanged.Invoke(new DesignChanged.Arguments(DesignChanged.Type.ResetTemporarySettings, design));
+    }
+
+    public void ChangeApplyCustomizePlusAssociation(Design design, bool applyCustomizePlusAssociation)
+    {
+        if (design.ApplyCustomizePlusAssociation == applyCustomizePlusAssociation)
+            return;
+
+        var old = design.ApplyCustomizePlusAssociation;
+        design.ApplyCustomizePlusAssociation = applyCustomizePlusAssociation;
+        SaveService.QueueSave(design);
+        Glamourer.Log.Debug($"Set {design.Identifier} to {(applyCustomizePlusAssociation ? string.Empty : "not ")}apply Customize+ associations.");
+        DesignChanged.Invoke(new DesignChanged.Arguments(DesignChanged.Type.ApplyCustomizePlusAssociation, design,
+            new ApplyCustomizePlusAssociationTransaction(old, applyCustomizePlusAssociation)));
     }
 
     /// <summary> Change whether to apply a specific customize value. </summary>
