@@ -80,12 +80,12 @@ public sealed class NpcPanel(
 
         foreach (var slot in EquipSlotExtensions.EqdpSlots)
         {
-            var data = new EquipDrawData(slot, designData) { Locked = true };
+            var data = new EquipDrawData(slot, in designData) { Locked = true };
             equipmentDrawer.DrawEquip(data);
         }
 
-        var mainhandData = new EquipDrawData(EquipSlot.MainHand, designData) { Locked = true };
-        var offhandData  = new EquipDrawData(EquipSlot.OffHand,  designData) { Locked = true };
+        var mainhandData = new EquipDrawData(EquipSlot.MainHand, in designData) { Locked = true };
+        var offhandData  = new EquipDrawData(EquipSlot.OffHand,  in designData) { Locked = true };
         equipmentDrawer.DrawWeapons(mainhandData, offhandData, false);
 
         Im.Dummy(new Vector2(Im.Style.TextHeight / 2));
@@ -140,8 +140,9 @@ public sealed class NpcPanel(
         table.SetupColumn("类型"u8, TableColumnFlags.WidthFixed, Im.Font.CalculateButtonSize("最后更新时间"u8).X);
         table.SetupColumn("数据"u8, TableColumnFlags.WidthStretch);
 
-        CopyButton(table, "NPC 名称"u8, selection.Name);
-        CopyButton(table, "NPC ID"u8,   $"{selection.Data.Id.Id}");
+        CopyButton(table, "NPC 名称"u8,    selection.Name);
+        CopyButton(table, "NPC ID"u8,      $"{selection.Data.Id.Id}");
+        CopyButton(table, "NPC 名称 ID"u8, $"{selection.Data.NameId}");
         table.DrawFrameColumn("NPC 类型"u8);
         table.NextColumn();
         var width = Im.ContentRegion.Available.X;
