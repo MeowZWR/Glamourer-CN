@@ -27,7 +27,7 @@ public enum ApplicationType : byte
     [Tooltip("应用此设计中启用的所有饰品修改，这些修改须在自动执行中有效。")]
     Accessories = 0x10,
 
-    [Tooltip("应用此设计中启用的角色配置，须匹配当前角色，否则不生效。")]
+    [Tooltip("应用此设计中启用的 C+ 角色配置，须匹配当前角色，否则不生效。")]
     CustomizePlusProfile = 0x20,
 
     All = Armor | Accessories | Customizations | Weapons | GearCustomization | CustomizePlusProfile,

@@ -55,11 +55,10 @@ public sealed class CustomizePlusAssociationsTab(
 
         Im.Line.SameInner();
         if (ImEx.Icon.LabeledButton(LunaStyle.DeleteIcon, "##clearCustomizePlusAssociation"u8,
-                "移除此设计的 Customize+ 关联，并关闭该设计的 C+ 应用开关。"u8,
+                "移除此设计的 Customize+ 关联。"u8,
                 !Selection.CustomizePlusAssociation.IsSet || !canClear))
         {
             manager.ClearCustomizePlusAssociation(Selection);
-            manager.ChangeApplyCustomizePlusAssociation(Selection, false);
         }
         if (!canClear)
             Im.Tooltip.OnHover($"\n按住{config.DeleteDesignModifier}来删除。");

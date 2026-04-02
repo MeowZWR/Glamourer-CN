@@ -169,7 +169,7 @@ public sealed class SetPanel(
             table.SetupColumn("角色设计"u8, TableColumnFlags.WidthFixed, 220 * Im.Style.GlobalScale);
             if (config.ShowAllAutomatedApplicationRules)
                 table.SetupColumn("执行规则"u8, TableColumnFlags.WidthFixed,
-                    6 * Im.Style.FrameHeight + 10 * Im.Style.GlobalScale);
+                    7 * Im.Style.FrameHeight + 12 * Im.Style.GlobalScale);
             else
                 table.SetupColumn("使用"u8, TableColumnFlags.WidthFixed, Im.Font.CalculateSize("使用"u8).X);
         }
@@ -179,7 +179,7 @@ public sealed class SetPanel(
                 250 * Im.Style.GlobalScale - (Im.Scroll.MaximumY > 0 ? Im.Style.ScrollbarSize : 0));
             if (config.ShowAllAutomatedApplicationRules)
                 table.SetupColumn("执行规则"u8, TableColumnFlags.WidthFixed,
-                    3 * Im.Style.FrameHeight + 4 * Im.Style.GlobalScale);
+                    4 * Im.Style.FrameHeight + 6 * Im.Style.GlobalScale);
             else
                 table.SetupColumn("使用"u8, TableColumnFlags.WidthFixed, Im.Font.CalculateSize("使用"u8).X);
         }
@@ -267,8 +267,8 @@ public sealed class SetPanel(
     {
         var (numCheckboxes, numSpacing) = (config.ShowAllAutomatedApplicationRules, config.ShowUnlockedItemWarnings) switch
         {
-            (true, true)   => (10, 14),
-            (true, false)  => (8, 10),
+            (true, true)   => (11, 16),
+            (true, false)  => (9, 12),
             (false, true)  => (4, 4),
             (false, false) => (2, 0),
         };
@@ -486,18 +486,35 @@ public sealed class SetPanel(
                 Im.Tooltip.OnHover(type.Tooltip());
             }
 
-            Im.Line.Same();
-            Box(0);
-            Im.Line.Same();
-            Box(1);
             if (singleLine)
+            {
                 Im.Line.Same();
-
-            Box(2);
-            Im.Line.Same();
-            Box(3);
-            Im.Line.Same();
-            Box(4);
+                Box(0);
+                Im.Line.Same();
+                Box(1);
+                Im.Line.Same();
+                Box(2);
+                Im.Line.Same();
+                Box(3);
+                Im.Line.Same();
+                Box(4);
+                Im.Line.Same();
+                Box(5);
+            }
+            else
+            {
+                Im.Line.Same();
+                Box(0);
+                Im.Line.Same();
+                Box(1);
+                Im.Line.Same();
+                Box(2);
+                Box(3);
+                Im.Line.Same();
+                Box(4);
+                Im.Line.Same();
+                Box(5);
+            }
         }
 
         manager.ChangeApplicationType(set, autoDesignIndex, newType);

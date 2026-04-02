@@ -92,12 +92,14 @@ public class DesignMerger(
 
     private static void ReduceCustomizePlusAssociation(Design? design, ApplicationType type, MergedDesign ret)
     {
-        if (design == null || type is 0 || !design.ApplyCustomizePlusAssociation
-         || !design.CustomizePlusAssociation.IsSet || ret.ApplyCustomizePlusAssociation)
+        if (design == null || !type.HasFlag(ApplicationType.CustomizePlusProfile) || !design.ApplyCustomizePlusAssociation
+         || ret.ApplyCustomizePlusAssociation)
             return;
 
         ret.ApplyCustomizePlusAssociation = true;
-        ret.CustomizePlusAssociation = design.CustomizePlusAssociation.Clone();
+        ret.CustomizePlusAssociation = design.CustomizePlusAssociation.IsSet
+            ? design.CustomizePlusAssociation.Clone()
+            : null;
     }
 
     private static void ReduceMeta(in DesignData design, MetaFlag applyMeta, MergedDesign ret, StateSource source)

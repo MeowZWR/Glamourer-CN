@@ -59,7 +59,7 @@ public sealed class Design : DesignBase, ISavable, IDesignStandIn, IFileSystemVa
     public bool                         ForcedRedraw           { get; internal set; }
     public bool                         ResetAdvancedDyes      { get; internal set; }
     public bool                         ResetTemporarySettings { get; internal set; }
-    public bool                         ApplyCustomizePlusAssociation { get; internal set; }
+    public bool                         ApplyCustomizePlusAssociation { get; internal set; } = true;
     public bool                         QuickDesign            { get; internal set; } = true;
     public string                       Color                  { get; internal set; } = string.Empty;
     public SortedList<Mod, ModSettings> AssociatedMods         { get; private set; }  = [];
@@ -280,12 +280,13 @@ public sealed class Design : DesignBase, ISavable, IDesignStandIn, IFileSystemVa
         LoadParameters(json["Parameters"], design, design.Name);
         LoadMaterials(json["Materials"], design, design.Name);
         LoadLinks(linkLoader, json["Links"], design);
-        design.Color                  = json["Color"]?.ToObject<string>() ?? string.Empty;
-        design.ForcedRedraw           = json["ForcedRedraw"]?.ToObject<bool>() ?? false;
-        design.ResetAdvancedDyes      = json["ResetAdvancedDyes"]?.ToObject<bool>() ?? false;
-        design.ResetTemporarySettings = json["ResetTemporarySettings"]?.ToObject<bool>() ?? false;
-        design.ApplyCustomizePlusAssociation = json["ApplyCustomizePlusAssociation"]?.ToObject<bool>() ?? false;
-        design.CustomizePlusAssociation = CustomizePlusAssociation.Load(json["CustomizePlusAssociation"]);
+        design.Color                            = json["Color"]?.ToObject<string>() ?? string.Empty;
+        design.ForcedRedraw                     = json["ForcedRedraw"]?.ToObject<bool>() ?? false;
+        design.ResetAdvancedDyes                = json["ResetAdvancedDyes"]?.ToObject<bool>() ?? false;
+        design.ResetTemporarySettings           = json["ResetTemporarySettings"]?.ToObject<bool>() ?? false;
+        design.QuickDesign                      = json["QuickDesign"]?.ToObject<bool>() ?? true;
+        design.ApplyCustomizePlusAssociation    = json["ApplyCustomizePlusAssociation"]?.ToObject<bool>() ?? true;
+        design.CustomizePlusAssociation         = CustomizePlusAssociation.Load(json["CustomizePlusAssociation"]);
         return design;
 
         static string[] ParseTags(JObject json)
