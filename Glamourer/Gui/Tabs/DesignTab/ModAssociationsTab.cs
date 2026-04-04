@@ -102,7 +102,7 @@ public sealed class ModAssociationsTab(PenumbraService penumbra, DesignFileSyste
         table.SetupColumn("继承"u8,   TableColumnFlags.WidthFixed, Im.Font.CalculateSize("继承"u8).X);
         table.SetupColumn("状态"u8,     TableColumnFlags.WidthFixed, Im.Font.CalculateSize("状态"u8).X);
         table.SetupColumn("优先级"u8,  TableColumnFlags.WidthFixed, Im.Font.CalculateSize("优先级"u8).X);
-        table.SetupColumn("##Options"u8, TableColumnFlags.WidthFixed, Im.Font.CalculateSize("应用"u8).X);
+        table.SetupColumn("##Options"u8, TableColumnFlags.WidthFixed, Im.Font.CalculateSize("应用"u8).X + Im.Style.FramePadding.X);
         table.HeaderRow();
 
         Mod?                             removedMod = null;
