@@ -1,6 +1,7 @@
 using Glamourer.Designs;
 using Glamourer.Designs.CustomizePlus;
 using Glamourer.Designs.Links;
+using Glamourer.State;
 using Luna;
 using Penumbra.GameData.Actors;
 using Penumbra.GameData.Interop;
@@ -15,6 +16,9 @@ public sealed class CustomizePlusAssociationApplier(
 {
     private readonly Dictionary<ActorIdentifier, (Guid SourceProfileId, Guid TemporaryProfileId)> _applied = [];
 
+    /// <summary> Actors where Glamourer last successfully applied a temporary C+ profile from a manual design apply. </summary>
+    private readonly HashSet<ActorIdentifier> _manualTemporaryCustomizePlus = [];
+
     /// <summary> Remove every temporary Customize+ profile this plugin applied (e.g. on unload). </summary>
     public void RestoreAll()
     {
@@ -26,13 +30,17 @@ public sealed class CustomizePlusAssociationApplier(
         => RestoreAll();
 
     public void Apply(ActorIdentifier identifier, in ObjectIndex objectIndex, DesignBase design)
-        => Apply(identifier, objectIndex, design is Design d && d.ApplyCustomizePlusAssociation ? d.CustomizePlusAssociation : null);
+        => Apply(identifier, objectIndex, design is Design d && d.ApplyCustomizePlusAssociation ? d.CustomizePlusAssociation : null,
+            StateSource.Manual, false);
 
-    public void Apply(ActorIdentifier identifier, in ObjectIndex objectIndex, MergedDesign design)
-        => Apply(identifier, objectIndex, design.ApplyCustomizePlusAssociation ? design.CustomizePlusAssociation : null);
+    public void Apply(ActorIdentifier identifier, in ObjectIndex objectIndex, MergedDesign design, StateSource applySource,
+        bool respectManual)
+        => Apply(identifier, objectIndex, design.ApplyCustomizePlusAssociation ? design.CustomizePlusAssociation : null, applySource,
+            respectManual);
 
     public void Restore(ActorIdentifier identifier)
     {
+        _manualTemporaryCustomizePlus.Remove(identifier);
         if (!_applied.Remove(identifier, out var state))
             return;
 
@@ -54,8 +62,12 @@ public sealed class CustomizePlusAssociationApplier(
         Restore(identifier, data.Objects[0].Index);
     }
 
-    private void Apply(ActorIdentifier identifier, in ObjectIndex objectIndex, CustomizePlusAssociation? association)
+    private void Apply(ActorIdentifier identifier, in ObjectIndex objectIndex, CustomizePlusAssociation? association,
+        StateSource applySource, bool respectManual)
     {
+        if (respectManual && applySource.IsFixed() && _manualTemporaryCustomizePlus.Contains(identifier))
+            return;
+
         if (dynamicBridge.IsLoaded || association is not { IsSet: true } || !customizePlus.IsAvailable(out _)
          || !CustomizePlusIpcService.Matches(identifier, association))
         {
@@ -64,7 +76,13 @@ public sealed class CustomizePlusAssociationApplier(
         }
 
         if (_applied.TryGetValue(identifier, out var existing) && existing.SourceProfileId == association.ProfileId)
+        {
+            if (applySource.IsManual())
+                _manualTemporaryCustomizePlus.Add(identifier);
+            else
+                _manualTemporaryCustomizePlus.Remove(identifier);
             return;
+        }
 
         if (!customizePlus.TryGetProfileJson(association.ProfileId, out var profileJson, out var readError))
         {
@@ -83,5 +101,9 @@ public sealed class CustomizePlusAssociationApplier(
         }
 
         _applied[identifier] = (association.ProfileId, temporaryId);
+        if (applySource.IsManual())
+            _manualTemporaryCustomizePlus.Add(identifier);
+        else
+            _manualTemporaryCustomizePlus.Remove(identifier);
     }
 }

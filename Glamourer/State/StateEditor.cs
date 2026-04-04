@@ -444,7 +444,7 @@ public class StateEditor(
 
         Glamourer.Log.Verbose(
             $"Applied design to {state.Identifier.Incognito(null)}. [Affecting {actors.ToLazyString("nothing")}.]");
-        ApplyCustomizePlusAssociation(state, mergedDesign);
+        ApplyCustomizePlusAssociation(state, mergedDesign, settings);
         StateChanged.Invoke(new StateChanged.Arguments(StateChangeType.Design, state.Sources[MetaIndex.Wetness], state, actors)); // FIXME: maybe later
         if (settings.IsFinal)
             StateFinalized.Invoke(new StateFinalized.Arguments(StateFinalizationType.DesignApplied, actors));
@@ -502,7 +502,7 @@ public class StateEditor(
                 stains,        settings);
     }
 
-    private void ApplyCustomizePlusAssociation(ActorState state, MergedDesign mergedDesign)
+    private void ApplyCustomizePlusAssociation(ActorState state, MergedDesign mergedDesign, ApplySettings settings)
     {
         if (!Objects.TryGetValue(state.Identifier, out var data) || !data.Valid)
         {
@@ -510,6 +510,6 @@ public class StateEditor(
             return;
         }
 
-        CustomizePlusApplier.Apply(state.Identifier, data.Objects[0].Index, mergedDesign);
+        CustomizePlusApplier.Apply(state.Identifier, data.Objects[0].Index, mergedDesign, settings.Source, settings.RespectManual);
     }
 }
