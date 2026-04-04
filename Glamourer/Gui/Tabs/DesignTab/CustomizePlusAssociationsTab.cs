@@ -34,8 +34,8 @@ public sealed class CustomizePlusAssociationsTab(
         Im.Tooltip.OnHover(
             "【国服特供】Customize+ 关联\n"u8
           + "● 此功能旨在提供轻量化的联动体验，仅在未启用 DynamicBridge 时生效。\n"u8
-          + "● 生效机制：当手动或自动应用此设计时，将临时应用选择的 Customize+ 配置。\n"u8
-          + "● 恢复逻辑：规则不再匹配或切换至未关联的设计，将恢复 Customize+ 的原始设置。\n"u8
+          + "● 生效机制：手动或自动应用此设计时，临时应用关联的 Customize+ 配置。\n"u8
+          + "● 恢复逻辑：规则不再匹配或切换至未关联的设计，清除关联的 Customize+ 临时配置。\n"u8
           + "※ 请根据实际需求谨慎开启，可能会损害你的配置，请做好备份。"u8);
         if (!h)
             return;

@@ -236,7 +236,7 @@ public class DesignPanel : IPanel
         using var id = Im.Id.Push("CustomizePlusAssociation"u8);
 
         var apply = Selection.ApplyCustomizePlusAssociation;
-        if (Im.Checkbox("应用 C+ 关联配置"u8, ref apply))
+        if (Im.Checkbox("应用 Customize+ "u8, ref apply))
         {
             _manager.ChangeApplyCustomizePlusAssociation(Selection, apply);
         }
