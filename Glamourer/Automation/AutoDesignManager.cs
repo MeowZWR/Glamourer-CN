@@ -533,13 +533,13 @@ public sealed class AutoDesignManager : ISavable, IReadOnlyList<AutoDesignSet>, 
         foreach (var obj in array)
         {
             var name = obj["Name"]?.ToObject<string>() ?? string.Empty;
-            if (name.Length == 0)
+            if (name.Length is 0)
             {
                 Glamourer.Messager.NotificationMessage("已跳过加载自动化执行集：未提供名称。", NotificationType.Warning);
                 continue;
             }
 
-            var id = _actors.FromJson(obj["Identifier"] as JObject);
+            var id = _actors.FromJson(obj["Identifier"] as JObject).WithoutIndex();
             if (!IdentifierValid(id, out var group))
             {
                 Glamourer.Messager.NotificationMessage("已跳过加载自动化执行集：无效的标识符。", NotificationType.Warning);
@@ -573,7 +573,7 @@ public sealed class AutoDesignManager : ISavable, IReadOnlyList<AutoDesignSet>, 
             if (obj["SecondaryIdentifiers"] is JArray identifierArray)
                 foreach (var idJObj in identifierArray)
                 {
-                    var identifier = _actors.FromJson(idJObj as JObject);
+                    var identifier = _actors.FromJson(idJObj as JObject).WithoutIndex();
                     if (!IdentifierValid(identifier, out var g))
                     {
                         Glamourer.Messager.NotificationMessage($"Invalid Secondary Identifier in Automation Set {name}, skipped.",
@@ -613,7 +613,7 @@ public sealed class AutoDesignManager : ISavable, IReadOnlyList<AutoDesignSet>, 
         }
         else
         {
-            if (designIdentifier.Length == 0)
+            if (designIdentifier.Length is 0)
             {
                 Glamourer.Messager.NotificationMessage($"Error parsing automatically applied design for set {setName}: No design specified.",
                     NotificationType.Warning);
@@ -701,8 +701,7 @@ public sealed class AutoDesignManager : ISavable, IReadOnlyList<AutoDesignSet>, 
             group = [];
             return false;
         }
-
-        group = GetGroup(identifier);
+        group = GetGroup(identifier.WithoutIndex());
         return group.Length > 0;
     }
 

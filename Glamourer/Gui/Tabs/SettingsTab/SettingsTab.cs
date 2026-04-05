@@ -1,5 +1,6 @@
 ﻿using Dalamud.Game.ClientState.Keys;
 using Dalamud.Interface;
+using Dalamud.Plugin;
 using Dalamud.Plugin.Services;
 using Glamourer.Automation;
 using Glamourer.Config;
@@ -16,6 +17,7 @@ using Luna;
 namespace Glamourer.Gui.Tabs.SettingsTab;
 
 public sealed class SettingsTab(
+    IDalamudPluginInterface pi,
     Configuration config,
     DesignFileSystemDrawer drawer,
     ContextMenuService contextMenuService,
@@ -96,8 +98,39 @@ public sealed class SettingsTab(
             "对当前任何处于活动状态的自动执行组进行更改，在重新应用修改后的自动执行时是否保留手动作出的更改。"u8,
             config.RespectManualOnAutomationUpdate, v => config.RespectManualOnAutomationUpdate = v);
         Checkbox("启用节日彩蛋"u8,
-            "Glamourer 也许会在一些特别的日子做一些有趣的事情。如果你觉得这会影响你的体验，请禁用此选项。全局的 Dalamud 设置优先于此设置。"u8,
-            config.DisableFestivals is 0, v => config.DisableFestivals = v ? (byte)0 : (byte)2);
+            "Glamourer 也许会在一些特别的日子做一些有趣的事情。如果你觉得这会影响你的体验，请禁用此选项。Dalamud 的全局设置优先于此设置。"u8,
+            config.FestivalMode is FestivalSetting.AskYes or FestivalSetting.NeverAskYes, v => config.FestivalMode =
+                (v, config.FestivalMode) switch
+                {
+                    (true, FestivalSetting.NeverAskYes) or (true, FestivalSetting.NeverAskNo)   => FestivalSetting.NeverAskYes,
+                    (false, FestivalSetting.NeverAskYes) or (false, FestivalSetting.NeverAskNo) => FestivalSetting.NeverAskNo,
+                    (true, _)                                                                   => FestivalSetting.AskYes,
+                    _                                                                           => FestivalSetting.AskNo,
+                });
+        if (!pi.AllowSeasonalEvents)
+        {
+            Im.Line.SameInner();
+            ImEx.Icon.DrawAligned(LunaStyle.WarningIcon, Colors.SelectedRed);
+            Im.Tooltip.OnHover("你已在 Dalamud 中禁用了“节日事件”。\n\nGlamourer 将优先遵循该全局设置。若不开启全局开关，此处的选项将无法生效。");
+        }
+
+        if (config.FestivalMode is not FestivalSetting.Undefined)
+        {
+            Im.Cursor.X += Im.Style.FrameHeight + Im.Style.ItemInnerSpacing.X;
+            Checkbox("针对每个节日彩蛋单独询问"u8,
+                "开启后，每逢新的节日，Glamourer 都会通过通知询问是否启用相关彩蛋；若关闭，则不再询问。"u8,
+                config.FestivalMode is FestivalSetting.AskYes or FestivalSetting.AskNo, v => config.FestivalMode =
+                    (v, config.FestivalMode) switch
+                    {
+                        (true, FestivalSetting.NeverAskYes) or (true, FestivalSetting.AskYes)   => FestivalSetting.AskYes,
+                        (false, FestivalSetting.NeverAskYes) or (false, FestivalSetting.AskYes) => FestivalSetting.NeverAskYes,
+                        (true, _)                                                               => FestivalSetting.AskNo,
+                        _                                                                       => FestivalSetting.NeverAskNo,
+                    });
+        }
+        else
+            Im.FrameDummy();
+
         DrawPenumbraIntegrationSettings1();
         Checkbox("在更换区域时撤销手动更改"u8,
             "当你更换区域时，撤销你对角色进行的手动更改，恢复到游戏基础状态或自动执行状态。"u8,

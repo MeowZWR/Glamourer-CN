@@ -1,3 +1,4 @@
+using Dalamud.Game.ClientState.Objects.Enums;
 using Glamourer.Automation;
 using Glamourer.Designs;
 using Glamourer.Designs.Special;
@@ -13,6 +14,7 @@ using Penumbra.GameData.DataContainers;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Interop;
 using Penumbra.GameData.Structs;
+using CustomizeIndex = Penumbra.GameData.Enums.CustomizeIndex;
 
 namespace Glamourer.Gui.Tabs.AutomationTab;
 
@@ -131,7 +133,7 @@ public sealed class SetPanel(
                             Im.Tooltip.OnHover($"按住 {config.DeleteDesignModifier} 键删除。");
 
                         Im.Line.Same();
-                        ImEx.TextFrameAligned(config.Ephemeral.IncognitoMode ? identifier.Incognito(null) : identifier.ToName());
+                        ImEx.TextFrameAligned(config.Ephemeral.IncognitoMode ? GetIncognito(identifier) : GetIdentifier(identifier));
                     }
                 }
             }
@@ -711,4 +713,20 @@ public sealed class SetPanel(
         public override bool GetValue(in AutoDesignCacheItem item, int globalIndex, int triEnumIndex)
             => !item.Disabled;
     }
+
+    private static Utf8StringHandler<TextStringHandlerBuffer> GetIdentifier(ActorIdentifier identifier)
+        => identifier switch
+        {
+            { Type: IdentifierType.Npc, Kind: ObjectKind.BattleNpc } => $"{identifier.ToName()} ({identifier.Kind.ToName()})",
+            { Type: IdentifierType.Npc, Kind: ObjectKind.EventNpc }  => $"{identifier.ToName()} ({identifier.Kind.ToName()})",
+            _                                                        => identifier.ToName(),
+        };
+
+    private static Utf8StringHandler<TextStringHandlerBuffer> GetIncognito(ActorIdentifier identifier)
+        => identifier switch
+        {
+            { Type: IdentifierType.Npc, Kind: ObjectKind.BattleNpc } => new StringU8($"{identifier.ToName()} ({identifier.Kind.ToName()})"),
+            { Type: IdentifierType.Npc, Kind: ObjectKind.EventNpc }  => new StringU8($"{identifier.ToName()} ({identifier.Kind.ToName()})"),
+            _                                                        => new StringU8(identifier.Incognito(null)),
+        };
 }
