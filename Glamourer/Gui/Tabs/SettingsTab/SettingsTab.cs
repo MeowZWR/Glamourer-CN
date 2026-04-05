@@ -82,7 +82,7 @@ public sealed class SettingsTab(
 
     private void DrawBehaviorSettings()
     {
-        if (!Im.Tree.Header("行为设置"u8))
+        if (!Im.Tree.Header("常规设置"u8))
             return;
 
         Checkbox("总是为主手应用整套武器"u8,
@@ -94,7 +94,7 @@ public sealed class SettingsTab(
         Checkbox("不在自动执行中使用未获得过的物品"u8,
             "如果你希望“自动执行”中只使用你已经获取过一次的物品，不使用那些从未获取过的物品，就启用这个选项。"u8,
             config.UnlockedItemMode, v => config.UnlockedItemMode = v);
-        Checkbox("编辑自动执行时尊重手动更改"u8,
+        Checkbox("编辑自动执行时保留手动更改"u8,
             "对当前任何处于活动状态的自动执行组进行更改，在重新应用修改后的自动执行时是否保留手动作出的更改。"u8,
             config.RespectManualOnAutomationUpdate, v => config.RespectManualOnAutomationUpdate = v);
         Checkbox("启用节日彩蛋"u8,

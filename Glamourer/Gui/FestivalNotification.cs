@@ -30,14 +30,14 @@ public sealed class FestivalNotification(Configuration config, IDalamudPluginInt
         => config.FestivalMode switch
         {
             FestivalSetting.Undefined =>
-                "Glamourer provides some festival-specific behaviour turned off by default.\n\nYou can always turn this behaviour on or off in the general settings, and choose your current preference now.",
+                "Glamourer 提供了一些节日限定的彩蛋功能，默认处于关闭状态。\n\n你可以随时在常规设置中开启或关闭它们，现在也可以直接选择你的偏好。",
             FestivalSetting.AskYes =>
-                "A new Glamourer seasonal easter egg has started.\n\nDo you still want to keep festival-specific behavior on?",
-            _ => "A new Glamourer seasonal easter egg has started.\n\nAre you still not interested?",
+                "新的 Glamourer 节日彩蛋已上线！\n\n要继续保持节日彩蛋功能开启吗？",
+            _ => "新的 Glamourer 节日彩蛋已上线！\n\n你还是对节日彩蛋功能不感兴趣吗？",
         };
 
     public string NotificationTitle
-        => "Seasonal Easter Egg";
+        => "节日彩蛋";
 
     public TimeSpan NotificationDuration
         => TimeSpan.MaxValue;
@@ -59,19 +59,19 @@ public sealed class FestivalNotification(Configuration config, IDalamudPluginInt
         Im.Separator();
         Im.Cursor.Y += Im.Style.ItemInnerSpacing.Y;
         var region = Im.ContentRegion.Available;
-        var width  = Im.Font.CalculateSize("Do not ask again"u8).X + Im.Style.ItemInnerSpacing.X + Im.Style.FrameHeight;
+        var width  = Im.Font.CalculateSize("不再询问"u8).X + Im.Style.ItemInnerSpacing.X + Im.Style.FrameHeight;
         Im.Cursor.X += (region.X - width) / 2;
         using (ImStyleBorder.Frame.Push(ColorParameter.Default, 1))
         {
-            Im.Checkbox("Do not ask again"u8, ref _doNotAskAgain);
+            Im.Checkbox("不再询问"u8, ref _doNotAskAgain);
         }
 
         var buttonSize = new Vector2((region.X - Im.Style.ItemSpacing.X) / 2, 0);
         var (yesText, noText) = config.FestivalMode switch
         {
-            FestivalSetting.Undefined => RefTuple.Create("Let's Check It Out!"u8, "I Don't Like Fun."u8),
-            FestivalSetting.AskYes    => RefTuple.Create("Keep It!"u8,            "Turn It Off."u8),
-            _                         => RefTuple.Create("Try It This Time!"u8,   "Still No."u8),
+            FestivalSetting.Undefined => RefTuple.Create("去看看！"u8, "我没兴趣。"u8),
+            FestivalSetting.AskYes    => RefTuple.Create("保留开启！"u8, "现在关闭。"u8),
+            _                         => RefTuple.Create("这次试试！"u8, "依然没兴趣。"u8),
         };
         if (ImEx.Button(yesText, buttonSize, !pi.AllowSeasonalEvents && !config.DeleteDesignModifier.IsActive()))
         {
@@ -84,11 +84,11 @@ public sealed class FestivalNotification(Configuration config, IDalamudPluginInt
         {
             using var tt = Im.Tooltip.Begin();
             Im.Text(
-                "You have seasonal events disabled globally in Dalamud.\n\nGlamourer will respect this setting, so choosing yes here will not work until you enable the global setting."u8,
+                "你已在 Dalamud 设置中全局禁用了节日活动。\n\nGlamourer 将遵循该设置，因此除非你开启全局设置，否则此处选择的“是”将不会生效。"u8,
                 Colors.SelectedRed);
 
             if (!config.DeleteDesignModifier.IsActive())
-                Im.Text($"\nHold {config.DeleteDesignModifier} to click anyway.");
+                Im.Text($"\n按住 {config.DeleteDesignModifier} 键强制点击。");
         }
 
         Im.Line.Same();
