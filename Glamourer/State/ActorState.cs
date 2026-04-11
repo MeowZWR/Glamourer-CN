@@ -87,4 +87,22 @@ public class ActorState
         LastTerritory = territory;
         return true;
     }
+
+    /// <summary> True if any appearance slot or advanced dye row is attributed to a manual (or IPC-manual) source. </summary>
+    public bool HasAnyManualGlamourerSource()
+    {
+        for (var i = 0; i < StateIndex.Size; ++i)
+        {
+            if (Sources[new StateIndex(i)].IsManual())
+                return true;
+        }
+
+        foreach (var (_, value) in Materials.Values)
+        {
+            if (value.Source.IsManual())
+                return true;
+        }
+
+        return false;
+    }
 }

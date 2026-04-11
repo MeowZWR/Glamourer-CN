@@ -510,6 +510,7 @@ public class StateEditor(
             return;
         }
 
-        CustomizePlusApplier.Apply(state.Identifier, data.Objects[0].Index, mergedDesign, settings.Source, settings.RespectManual);
+        CustomizePlusApplier.Apply(state.Identifier, data.Objects[0].Index, mergedDesign, settings.Source, settings.RespectManual,
+            state.HasAnyManualGlamourerSource());
     }
 }

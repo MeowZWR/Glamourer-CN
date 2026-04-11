@@ -31,12 +31,12 @@ public sealed class CustomizePlusAssociationApplier(
 
     public void Apply(ActorIdentifier identifier, in ObjectIndex objectIndex, DesignBase design)
         => Apply(identifier, objectIndex, design is Design d && d.ApplyCustomizePlusAssociation ? d.CustomizePlusAssociation : null,
-            StateSource.Manual, false);
+            StateSource.Manual, false, false);
 
     public void Apply(ActorIdentifier identifier, in ObjectIndex objectIndex, MergedDesign design, StateSource applySource,
-        bool respectManual)
+        bool respectManual, bool stateHasManualGlamourerSource)
         => Apply(identifier, objectIndex, design.ApplyCustomizePlusAssociation ? design.CustomizePlusAssociation : null, applySource,
-            respectManual);
+            respectManual, stateHasManualGlamourerSource);
 
     public void Restore(ActorIdentifier identifier)
     {
@@ -63,9 +63,10 @@ public sealed class CustomizePlusAssociationApplier(
     }
 
     private void Apply(ActorIdentifier identifier, in ObjectIndex objectIndex, CustomizePlusAssociation? association,
-        StateSource applySource, bool respectManual)
+        StateSource applySource, bool respectManual, bool stateHasManualGlamourerSource)
     {
-        if (respectManual && applySource.IsFixed() && _manualTemporaryCustomizePlus.Contains(identifier))
+        if (association is { IsSet: true } && respectManual && applySource.IsFixed()
+         && (_manualTemporaryCustomizePlus.Contains(identifier) || stateHasManualGlamourerSource))
             return;
 
         if (dynamicBridge.IsLoaded || association is not { IsSet: true } || !customizePlus.IsAvailable(out _)
