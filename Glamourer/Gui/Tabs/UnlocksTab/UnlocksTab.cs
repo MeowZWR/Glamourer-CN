@@ -1,16 +1,18 @@
-﻿using ImSharp;
+﻿using Dalamud.Interface.Windowing;
+using ImSharp;
 using Luna;
+using Window = Luna.Window;
 
 namespace Glamourer.Gui.Tabs.UnlocksTab;
 
 public sealed class UnlocksTab : Window, ITab<MainTabType>
 {
     private readonly Config.EphemeralConfig _config;
-    private readonly UnlockOverview                _overview;
-    private readonly UnlockTable                   _table;
+    private readonly UnlockOverview         _overview;
+    private readonly UnlockTable            _table;
 
     public UnlocksTab(Config.EphemeralConfig config, UnlockOverview overview, UnlockTable table)
-        : base("已解锁装备")
+        : base("装备 & 外貌日志")
     {
         _config   = config;
         _overview = overview;
@@ -36,7 +38,7 @@ public sealed class UnlocksTab : Window, ITab<MainTabType>
     }
 
     public ReadOnlySpan<byte> Label
-        => "解锁物品"u8;
+        => "物品日志"u8;
 
     public MainTabType Identifier
         => MainTabType.Unlocks;

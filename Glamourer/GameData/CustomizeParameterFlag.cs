@@ -13,17 +13,11 @@ public enum CustomizeParameterFlag : ushort
     [Name("肌肉强度")]
     MuscleTone = 0x0002,
 
-    [Name("皮肤光泽")]
-    SkinSpecular = 0x0004,
-
     [Name("嘴唇颜色")]
     LipDiffuse = 0x0008,
 
     [Name("头发颜色")]
     HairDiffuse = 0x0010,
-
-    [Name("头发光泽")]
-    HairSpecular = 0x0020,
 
     [Name("头发挑染")]
     HairHighlight = 0x0040,

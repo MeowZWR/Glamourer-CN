@@ -109,7 +109,7 @@ public sealed class DesignManager : DesignEditor, IService
             Name                   = actualName,
             Index                  = Designs.Count,
             ForcedRedraw           = Config.DefaultDesignSettings.AlwaysForceRedrawing,
-            ResetAdvancedDyes      = Config.DefaultDesignSettings.ResetAdvancedDyes,
+            ResetAdvancedDyes      = Config.DefaultDesignSettings.ResetAdvancedDyes ? EquipFlagExtensions.AllCombined : 0,
             QuickDesign            = Config.DefaultDesignSettings.ShowQuickDesignBar,
             ResetTemporarySettings = Config.DefaultDesignSettings.ResetTemporarySettings,
         };
@@ -133,7 +133,7 @@ public sealed class DesignManager : DesignEditor, IService
             Name                   = actualName,
             Index                  = Designs.Count,
             ForcedRedraw           = Config.DefaultDesignSettings.AlwaysForceRedrawing,
-            ResetAdvancedDyes      = Config.DefaultDesignSettings.ResetAdvancedDyes,
+            ResetAdvancedDyes      = Config.DefaultDesignSettings.ResetAdvancedDyes ? EquipFlagExtensions.AllCombined : 0,
             QuickDesign            = Config.DefaultDesignSettings.ShowQuickDesignBar,
             ResetTemporarySettings = Config.DefaultDesignSettings.ResetTemporarySettings,
         };
@@ -377,15 +377,17 @@ public sealed class DesignManager : DesignEditor, IService
         DesignChanged.Invoke(new DesignChanged.Arguments(DesignChanged.Type.ForceRedraw, design));
     }
 
-    public void ChangeResetAdvancedDyes(Design design, bool resetAdvancedDyes)
+    public void ChangeResetAdvancedDyes(Design design, CombinedItemSlotFlag resetAdvancedDyes)
     {
         if (design.ResetAdvancedDyes == resetAdvancedDyes)
             return;
 
+        var old = design.ResetAdvancedDyes;
         design.ResetAdvancedDyes = resetAdvancedDyes;
         SaveService.QueueSave(design);
-        Glamourer.Log.Debug($"Set {design.Identifier} to {(resetAdvancedDyes ? string.Empty : "not")} reset advanced dyes.");
-        DesignChanged.Invoke(new DesignChanged.Arguments(DesignChanged.Type.ResetAdvancedDyes, design));
+        Glamourer.Log.Debug($"Set {design.Identifier} to reset advanced dyes for slots {resetAdvancedDyes}.");
+        DesignChanged.Invoke(new DesignChanged.Arguments(DesignChanged.Type.ResetAdvancedDyes, design,
+            new ResetAdvancedDyesTransaction(old, resetAdvancedDyes)));
     }
 
     public void ChangeResetTemporarySettings(Design design, bool resetTemporarySettings)
@@ -410,6 +412,19 @@ public sealed class DesignManager : DesignEditor, IService
         Glamourer.Log.Debug($"Set {design.Identifier} to {(applyCustomizePlusAssociation ? string.Empty : "not ")}apply Customize+ associations.");
         DesignChanged.Invoke(new DesignChanged.Arguments(DesignChanged.Type.ApplyCustomizePlusAssociation, design,
             new ApplyCustomizePlusAssociationTransaction(old, applyCustomizePlusAssociation)));
+    }
+    
+    public void ChangeRevertAdvancedDyes(Design design, CombinedItemSlotFlag revertAdvancedDyes)
+    {
+        if (design.RevertAdvancedDyes == revertAdvancedDyes)
+            return;
+
+        var old = design.RevertAdvancedDyes;
+        design.RevertAdvancedDyes = revertAdvancedDyes;
+        SaveService.QueueSave(design);
+        Glamourer.Log.Debug($"Set {design.Identifier} to revert advanced dyes for slots {revertAdvancedDyes}.");
+        DesignChanged.Invoke(new DesignChanged.Arguments(DesignChanged.Type.ResetAdvancedDyes, design,
+            new SlotMaterialRevertTransaction(old, revertAdvancedDyes)));
     }
 
     /// <summary> Change whether to apply a specific customize value. </summary>

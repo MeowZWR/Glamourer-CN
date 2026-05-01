@@ -4,6 +4,7 @@ using Glamourer.Interop.Material;
 using Glamourer.Services;
 using ImSharp;
 using Luna;
+using Penumbra.GameData.Enums;
 
 namespace Glamourer.Gui.Tabs.DesignTab;
 
@@ -57,7 +58,8 @@ public sealed class MultiDesignPanel(
         _numDesignsLocked           = 0;
         _numDesignsForcedRedraw     = 0;
         _numDesignsResetSettings    = 0;
-        _numDesignsResetDyes        = 0;
+        _numDesignsResetSomeDyes    = 0;
+        _numDesignsResetAllDyes     = 0;
         _numDesignsWithAdvancedDyes = 0;
         _numAdvancedDyes            = 0;
     }
@@ -75,8 +77,10 @@ public sealed class MultiDesignPanel(
             ++_numDesignsResetSettings;
         if (l.Value.ForcedRedraw)
             ++_numDesignsForcedRedraw;
-        if (l.Value.ResetAdvancedDyes)
-            ++_numDesignsResetDyes;
+        if (l.Value.ResetAdvancedDyes is not 0)
+            ++_numDesignsResetSomeDyes;
+        if (l.Value.ResetAdvancedDyes.HasFlag(EquipFlagExtensions.AllCombined))
+            ++_numDesignsResetAllDyes;
         if (l.Value.Materials.Count > 0)
         {
             ++_numDesignsWithAdvancedDyes;
@@ -131,7 +135,8 @@ public sealed class MultiDesignPanel(
     private          int                 _numDesignsLocked;
     private          int                 _numDesignsForcedRedraw;
     private          int                 _numDesignsResetSettings;
-    private          int                 _numDesignsResetDyes;
+    private          int                 _numDesignsResetSomeDyes;
+    private          int                 _numDesignsResetAllDyes;
     private          int                 _numAdvancedDyes;
     private          int                 _numDesignsWithAdvancedDyes;
     private readonly List<Design>        _addDesigns    = [];
@@ -255,20 +260,20 @@ public sealed class MultiDesignPanel(
     {
         ImEx.TextFrameAligned("高级染色："u8);
         Im.Line.Same(offset, Im.Style.ItemSpacing.X);
-        var diff        = fileSystem.Selection.DataNodes.Count - _numDesignsResetDyes;
+        var diff        = fileSystem.Selection.DataNodes.Count - _numDesignsResetAllDyes;
         if (ImEx.Button("设置重置染色"u8, width, diff is 0
                 ? $"全部 {fileSystem.Selection.DataNodes.Count} 个选中的设计已重置高级染色。"
                 : $"设置全部 {fileSystem.Selection.DataNodes.Count} 个选中的设计重置高级染色。影响 {diff} 个设计。", diff is 0))
             foreach (var design in fileSystem.Selection.DataNodes)
-                editor.ChangeResetAdvancedDyes(design.GetValue<Design>()!, true);
+                editor.ChangeResetAdvancedDyes(design.GetValue<Design>()!, EquipFlagExtensions.AllCombined);
 
         Im.Line.SameInner();
         if (ImEx.Button("移除重置染色"u8, width, _numDesignsLocked is 0
                     ? $"全部 {fileSystem.Selection.DataNodes.Count} 个选中的设计均未重置高级染色。"
-                    : $"停止全部 {fileSystem.Selection.DataNodes.Count} 个选中的设计重置高级染色。影响 {_numDesignsResetDyes} 个设计。",
-                _numDesignsResetDyes is 0))
+                    : $"停止全部 {fileSystem.Selection.DataNodes.Count} 个选中的设计重置高级染色。影响 {_numDesignsResetSomeDyes} 个设计。",
+                _numDesignsResetSomeDyes is 0))
             foreach (var design in fileSystem.Selection.DataNodes)
-                editor.ChangeResetAdvancedDyes(design.GetValue<Design>()!, false);
+                editor.ChangeResetAdvancedDyes(design.GetValue<Design>()!, 0);
         Im.Separator();
     }
 

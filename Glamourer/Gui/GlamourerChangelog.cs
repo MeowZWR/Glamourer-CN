@@ -49,6 +49,7 @@ public sealed class GlamourerChangelog : IUiService
         Add1_5_1_0(Changelog);
         AddDummy(Changelog);
         Add1_6_0_0(Changelog);
+        Add1_6_1_0(Changelog);
     }
 
     private (int, ChangeLogDisplayType) ConfigData()
@@ -71,17 +72,45 @@ public sealed class GlamourerChangelog : IUiService
 
     private static void Add1_6_1_0(Changelog log)
         => log.NextVersion("Version 1.6.1.0"u8)
-            .RegisterEntry("修复了同步和替换装备保护的相关问题。"u8)
-            .RegisterEntry("重做了节日弹窗，现改为通过通知显示。你可以设置为每个节日都进行询问或不再询问；但无论当前设置如何，重做后的首次更新都将重新询问一次。"u8)
-            .RegisterEntry("修复了自动执行选择器和次级标识符（Secondary Identifier）列表中 NPC 的显示问题。"u8)
-            .RegisterHighlight("在所有标签页中，新增支持对当前玩家角色按装备位单独应用物品和染色。 (1.6.0.2)."u8)
-            .RegisterEntry("修复了在左右对戒上应用高级染色时出现的问题。 (1.6.0.2)."u8)
-            .RegisterEntry("修复了设计颜色和排序模式无法保存的问题。 (1.6.0.2)."u8)
-            .RegisterEntry("修复了右键菜单中重命名选择框的问题。 (1.6.0.2)."u8)
-            .RegisterEntry("修复了当标签页选择器因某种原因变得过小时触发的程序异常。 (1.6.0.2)."u8)
-            .RegisterEntry("修复了禁用的标题栏按钮以及锁定状态下的颜色显示问题。 (1.6.0.2)."u8)
-            .RegisterEntry("修复了 NPC 标签页及其下拉组合框的多个问题。 (1.6.0.2)."u8);
-            
+            .RegisterHighlight("Glamourer 已针对游戏版本 7.50 与 Dalamud API 15 更新。"u8)
+            .RegisterEntry(
+                "遗憾的是，游戏移除了肤色与发色高级自定义中的高光（Specular）相关选项，Glamourer 也不得不随之移除；这可能是为 8.0 的改动做准备。"u8)
+            .RegisterHighlight(
+                "新增「自动执行测试」窗口：可对照职业或装备套装检查自动执行套装，查看各设计会应用哪些改动。"u8)
+            .RegisterEntry("「解锁」标签页已更名为「物品日志」。"u8)
+            .RegisterEntry("在物品日志标签页的概览模式下，被标记为忽略的 Mod 现在也会以视觉效果应用显示。"u8)
+            .RegisterHighlight("为设计文件系统新增多项功能："u8)
+            .RegisterEntry(
+                "现在可在设计文件系统中添加分隔线；右键分隔线可设置颜色、排序时与文件夹或文件归在一起，以及具体排序方式。"u8,
+                1)
+            .RegisterEntry(
+                "文件夹右键菜单略有调整：通过「编辑文件夹」子菜单，可为指定文件夹单独设置颜色与排序模式。"u8,
+                1)
+            .RegisterHighlight(
+                "新增兼容武器框架：目前支持黑魔法师与白魔法师法杖之间的互换，以及单手武器（含盾）之间的互换替换，后续可能还会扩展。"u8)
+            .RegisterEntry(
+                "请注意，这仍可能导致动画异常或其他问题；在收到严重问题反馈之前，作者认为其风险尚可接受。"u8,
+                1)
+            .RegisterHighlight(
+                "新增可弹出的轻量装备栏，编辑角色时占用更少屏幕空间（感谢 Ny！）。"u8)
+            .RegisterHighlight("设计链接现已支持职业与装备套装条件，与自动执行套装一致（感谢 Ny！）。"u8)
+            .RegisterHighlight("设计中现可按装备位对高级染色进行「重置」或「还原」。"u8)
+            .RegisterEntry(
+                "「重置」与此前行为相同：清除该装备位上先前存在的高级染色，但这些染色仍可被其他设计再次应用。"u8)
+            .RegisterEntry(
+                "「还原」是高级染色中的新选项：移除该装备位上的全部高级染色，并标记为已应用，使后续设计无法再作用于该位。"u8)
+            .RegisterEntry("修复了同步与替换装备保护的相关问题。"u8)
+            .RegisterEntry("修复了与禁用状态相关的若干显示问题。"u8)
+            .RegisterEntry(
+                "节日提示已改为通知形式：可设为每个节日都询问或不再询问；但无论当前设置如何，更新后首次都会再次询问（1.6.0.3）。"u8)
+            .RegisterEntry("修复了自动执行选择器与次级标识符列表中 NPC 的显示问题（1.6.0.3）。"u8)
+            .RegisterHighlight("在所有标签页中，可对当前玩家角色按装备位单独应用物品与染色（1.6.0.2）。"u8)
+            .RegisterEntry("修复了在左右对戒上应用高级染色时的问题（1.6.0.2）。"u8)
+            .RegisterEntry("修复了设计颜色与排序模式无法保存的问题（1.6.0.2）。"u8)
+            .RegisterEntry("修复了右键菜单中重命名选择框的问题（1.6.0.2）。"u8)
+            .RegisterEntry("修复了标签页选择器在异常缩小时触发的程序异常（1.6.0.2）。"u8)
+            .RegisterEntry("修复了禁用的标题栏按钮与锁定状态下的颜色显示（1.6.0.2）。"u8)
+            .RegisterEntry("修复了 NPC 标签页及其下拉组合框的多个问题（1.6.0.2）。"u8);
 
     private static void Add1_6_0_0(Changelog log)
         => log.NextVersion("Version 1.6.0.0"u8)

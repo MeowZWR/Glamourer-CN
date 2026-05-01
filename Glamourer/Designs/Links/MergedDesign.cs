@@ -109,6 +109,6 @@ public sealed class MergedDesign
     public          bool                         ApplyCustomizePlusAssociation;
     public          StateSources                 Sources        = new();
     public          bool                         ForcedRedraw;
-    public          bool                         ResetAdvancedDyes;
+    public          CombinedItemSlotFlag         ResetAdvancedDyes;
     public          bool                         ResetTemporarySettings;
 }

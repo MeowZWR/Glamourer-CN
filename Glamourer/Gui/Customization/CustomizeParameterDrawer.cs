@@ -179,8 +179,14 @@ public class CustomizeParameterDrawer(Configuration config, PaletteImport import
         Im.Line.SameInner();
         using (Im.Disabled(data.Locked || noHighlights))
         {
-            if (Im.Color.Editor("##value"u8, ref value, GetFlags()))
+            var flags = GetFlags();
+            if (Im.Color.Editor("##value"u8, ref value, flags | ColorEditorFlags.NoTooltip))
                 data.ChangeParameter(new CustomizeParameterValue(value));
+            if (Im.Item.Hovered(HoveredFlags.AllowWhenDisabled))
+            {
+                using var enabled = Im.Enabled();
+                Im.Color.Tooltip(StringU8.Empty, value, flags);
+            }
         }
 
         if (noHighlights)
@@ -199,8 +205,14 @@ public class CustomizeParameterDrawer(Configuration config, PaletteImport import
         Im.Line.SameInner();
         using (Im.Disabled(data.Locked))
         {
-            if (Im.Color.Editor("##value"u8, ref value, GetFlags() | ColorEditorFlags.AlphaPreviewHalf))
+            var flags = GetFlags();
+            if (Im.Color.Editor("##value"u8, ref value, flags | ColorEditorFlags.NoTooltip))
                 data.ChangeParameter(new CustomizeParameterValue(value));
+            if (Im.Item.Hovered(HoveredFlags.AllowWhenDisabled))
+            {
+                using var enabled = Im.Enabled();
+                Im.Color.Tooltip(StringU8.Empty, value, flags);
+            }
         }
 
         DrawRevert(data);

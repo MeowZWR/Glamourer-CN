@@ -9,6 +9,7 @@ using Glamourer.Interop.CustomizePlus;
 using Glamourer.Interop.Material;
 using Glamourer.Interop.Penumbra;
 using Glamourer.Services;
+using Luna;
 using Penumbra.GameData.Enums;
 using Penumbra.GameData.Interop;
 using Penumbra.GameData.Structs;
@@ -77,7 +78,8 @@ public class StateEditor(
         var actors = Applier.ChangeCustomize(state, settings.Source.RequiresChange());
         Glamourer.Log.Verbose(
             $"Set {idx.ToName()} customizations in state {state.Identifier.Incognito(null)} from {old.Value} to {value.Value}. [Affecting {actors.ToLazyString("nothing")}.]");
-        StateChanged.Invoke(new StateChanged.Arguments(StateChangeType.Customize, settings.Source, state, actors, new CustomizeTransaction(idx, old, value)));
+        StateChanged.Invoke(new StateChanged.Arguments(StateChangeType.Customize, settings.Source, state, actors,
+            new CustomizeTransaction(idx, old, value)));
     }
 
     /// <inheritdoc/>
@@ -105,7 +107,9 @@ public class StateEditor(
         var actors = type is StateChangeType.Equip
             ? Applier.ChangeArmor(state, slot, settings.Source.RequiresChange())
             : Applier.ChangeWeapon(state, slot, settings.Source.RequiresChange(),
-                item.Type != (slot is EquipSlot.MainHand ? state.BaseData.MainhandType : state.BaseData.OffhandType));
+                slot is EquipSlot.MainHand
+                    ? !item.Type.IsCompatible(state.BaseData.MainhandType)
+                    : !item.Type.IsOffhandCompatible(state.BaseData.MainhandType, state.ModelData.MainhandType, state.BaseData.OffhandType));
 
         if (slot is EquipSlot.MainHand)
             ApplyMainhandPeriphery(state, item, null, settings);
@@ -142,7 +146,8 @@ public class StateEditor(
         var actors = Applier.ChangeBonusItem(state, slot, settings.Source.RequiresChange());
         Glamourer.Log.Verbose(
             $"Set {slot.ToName()} in state {state.Identifier.Incognito(null)} from {old.Name} ({old.Id}) to {item.Name} ({item.Id}). [Affecting {actors.ToLazyString("nothing")}.]");
-        StateChanged.Invoke(new StateChanged.Arguments(StateChangeType.BonusItem, settings.Source, state, actors, new BonusItemTransaction(slot, old, item)));
+        StateChanged.Invoke(new StateChanged.Arguments(StateChangeType.BonusItem, settings.Source, state, actors,
+            new BonusItemTransaction(slot, old, item)));
     }
 
     /// <inheritdoc/>
@@ -168,7 +173,9 @@ public class StateEditor(
         var actors = type is StateChangeType.Equip
             ? Applier.ChangeArmor(state, slot, settings.Source.RequiresChange())
             : Applier.ChangeWeapon(state, slot, settings.Source.RequiresChange(),
-                item!.Value.Type != (slot is EquipSlot.MainHand ? state.BaseData.MainhandType : state.BaseData.OffhandType));
+                slot is EquipSlot.MainHand
+                    ? !item!.Value.Type.IsCompatible(state.BaseData.MainhandType)
+                    : !item!.Value.Type.IsOffhandCompatible(state.BaseData.MainhandType, state.ModelData.MainhandType, state.BaseData.OffhandType));
 
         if (slot is EquipSlot.MainHand)
             ApplyMainhandPeriphery(state, item, stains, settings);
@@ -194,7 +201,8 @@ public class StateEditor(
                 new WeaponTransaction(oldMain, old, oldGauntlets, oldMain, item!.Value, oldGauntlets)));
         }
 
-        StateChanged.Invoke(new StateChanged.Arguments(StateChangeType.Stains, settings.Source, state, actors, new StainTransaction(slot, oldStains, stains!.Value)));
+        StateChanged.Invoke(new StateChanged.Arguments(StateChangeType.Stains, settings.Source, state, actors,
+            new StainTransaction(slot, oldStains, stains!.Value)));
     }
 
     /// <inheritdoc/>
@@ -207,7 +215,8 @@ public class StateEditor(
         var actors = Applier.ChangeStain(state, slot, settings.Source.RequiresChange());
         Glamourer.Log.Verbose(
             $"Set {slot.ToName()} stain in state {state.Identifier.Incognito(null)} from {old} to {stains}. [Affecting {actors.ToLazyString("nothing")}.]");
-        StateChanged.Invoke(new StateChanged.Arguments(StateChangeType.Stains, settings.Source, state, actors, new StainTransaction(slot, old, stains)));
+        StateChanged.Invoke(new StateChanged.Arguments(StateChangeType.Stains, settings.Source, state, actors,
+            new StainTransaction(slot, old, stains)));
     }
 
     /// <inheritdoc/>
@@ -220,7 +229,8 @@ public class StateEditor(
         var actors = Applier.ChangeCrests(state, settings.Source.RequiresChange());
         Glamourer.Log.Verbose(
             $"Set {slot.ToLabel()} crest in state {state.Identifier.Incognito(null)} from {old} to {crest}. [Affecting {actors.ToLazyString("nothing")}.]");
-        StateChanged.Invoke(new StateChanged.Arguments(StateChangeType.Crest, settings.Source, state, actors, new CrestTransaction(slot, old, crest)));
+        StateChanged.Invoke(new StateChanged.Arguments(StateChangeType.Crest, settings.Source, state, actors,
+            new CrestTransaction(slot, old, crest)));
     }
 
     /// <inheritdoc/>
@@ -238,7 +248,8 @@ public class StateEditor(
         var actors = Applier.ChangeParameters(state, flag, settings.Source.RequiresChange());
         Glamourer.Log.Verbose(
             $"Set {flag} in state {state.Identifier.Incognito(null)} from {old} to {@new}. [Affecting {actors.ToLazyString("nothing")}.]");
-        StateChanged.Invoke(new StateChanged.Arguments(StateChangeType.Parameter, settings.Source, state, actors, new ParameterTransaction(flag, old, @new)));
+        StateChanged.Invoke(new StateChanged.Arguments(StateChangeType.Parameter, settings.Source, state, actors,
+            new ParameterTransaction(flag, old, @new)));
     }
 
     public void ChangeMaterialValue(object data, MaterialValueIndex index, in MaterialValueState newValue, ApplySettings settings)
@@ -263,7 +274,8 @@ public class StateEditor(
         var actors = Applier.ChangeMaterialValue(state, index, true);
         Glamourer.Log.Verbose(
             $"Reset material value in state {state.Identifier.Incognito(null)} to game value. [Affecting {actors.ToLazyString("nothing")}.]");
-        StateChanged.Invoke(new StateChanged.Arguments(StateChangeType.MaterialValue, settings.Source, state, actors, new MaterialTransaction(index, null, null, null, null)));
+        StateChanged.Invoke(new StateChanged.Arguments(StateChangeType.MaterialValue, settings.Source, state, actors,
+            new MaterialTransaction(index, null, null, null, null)));
     }
 
     /// <inheritdoc/>
@@ -276,7 +288,8 @@ public class StateEditor(
         var actors = Applier.ChangeMetaState(state, index, settings.Source.RequiresChange());
         Glamourer.Log.Verbose(
             $"Set {index.ToName()} in state {state.Identifier.Incognito(null)} from {old} to {value}. [Affecting {actors.ToLazyString("nothing")}.]");
-        StateChanged.Invoke(new StateChanged.Arguments(StateChangeType.Other, settings.Source, state, actors, new MetaTransaction(index, old, value)));
+        StateChanged.Invoke(new StateChanged.Arguments(StateChangeType.Other, settings.Source, state, actors,
+            new MetaTransaction(index, old, value)));
     }
 
     /// <inheritdoc/>
@@ -407,8 +420,23 @@ public class StateEditor(
                     Editor.ChangeMetaState(state, meta, mergedDesign.Design.DesignData.GetMeta(meta), Source(meta), out _, settings.Key);
             }
 
-            if (settings.ResetMaterials || !settings.RespectManual && mergedDesign.ResetAdvancedDyes)
-                state.Materials.Clear();
+            if (settings.ResetMaterials || !settings.RespectManual && mergedDesign.ResetAdvancedDyes is not 0)
+            {
+                if (mergedDesign.ResetAdvancedDyes.HasFlag(EquipFlagExtensions.AllCombined))
+                    state.Materials.Clear();
+                else
+                {
+                    var slotsToReset = mergedDesign.ResetAdvancedDyes;
+                    while (slotsToReset is not 0)
+                    {
+                        // Extract the least significant bit.
+                        // Do not attempt to work on a range of bits, as contiguous bits can yield very different material value indices.
+                        var slot = unchecked(slotsToReset & (~slotsToReset + 1));
+                        state.Materials.RemoveValues(MaterialValueIndex.Min(slot), MaterialValueIndex.Max(slot));
+                        slotsToReset &= ~slot;
+                    }
+                }
+            }
 
             foreach (var (key, value) in mergedDesign.Design.Materials)
             {
@@ -444,8 +472,8 @@ public class StateEditor(
 
         Glamourer.Log.Verbose(
             $"Applied design to {state.Identifier.Incognito(null)}. [Affecting {actors.ToLazyString("nothing")}.]");
-        ApplyCustomizePlusAssociation(state, mergedDesign, settings);
-        StateChanged.Invoke(new StateChanged.Arguments(StateChangeType.Design, state.Sources[MetaIndex.Wetness], state, actors)); // FIXME: maybe later
+        StateChanged.Invoke(new StateChanged.Arguments(StateChangeType.Design, state.Sources[MetaIndex.Wetness], state,
+            actors)); // FIXME: maybe later
         if (settings.IsFinal)
             StateFinalized.Invoke(new StateFinalized.Arguments(StateFinalizationType.DesignApplied, actors));
 
@@ -468,8 +496,8 @@ public class StateEditor(
         if (!settings.MergeLinks || design is not Design d)
             merged = new MergedDesign(design);
         else
-            merged = merger.Merge(d.AllLinks(true), state.ModelData.IsHuman ? state.ModelData.Customize : CustomizeArray.Default,
-                state.BaseData,
+            merged = merger.Merge(d.AllLinks(true, ActorConditions(state)),
+                state.ModelData.IsHuman ? state.ModelData.Customize : CustomizeArray.Default, state.BaseData,
                 false, Config.AlwaysApplyAssociatedMods);
 
         ApplyDesign(data, merged, settings with
@@ -479,6 +507,11 @@ public class StateEditor(
             UseSingleSource = true,
         });
     }
+
+    private Predicate<DesignConditions>? ActorConditions(ActorState state)
+        => Applier.GetData(state).Objects.FindFirst(static actor => actor.IsCharacter, out var actor)
+            ? cond => cond.Match(actor)
+            : null;
 
 
     /// <summary> Apply offhand item and potentially gauntlets if configured. </summary>

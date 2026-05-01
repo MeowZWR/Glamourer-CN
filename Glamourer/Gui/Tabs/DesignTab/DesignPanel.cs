@@ -20,6 +20,9 @@ namespace Glamourer.Gui.Tabs.DesignTab;
 
 public class DesignPanel : IPanel
 {
+    public ReadOnlySpan<byte> Id
+        => "DesignPanel"u8;
+
     private readonly FileDialogManager        _fileDialog = new();
     private readonly CustomizationDrawer      _customizationDrawer;
     private readonly DesignFileSystem         _fileSystem;
@@ -36,7 +39,6 @@ public class DesignPanel : IPanel
     private readonly DesignLinkDrawer         _designLinkDrawer;
     private readonly MaterialDrawer           _materials;
     private readonly DesignApplier            _designApplier;
-
 
     public DesignPanel(CustomizationDrawer customizationDrawer,
         DesignManager manager,
@@ -72,7 +74,6 @@ public class DesignPanel : IPanel
         _designApplier       = designApplier;
     }
 
-
     private Design Selection
         => (Design)_fileSystem.Selection.Selection!.Value;
 
@@ -82,7 +83,7 @@ public class DesignPanel : IPanel
         if (!h)
             return;
 
-        _equipmentDrawer.Prepare();
+        _equipmentDrawer.Prepare(false);
 
         var usedAllStain = _equipmentDrawer.DrawAllStain(out var newAllStain, Selection.WriteProtected());
         Im.Line.Same();
@@ -454,8 +455,6 @@ public class DesignPanel : IPanel
         }
     }
 
-    public ReadOnlySpan<byte> Id
-        => "DesignPanel"u8;
 
     public void Draw()
     {

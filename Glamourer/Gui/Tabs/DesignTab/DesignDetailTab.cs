@@ -120,10 +120,12 @@ public sealed class DesignDetailTab : IUiService
 
         var resetAdvancedDyes = Selected.ResetAdvancedDyes;
         table.DrawFrameColumn("重置高级染色"u8);
+        Im.Line.SameInner();
+        LunaStyle.DrawAlignedHelpMarker(
+            "设置此设计在以任何方式应用时，均会重置之前应用的高级染色。\n\n如果此设计是设计链接或自动执行集的一部分，设置此选项的行为与设置重置所有高级染色不同：\n- 设置此选项会重置之前应用的所有高级染色，但允许较低的设计应用高级染色。\n- 设置重置所有高级染色会重置之前应用的所有高级染色，并阻止较低的设计应用高级染色。"u8);
         table.NextColumn();
-        if (Im.Checkbox("##ResetAdvancedDyes"u8, ref resetAdvancedDyes))
+        if (UiHelpers.DrawItemSlots("##ResetAdvancedDyes"u8, ref resetAdvancedDyes))
             _manager.ChangeResetAdvancedDyes(Selected, resetAdvancedDyes);
-        Im.Tooltip.OnHover("设置此设计在以任何方式应用时，均会重置之前应用的高级染色。"u8);
 
         var resetTemporarySettings = Selected.ResetTemporarySettings;
         table.DrawFrameColumn("重置临时设置"u8);
