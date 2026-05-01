@@ -472,6 +472,7 @@ public class StateEditor(
 
         Glamourer.Log.Verbose(
             $"Applied design to {state.Identifier.Incognito(null)}. [Affecting {actors.ToLazyString("nothing")}.]");
+        ApplyCustomizePlusAssociation(state, mergedDesign, settings);
         StateChanged.Invoke(new StateChanged.Arguments(StateChangeType.Design, state.Sources[MetaIndex.Wetness], state,
             actors)); // FIXME: maybe later
         if (settings.IsFinal)
