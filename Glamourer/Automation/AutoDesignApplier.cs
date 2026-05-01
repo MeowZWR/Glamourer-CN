@@ -108,7 +108,7 @@ public sealed class AutoDesignApplier : IDisposable, IRequiredService
         if (ReferenceEquals(root, target))
             return true;
 
-        foreach (var (link, _, _) in root.AllLinks(true))
+        foreach (var (link, _, _) in root.AllLinks(true, null))
             if (link is Design d && d.Identifier == target.Identifier)
                 return true;
 
