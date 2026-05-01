@@ -74,7 +74,8 @@ public sealed class GlamourerChangelog : IUiService
         => log.NextVersion("Version 1.6.1.0"u8)
             .RegisterHighlight("Glamourer 已针对游戏版本 7.50 与 Dalamud API 15 更新。"u8)
             .RegisterEntry(
-                "遗憾的是，游戏移除了肤色与发色高级自定义中的高光（Specular）相关选项，Glamourer 也不得不随之移除；这可能是为 8.0 的改动做准备。"u8)
+                "游戏已完全移除肤色与发色中的高光（Specular）高级自定义选项（在 Glamourer 的可视编辑中先前也已不再显示）。这可能是为 8.0 的改动做准备，因此这些选项很可能不会再恢复。"u8,
+                1)
             .RegisterHighlight(
                 "新增「自动执行测试」窗口：可对照职业或装备套装检查自动执行套装，查看各设计会应用哪些改动。"u8)
             .RegisterEntry("「解锁」标签页已更名为「物品日志」。"u8)
@@ -96,9 +97,11 @@ public sealed class GlamourerChangelog : IUiService
             .RegisterHighlight("设计链接现已支持职业与装备套装条件，与自动执行套装一致（感谢 Ny！）。"u8)
             .RegisterHighlight("设计中现可按装备位对高级染色进行「重置」或「还原」。"u8)
             .RegisterEntry(
-                "「重置」与此前行为相同：清除该装备位上先前存在的高级染色，但这些染色仍可被其他设计再次应用。"u8)
+                "「重置」与此前行为相同：清除该装备位上先前存在的高级染色，但这些染色仍可被其他设计再次应用。"u8,
+                1)
             .RegisterEntry(
-                "「还原」是高级染色中的新选项：移除该装备位上的全部高级染色，并标记为已应用，使后续设计无法再作用于该位。"u8)
+                "「还原」是设计中「高级染色」部分的新选项：移除该装备位上的全部高级染色，并标记为已应用，使后续设计无法再作用于该位。"u8,
+                1)
             .RegisterEntry("修复了同步与替换装备保护的相关问题。"u8)
             .RegisterEntry("修复了与禁用状态相关的若干显示问题。"u8)
             .RegisterEntry(
