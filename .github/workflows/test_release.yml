@@ -17,7 +17,6 @@ jobs:
         with:
           dotnet-version: |
               10.x.x
-              9.x.x
       - name: Restore dependencies
         run: dotnet restore
       - name: Download Dalamud
