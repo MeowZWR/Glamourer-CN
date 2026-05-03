@@ -45,7 +45,7 @@ public static class UnlockDictionaryHelpers
                     revertEndian = true;
                     break;
                 default:
-                    Glamourer.Messager.NotificationMessage($"Loading unlocked {type}s failed: Invalid magic number.", NotificationType.Warning);
+                    Glamourer.Messager.NotificationMessage($"加载{type}解锁物品记录失败：文件头无效或文件已损坏。", NotificationType.Warning);
                     return -1;
             }
 
@@ -77,23 +77,23 @@ public static class UnlockDictionaryHelpers
                     }
 
                     if (skips > 0)
-                        Glamourer.Messager.NotificationMessage($"Skipped {skips} unlocked {type}s while loading unlocked {type}s.",
+                        Glamourer.Messager.NotificationMessage($"加载{type}解锁物品记录时，已跳过 {skips} 条无效或重复条目。",
                             NotificationType.Warning);
 
                     break;
                 default:
-                    Glamourer.Messager.NotificationMessage($"Loading unlocked {type}s failed: Version {version} is unknown.",
+                    Glamourer.Messager.NotificationMessage($"加载{type}解锁物品记录失败：不支持的文件版本（{version}）。",
                         NotificationType.Warning);
                     return version;
             }
 
-            Glamourer.Log.Debug($"[UnlockManager] Loaded {data.Count} unlocked {type}s.");
+            Glamourer.Log.Debug($"[UnlockManager] 已加载 {data.Count} 条{type}解锁物品记录。");
             return version;
         }
         catch (Exception ex)
         {
-            Glamourer.Messager.NotificationMessage(ex, $"Loading unlocked {type}s failed: Unknown Error.",
-                $"Loading unlocked {type}s failed:\n", NotificationType.Error);
+            Glamourer.Messager.NotificationMessage(ex, $"加载{type}解锁物品记录失败：发生未知错误。",
+                $"加载{type}解锁物品记录失败：\n", NotificationType.Error);
 
             return -1;
         }
