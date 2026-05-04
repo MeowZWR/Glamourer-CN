@@ -413,6 +413,19 @@ public sealed class DesignManager : DesignEditor, IService
         DesignChanged.Invoke(new DesignChanged.Arguments(DesignChanged.Type.ApplyCustomizePlusAssociation, design,
             new ApplyCustomizePlusAssociationTransaction(old, applyCustomizePlusAssociation)));
     }
+
+    public void ChangeCustomizePlusApplicationMode(Design design, CustomizePlusApplicationMode mode)
+    {
+        if (design.CustomizePlusApplicationMode == mode)
+            return;
+
+        var old = design.CustomizePlusApplicationMode;
+        design.CustomizePlusApplicationMode = mode;
+        SaveService.QueueSave(design);
+        Glamourer.Log.Debug($"Set {design.Identifier} to apply Customize+ associations as {mode}.");
+        DesignChanged.Invoke(new DesignChanged.Arguments(DesignChanged.Type.CustomizePlusApplicationMode, design,
+            new CustomizePlusApplicationModeTransaction(old, mode)));
+    }
     
     public void ChangeRevertAdvancedDyes(Design design, CombinedItemSlotFlag revertAdvancedDyes)
     {

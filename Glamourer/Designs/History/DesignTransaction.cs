@@ -141,6 +141,17 @@ public record ApplyCustomizePlusAssociationTransaction(bool Old, bool New)
 }
 
 /// <remarks> Only Designs. </remarks>
+public record CustomizePlusApplicationModeTransaction(CustomizePlusApplicationMode Old, CustomizePlusApplicationMode New)
+    : ITransaction
+{
+    public ITransaction? Merge(ITransaction older)
+        => older is CustomizePlusApplicationModeTransaction other ? new CustomizePlusApplicationModeTransaction(other.Old, New) : null;
+
+    public void Revert(IDesignEditor editor, object data)
+        => ((DesignManager)editor).ChangeCustomizePlusApplicationMode((Design)data, Old);
+}
+
+/// <remarks> Only Designs. </remarks>
 public record MaterialTransaction(MaterialValueIndex Index, ColorRow? Old, ColorRow? New, ColorRow.Mode? OldMode, ColorRow.Mode? NewMode)
     : ITransaction
 {

@@ -38,6 +38,7 @@ public sealed class Design : DesignBase, ISavable, IDesignStandIn, IFileSystemVa
         ResetTemporarySettings          = other.ResetTemporarySettings;
         RevertAdvancedDyes              = other.RevertAdvancedDyes;
         ApplyCustomizePlusAssociation   = other.ApplyCustomizePlusAssociation;
+        CustomizePlusApplicationMode    = other.CustomizePlusApplicationMode;
         Color                           = other.Color;
         AssociatedMods                  = new SortedList<Mod, ModSettings>(other.AssociatedMods);
         CustomizePlusAssociation        = other.CustomizePlusAssociation.Clone();
@@ -63,6 +64,7 @@ public sealed class Design : DesignBase, ISavable, IDesignStandIn, IFileSystemVa
     public CombinedItemSlotFlag         RevertAdvancedDyes     { get; internal set; }
     public bool                         ResetTemporarySettings { get; internal set; }
     public bool                         ApplyCustomizePlusAssociation { get; internal set; } = true;
+    public CustomizePlusApplicationMode CustomizePlusApplicationMode { get; internal set; }
     public bool                         QuickDesign            { get; internal set; } = true;
     public string                       Color                  { get; internal set; } = string.Empty;
     public SortedList<Mod, ModSettings> AssociatedMods         { get; private set; }  = [];
@@ -126,6 +128,7 @@ public sealed class Design : DesignBase, ISavable, IDesignStandIn, IFileSystemVa
             ["ResetAdvancedDyes"]      = (uint)ResetAdvancedDyes,
             ["ResetTemporarySettings"] = ResetTemporarySettings,
             ["ApplyCustomizePlusAssociation"] = ApplyCustomizePlusAssociation,
+            ["CustomizePlusApplicationMode"]  = CustomizePlusApplicationMode.ToString(),
             ["RevertAdvancedDyes"]     = (uint)RevertAdvancedDyes,
             ["Color"]                  = Color,
             ["QuickDesign"]            = QuickDesign,
@@ -291,6 +294,9 @@ public sealed class Design : DesignBase, ISavable, IDesignStandIn, IFileSystemVa
         design.ResetTemporarySettings = json["ResetTemporarySettings"]?.ToObject<bool>() ?? false;
         design.RevertAdvancedDyes     = ParseCombinedItemSlotFlag(json["RevertAdvancedDyes"]);
         design.ApplyCustomizePlusAssociation = json["ApplyCustomizePlusAssociation"]?.ToObject<bool>() ?? true;
+        design.CustomizePlusApplicationMode =
+            json["CustomizePlusApplicationMode"]?.ToObject<CustomizePlusApplicationMode>()
+         ?? CustomizePlusApplicationMode.TemporaryProfile;
         design.CustomizePlusAssociation      = CustomizePlusAssociation.Load(json["CustomizePlusAssociation"]);
         return design;
 

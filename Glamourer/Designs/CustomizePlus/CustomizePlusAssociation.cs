@@ -2,6 +2,12 @@ using Newtonsoft.Json.Linq;
 
 namespace Glamourer.Designs.CustomizePlus;
 
+public enum CustomizePlusApplicationMode
+{
+    TemporaryProfile,
+    PermanentProfile,
+}
+
 public readonly record struct CustomizePlusCharacterAssociation(string Name, ushort WorldId, byte CharacterType, ushort CharacterSubType)
 {
     public JObject Serialize()

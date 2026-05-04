@@ -99,6 +99,9 @@ public sealed class DesignChanged(LunaLogger log)
         /// <summary> An existing design had changed whether its Customize+ association should be applied. </summary>
         ApplyCustomizePlusAssociation,
 
+        /// <summary> An existing design had changed how its Customize+ association should be applied. </summary>
+        CustomizePlusApplicationMode,
+
         /// <summary> An existing design changed whether a specific customization is applied. </summary>
         ApplyCustomize,
 

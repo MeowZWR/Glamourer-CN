@@ -38,6 +38,7 @@ public sealed class DesignFileSystemCache : FileSystemCache<DesignFileSystemCach
             case DesignChanged.Type.UpdatedMod:
             case DesignChanged.Type.CustomizePlusAssociation:
             case DesignChanged.Type.ApplyCustomizePlusAssociation:
+            case DesignChanged.Type.CustomizePlusApplicationMode:
             case DesignChanged.Type.ChangedLink:
             case DesignChanged.Type.Equip:
             case DesignChanged.Type.BonusItem:

@@ -102,6 +102,7 @@ public class DesignMerger(
             return;
 
         ret.ApplyCustomizePlusAssociation = true;
+        ret.CustomizePlusApplicationMode = design.CustomizePlusApplicationMode;
         ret.CustomizePlusAssociation = design.CustomizePlusAssociation.IsSet
             ? design.CustomizePlusAssociation.Clone()
             : null;

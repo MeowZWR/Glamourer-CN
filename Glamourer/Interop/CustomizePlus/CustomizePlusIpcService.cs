@@ -42,8 +42,11 @@ public sealed class CustomizePlusIpcService : IService
     private readonly ICallGateSubscriber<ushort, (int ErrorCode, Guid? ProfileId)> _getActiveProfileIdOnCharacter;
     private readonly ICallGateSubscriber<ushort, string, (int ErrorCode, Guid? ProfileId)> _setTemporaryProfileOnCharacter;
     private readonly ICallGateSubscriber<Guid, int> _deleteTemporaryProfileByUniqueId;
+    private readonly ICallGateSubscriber<Guid, int> _enableProfileByUniqueId;
+    private readonly ICallGateSubscriber<Guid, int> _disableProfileByUniqueId;
 
     private DateTime _lastProfileCache = DateTime.MinValue;
+    private IReadOnlyList<CustomizePlusProfileTuple> _cachedRawProfiles = [];
     private IReadOnlyList<CustomizePlusAssociation> _cachedProfiles = [];
 
     public CustomizePlusIpcService(IDalamudPluginInterface pluginInterface)
@@ -58,6 +61,8 @@ public sealed class CustomizePlusIpcService : IService
             pluginInterface.GetIpcSubscriber<ushort, string, (int ErrorCode, Guid? ProfileId)>("CustomizePlus.Profile.SetTemporaryProfileOnCharacter");
         _deleteTemporaryProfileByUniqueId =
             pluginInterface.GetIpcSubscriber<Guid, int>("CustomizePlus.Profile.DeleteTemporaryProfileByUniqueId");
+        _enableProfileByUniqueId = pluginInterface.GetIpcSubscriber<Guid, int>("CustomizePlus.Profile.EnableByUniqueId");
+        _disableProfileByUniqueId = pluginInterface.GetIpcSubscriber<Guid, int>("CustomizePlus.Profile.DisableByUniqueId");
     }
 
     public bool IsLoaded
@@ -103,15 +108,27 @@ public sealed class CustomizePlusIpcService : IService
 
     public IReadOnlyList<CustomizePlusAssociation> GetProfiles(bool forceRefresh = false)
     {
-        if (!forceRefresh && DateTime.UtcNow - _lastProfileCache <= ProfileCacheDuration)
+        if (!RefreshProfileCache(forceRefresh, out _))
             return _cachedProfiles;
 
-        if (!IsAvailable(out _))
-            return _cachedProfiles;
+        return _cachedProfiles;
+    }
+
+    private bool RefreshProfileCache(bool forceRefresh, out string error)
+    {
+        if (!forceRefresh && DateTime.UtcNow - _lastProfileCache <= ProfileCacheDuration)
+        {
+            error = string.Empty;
+            return true;
+        }
+
+        if (!IsAvailable(out error))
+            return false;
 
         try
         {
-            _cachedProfiles = _getProfileList.InvokeFunc()
+            _cachedRawProfiles = _getProfileList.InvokeFunc().ToArray();
+            _cachedProfiles = _cachedRawProfiles
                 .Select(profile =>
                 {
                     var association = new CustomizePlusAssociation();
@@ -123,13 +140,15 @@ public sealed class CustomizePlusIpcService : IService
                 })
                 .ToArray();
             _lastProfileCache = DateTime.UtcNow;
+            error = string.Empty;
+            return true;
         }
         catch (IpcError ex)
         {
-            Glamourer.Log.Warning($"Failed to refresh Customize+ profile list: {ex.Message}");
+            error = $"刷新 Customize+ 配置列表失败: {ex.Message}";
+            Glamourer.Log.Warning(error);
+            return false;
         }
-
-        return _cachedProfiles;
     }
 
     public bool TryGetProfile(Guid profileId, out CustomizePlusAssociation association, bool forceRefresh = false)
@@ -160,6 +179,52 @@ public sealed class CustomizePlusIpcService : IService
         catch (IpcError ex)
         {
             error = $"读取 Customize+ 配置失败: {ex.Message}";
+            return false;
+        }
+    }
+
+    public bool TryGetProfileIds(ActorIdentifier identifier, out IReadOnlyList<Guid> profileIds,
+        out IReadOnlyList<Guid> enabledProfileIds, out string error)
+    {
+        profileIds = [];
+        enabledProfileIds = [];
+        if (!RefreshProfileCache(true, out error))
+            return false;
+
+        var profiles = _cachedRawProfiles.Where(profile => Matches(identifier, profile.Characters)).ToArray();
+        profileIds = profiles.Select(profile => profile.UniqueId).ToArray();
+        enabledProfileIds = profiles.Where(profile => profile.IsEnabled).Select(profile => profile.UniqueId).ToArray();
+        return true;
+    }
+
+    public bool TrySetProfileEnabled(Guid profileId, bool enabled, out string error)
+    {
+        error = string.Empty;
+        if (profileId == Guid.Empty)
+            return true;
+
+        if (!IsAvailable(out error))
+            return false;
+
+        try
+        {
+            var result = (CustomizePlusErrorCode)(enabled
+                ? _enableProfileByUniqueId.InvokeFunc(profileId)
+                : _disableProfileByUniqueId.InvokeFunc(profileId));
+            switch (result)
+            {
+                case CustomizePlusErrorCode.Success:
+                case CustomizePlusErrorCode.ProfileNotFound when !enabled:
+                    _lastProfileCache = DateTime.MinValue;
+                    return true;
+                default:
+                    error = $"{(enabled ? "启用" : "禁用")} Customize+ 配置失败: {result}.";
+                    return false;
+            }
+        }
+        catch (IpcError ex)
+        {
+            error = $"{(enabled ? "启用" : "禁用")} Customize+ 配置失败: {ex.Message}";
             return false;
         }
     }
@@ -254,6 +319,10 @@ public sealed class CustomizePlusIpcService : IService
 
     public static bool Matches(ActorIdentifier identifier, CustomizePlusAssociation association)
         => association.IsSet && association.Characters.Any(character => Matches(identifier, character));
+
+    private static bool Matches(ActorIdentifier identifier, IEnumerable<CustomizePlusCharacterTuple> characters)
+        => characters.Any(character => Matches(identifier,
+            new CustomizePlusCharacterAssociation(character.Name, character.WorldId, character.CharacterType, character.CharacterSubType)));
 
     private static bool Matches(ActorIdentifier identifier, CustomizePlusCharacterAssociation character)
     {

@@ -90,7 +90,9 @@ public sealed class AutoDesignApplier : IDisposable, IRequiredService
         if (!_config.EnableAutoDesigns)
             return;
 
-        if (arguments.Type is not DesignChanged.Type.CustomizePlusAssociation and not DesignChanged.Type.ApplyCustomizePlusAssociation)
+        if (arguments.Type is not DesignChanged.Type.CustomizePlusAssociation
+            and not DesignChanged.Type.ApplyCustomizePlusAssociation
+            and not DesignChanged.Type.CustomizePlusApplicationMode)
             return;
 
         var design = arguments.Design;

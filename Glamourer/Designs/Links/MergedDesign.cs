@@ -99,6 +99,7 @@ public sealed class MergedDesign
         {
             ApplyCustomizePlusAssociation = true;
             CustomizePlusAssociation = design.CustomizePlusAssociation.Clone();
+            CustomizePlusApplicationMode = design.CustomizePlusApplicationMode;
         }
     }
 
@@ -107,6 +108,7 @@ public sealed class MergedDesign
     public readonly SortedList<Mod, ModSettings> AssociatedMods = [];
     public          CustomizePlusAssociation?    CustomizePlusAssociation;
     public          bool                         ApplyCustomizePlusAssociation;
+    public          CustomizePlusApplicationMode CustomizePlusApplicationMode;
     public          StateSources                 Sources        = new();
     public          bool                         ForcedRedraw;
     public          CombinedItemSlotFlag         ResetAdvancedDyes;
