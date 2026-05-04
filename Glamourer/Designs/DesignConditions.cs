@@ -48,7 +48,7 @@ public readonly record struct DesignConditions(JobGroup Jobs, short GearsetIndex
 
     public override string ToString()
         => Constant is { } value ? $"Always {value}" :
-            GearsetIndex is -1   ? $"Jobs: {Jobs.Name}" : $"Gearset: {GearsetIndex}";
+            GearsetIndex is -1   ? $"职业：{Jobs.Name}" : $"套装：{GearsetIndex}";
 
     public StringU8 ToJobsRestrictionString()
         => Constant is null && GearsetIndex is -1 ? Jobs.Name : StringU8.Empty;

@@ -15,14 +15,14 @@ public class DesignConditionsDrawer(JobService jobs) : IService
         newConditions = conditions;
         var changed      = false;
         var usingGearset = conditions.GearsetIndex >= 0;
-        if (Im.Button(usingGearset ? "Gearset:##usingGearset"u8 : "Jobs:##usingGearset"u8))
+        if (Im.Button(usingGearset ? "套装:##usingGearset"u8 : "职业:##usingGearset"u8))
         {
             usingGearset  = !usingGearset;
             newConditions = conditions with { GearsetIndex = (short)(usingGearset ? 0 : -1) };
             changed       = true;
         }
 
-        Im.Tooltip.OnHover("Click to switch between Job and Gearset restrictions."u8);
+        Im.Tooltip.OnHover("点击切换职业和套装限制."u8);
 
         Im.Line.SameInner();
         if (usingGearset)
@@ -52,7 +52,7 @@ public class DesignConditionsDrawer(JobService jobs) : IService
         public bool Draw(in JobGroup jobGroup, out JobGroup newGroup)
         {
             if (Draw("##jobGroups"u8, in jobGroup,
-                    "Select for which job groups this design should be applied.\nControl + Right-Click to set to all classes."u8,
+                    "选择此设计应该应用的职业组。\nCtrl + 右键点击设置为所有职业。"u8,
                     Im.ContentRegion.Available.X, out newGroup))
                 return true;
 
