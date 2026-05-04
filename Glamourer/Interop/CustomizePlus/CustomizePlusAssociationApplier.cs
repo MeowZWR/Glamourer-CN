@@ -69,8 +69,22 @@ public sealed class CustomizePlusAssociationApplier(
          && (_manualTemporaryCustomizePlus.Contains(identifier) || stateHasManualGlamourerSource))
             return;
 
-        if (dynamicBridge.IsLoaded || association is not { IsSet: true } || !customizePlus.IsAvailable(out _)
-         || !CustomizePlusIpcService.Matches(identifier, association))
+        if (dynamicBridge.IsLoaded || !customizePlus.IsAvailable(out _))
+        {
+            Restore(identifier, objectIndex);
+            return;
+        }
+
+        if (association is not { IsSet: true })
+        {
+            if (respectManual && applySource.IsFixed() && _manualTemporaryCustomizePlus.Contains(identifier))
+                return;
+
+            Restore(identifier, objectIndex);
+            return;
+        }
+
+        if (!CustomizePlusIpcService.Matches(identifier, association))
         {
             Restore(identifier, objectIndex);
             return;
