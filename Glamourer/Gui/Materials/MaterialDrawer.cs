@@ -83,10 +83,10 @@ public class MaterialDrawer(DesignManager designManager, Configuration config) :
     private void DrawRevertSlots(Design design)
     {
         Im.Cursor.FrameAlign();
-        Im.Text("Revert All Advanced Dyes"u8);
+        Im.Text("还原所有高级染色"u8);
         Im.Line.SameInner();
         LunaStyle.DrawAlignedHelpMarker(
-            "Set this design to revert any previously applied advanced dyes on the following slots when it is applied.\n\nIn case this design is part of a Design Link or Automation set, setting this behaves differently than setting Reset Advanced Dyes in the Design Details section:\n- Setting this resets all advanced dyes that were previously applied before this set, and also prevents designs that are lower in the set from applying advanced dyes. It behaves the same way as filling out every row of every material of those slots that you don't set explicitly below with \"Revert\".\n- Setting Reset Advanced Dyes in the Design Details section resets all advanced dyes that were previously applied before this set, but lets designs lower in this tree/set apply advanced dyes."u8);
+            "设置此设计以在应用时还原此前应用的所有高级染色。\n\n如果此设计是设计链接或自动执行设置的一部分，设置此选项与在设计详情中设置重置高级染色的行为不同：\n- 设置此选项会重置此前应用的所有高级染色，并阻止较低的设计应用高级染色。其行为与在下方未显式设置为\"还原\"的每个槽的每一行中填入\"还原\"相同。\n- 在设计详情中设置重置高级染色会重置此前应用的所有高级染色，但允许较低的设计应用高级染色。"u8);
         Im.Line.Same();
         var slots = design.RevertAdvancedDyes;
         if (UiHelpers.DrawItemSlots("revertAdvancedDyes"u8, ref slots, readOnly: design.WriteProtected()))

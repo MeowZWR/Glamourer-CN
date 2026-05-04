@@ -87,7 +87,7 @@ public class EquipmentBarWindow : Window, IDisposable
         ImEx.TextFramed(_selection.ShortName, buttonWidth,
             textColor: _selection.Data.Valid ? ColorId.ActorAvailable.Value() : ColorId.ActorUnavailable.Value(),
             frameColor: ImGuiColor.Button.Get());
-        if (ImEx.Icon.LabeledButton(FontAwesomeIcon.TheaterMasks.Icon(), "Expand"u8, "Go back to Glamourer's Main Window."u8, buttonWidth))
+        if (ImEx.Icon.LabeledButton(FontAwesomeIcon.TheaterMasks.Icon(), "展开"u8, "切换到Glamourer主窗口。"u8, buttonWidth))
             _mainWindow.IsOpen = true;
 
         _equipmentDrawer.Prepare(true);

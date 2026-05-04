@@ -170,7 +170,7 @@ public static class UiHelpers
         return true;
     }
 
-    private static readonly StringU8 Slots = new("slots"u8);
+    private static readonly StringU8 Slots = new("插槽"u8);
 
     public static bool DrawItemSlots(Utf8StringHandler<LabelStringHandlerBuffer> id, ref CombinedItemSlotFlag slots,
         CombinedItemSlotFlag allowedSlots = EquipFlagExtensions.AllCombined, bool readOnly = false)

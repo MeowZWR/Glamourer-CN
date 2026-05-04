@@ -167,7 +167,7 @@ public sealed class ActorPanel : IPanel
         using var color = ImGuiColor.Button.Push(ImGuiColor.Header)
             .Push(ImGuiColor.ButtonHovered, ImGuiColor.HeaderHovered)
             .Push(ImGuiColor.ButtonActive,  ImGuiColor.HeaderActive);
-        if (ImEx.Icon.LabeledButton(LunaStyle.PopOutIcon, "###switchToEquipBar"u8, "Switch to the Equipment Bar."u8, corners: Corners.Right))
+        if (ImEx.Icon.LabeledButton(LunaStyle.PopOutIcon, "###switchToEquipBar"u8, "切换到装备栏。"u8, corners: Corners.Right))
             OpenEquipmentBar?.Invoke();
         Im.Cursor.Position = savedCursor;
 
