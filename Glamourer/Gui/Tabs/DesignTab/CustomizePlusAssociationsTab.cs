@@ -1,7 +1,6 @@
 using Glamourer.Config;
 using Glamourer.Designs;
 using Glamourer.Designs.CustomizePlus;
-using Glamourer.Interop;
 using Glamourer.Interop.CustomizePlus;
 using ImSharp;
 using Luna;
@@ -19,6 +18,8 @@ public sealed class CustomizePlusAssociationsTab(
     DynamicBridgeGate dynamicBridge,
     ActorObjectManager objects) : IUiService
 {
+    private readonly CustomizePlusApplicationModeButton _customizePlusModeButton = new(fileSystem, manager);
+
     private string _filter = string.Empty;
 
     private Design Selection
@@ -32,11 +33,12 @@ public sealed class CustomizePlusAssociationsTab(
             return;
 
         Im.Tooltip.OnHover(
-            "【国服特供】Customize+ 关联\n"u8
+            "「国服特供」Customize+ 关联\n"u8
           + "● 此功能旨在提供轻量化的联动体验，仅在未启用 DynamicBridge 时生效。\n"u8
+          + "● 只适用于 C+ 角色配置中按角色名称分配的配置。不支持使用「应用于您登陆的任何角色」类型的配置。\n"u8
           + "● 生效机制：手动或自动应用此设计时，按下方模式应用关联的 Customize+ 配置。\n"u8
-          + "● 临时配置：沿用现有临时应用方式，不修改普通配置开关。\n"u8
-          + "● 永久配置：切换普通配置开关，可被同步插件同步，并会在不再匹配时尝试恢复应用前状态。\n"u8
+          + "● 临时配置：不会修改你在 Customize+ 中的选择，但可能不会被 Mare 同步。\n"u8
+          + "● 正常配置：类似 DynamicBridge 的应用方式。\n"u8
           + "※ 请根据实际需求谨慎开启，可能会损害你的配置，请做好备份。"u8);
         if (!h)
             return;
@@ -50,23 +52,20 @@ public sealed class CustomizePlusAssociationsTab(
     {
         var currentPlayer = objects.PlayerData.Identifier;
         var hasPlayer = currentPlayer.IsValid;
-        var canClear = config.DeleteDesignModifier.IsActive();
         if (ImEx.Icon.LabeledButton(LunaStyle.RefreshIcon, "##refreshCustomizePlusProfiles"u8, "刷新 Customize+ 列表。"u8))
             customizePlus.GetProfiles(true);
 
         Im.Line.SameInner();
         if (ImEx.Icon.LabeledButton(LunaStyle.DeleteIcon, "##clearCustomizePlusAssociation"u8,
                 "移除此设计的 Customize+ 关联。"u8,
-                !Selection.CustomizePlusAssociation.IsSet || !canClear))
+                !Selection.CustomizePlusAssociation.IsSet))
         {
             manager.ClearCustomizePlusAssociation(Selection);
         }
-        if (!canClear)
-            Im.Tooltip.OnHover($"\n按住{config.DeleteDesignModifier}来删除。");
 
         Im.Line.SameInner();
 
-        const float modeWidth = 116;
+        var modeWidth  = Im.Style.FrameHeight;
         var comboWidth = Math.Max(120, Im.ContentRegion.Available.X - modeWidth - Im.Style.ItemInnerSpacing.X);
         Im.Item.SetNextWidth(comboWidth);
         var preview = Selection.CustomizePlusAssociation.IsSet
@@ -124,16 +123,7 @@ public sealed class CustomizePlusAssociationsTab(
             Im.Tooltip.OnHover($"关联角色：{string.Join(", ", association.Characters.Select(FormatCharacter))}");
 
         Im.Line.SameInner();
-        Im.Item.SetNextWidth(modeWidth);
-        using (var modeCombo = Im.Combo.Begin("##CustomizePlusApplicationMode"u8, ModeName(Selection.CustomizePlusApplicationMode)))
-        {
-            if (modeCombo)
-            {
-                DrawModeSelectable(CustomizePlusApplicationMode.TemporaryProfile);
-                DrawModeSelectable(CustomizePlusApplicationMode.PermanentProfile);
-            }
-        }
-        Im.Tooltip.OnHover(ModeDescription(Selection.CustomizePlusApplicationMode));
+        _customizePlusModeButton.DrawButton(default);
     }
 
     private void DrawFooter(bool bridgeLoaded)
@@ -167,29 +157,6 @@ public sealed class CustomizePlusAssociationsTab(
 
     private static string DisplayName(CustomizePlusAssociation association)
         => association.ProfilePath.Length > 0 ? association.ProfilePath : association.ProfileName;
-
-    private static string ModeName(CustomizePlusApplicationMode mode)
-        => mode switch
-        {
-            CustomizePlusApplicationMode.PermanentProfile => "永久配置",
-            _                                             => "临时配置",
-        };
-
-    private static string ModeDescription(CustomizePlusApplicationMode mode)
-        => mode switch
-        {
-            CustomizePlusApplicationMode.PermanentProfile =>
-                "切换 Customize+ 普通配置开关，可被 Mare 等同步插件同步。\n应用前会清理 Glamourer 创建的临时配置，并在不再匹配时尝试恢复应用前已启用的配置。",
-            _ =>
-                "使用 Customize+ 临时配置应用方式，不修改普通配置开关。\n这是旧设计的默认行为。",
-        };
-
-    private void DrawModeSelectable(CustomizePlusApplicationMode mode)
-    {
-        if (Im.Selectable($"{ModeName(mode)}##{mode}", Selection.CustomizePlusApplicationMode == mode))
-            manager.ChangeCustomizePlusApplicationMode(Selection, mode);
-        Im.Tooltip.OnHover(ModeDescription(mode));
-    }
 
     private string FormatCharacter(CustomizePlusCharacterAssociation character)
         => ((IdentifierType)character.CharacterType) switch

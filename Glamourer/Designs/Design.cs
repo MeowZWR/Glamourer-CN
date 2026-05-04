@@ -64,7 +64,7 @@ public sealed class Design : DesignBase, ISavable, IDesignStandIn, IFileSystemVa
     public CombinedItemSlotFlag         RevertAdvancedDyes     { get; internal set; }
     public bool                         ResetTemporarySettings { get; internal set; }
     public bool                         ApplyCustomizePlusAssociation { get; internal set; } = true;
-    public CustomizePlusApplicationMode CustomizePlusApplicationMode { get; internal set; }
+    public CustomizePlusApplicationMode CustomizePlusApplicationMode { get; internal set; } = CustomizePlusApplicationMode.PermanentProfile;
     public bool                         QuickDesign            { get; internal set; } = true;
     public string                       Color                  { get; internal set; } = string.Empty;
     public SortedList<Mod, ModSettings> AssociatedMods         { get; private set; }  = [];
@@ -296,7 +296,7 @@ public sealed class Design : DesignBase, ISavable, IDesignStandIn, IFileSystemVa
         design.ApplyCustomizePlusAssociation = json["ApplyCustomizePlusAssociation"]?.ToObject<bool>() ?? true;
         design.CustomizePlusApplicationMode =
             json["CustomizePlusApplicationMode"]?.ToObject<CustomizePlusApplicationMode>()
-         ?? CustomizePlusApplicationMode.TemporaryProfile;
+         ?? CustomizePlusApplicationMode.PermanentProfile;
         design.CustomizePlusAssociation      = CustomizePlusAssociation.Load(json["CustomizePlusAssociation"]);
         return design;
 
