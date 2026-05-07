@@ -42,8 +42,8 @@ public sealed class CustomizePlusApplicationModeButton(DesignFileSystem fileSyst
         => mode switch
         {
             CustomizePlusApplicationMode.PermanentProfile =>
-                "正常配置 C+ 角色配置，类似 DynamicBridge 的应用方式。\n应用前会清理 Glamourer 创建的临时配置。\n不再匹配时会尝试恢复应用前已启用的配置。",
+                "正常配置 C+ 角色配置，类似 DynamicBridge 的行为方式。\n不再匹配时尝试恢复到应用前的状态。",
             _ =>
-                "临时配置 C+ 角色配置，不会修改你在 C+ 中的选择。\n临时配置可能不会被 Mare 等插件同步你的 C+ 状态。",
+                "临时配置 C+ 角色配置，不会修改你在 C+ 中的选择。\n但可能不会被 Mare 等插件同步你的 C+ 状态。",
         };
 }
