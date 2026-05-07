@@ -53,7 +53,7 @@ public sealed class CustomizePlusAssociationsTab(
         var currentPlayer = objects.PlayerData.Identifier;
         var hasPlayer = currentPlayer.IsValid;
         if (ImEx.Icon.LabeledButton(LunaStyle.RefreshIcon, "##refreshCustomizePlusProfiles"u8, "刷新 Customize+ 列表。"u8))
-            customizePlus.GetProfiles(true);
+            RefreshCustomizePlusProfiles();
 
         Im.Line.SameInner();
         if (ImEx.Icon.LabeledButton(LunaStyle.DeleteIcon, "##clearCustomizePlusAssociation"u8,
@@ -152,6 +152,23 @@ public sealed class CustomizePlusAssociationsTab(
         {
             using (ImGuiColor.Text.Push(ColorId.FolderLine.Value()))
                 Im.Text($"{reason}");
+        }
+    }
+
+    // 刷新后把设计里已关联的配置与 IPC 最新数据对齐（例如在 C+ 里为该配置新加了角色）。
+    private void RefreshCustomizePlusProfiles()
+    {
+        var profiles = customizePlus.GetProfiles(true);
+        var stored   = Selection.CustomizePlusAssociation;
+        if (!stored.IsSet)
+            return;
+
+        foreach (var profile in profiles)
+        {
+            if (profile.ProfileId != stored.ProfileId)
+                continue;
+            manager.ChangeCustomizePlusAssociation(Selection, profile);
+            break;
         }
     }
 
