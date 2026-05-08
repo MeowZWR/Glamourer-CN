@@ -68,9 +68,7 @@ public sealed class CustomizePlusAssociationsTab(
         var modeWidth  = Im.Style.FrameHeight;
         var comboWidth = Math.Max(120, Im.ContentRegion.Available.X - modeWidth - Im.Style.ItemInnerSpacing.X);
         Im.Item.SetNextWidth(comboWidth);
-        var preview = Selection.CustomizePlusAssociation.IsSet
-            ? DisplayName(Selection.CustomizePlusAssociation)
-            : "选择 Customize+ 角色配置...";
+        var preview = CustomizePlusAssociationComboPreview();
         using (Im.Disabled(bridgeLoaded || !customizePlus.IsAvailable(out _) || !hasPlayer))
         {
             using var combo = Im.Combo.Begin("##CustomizePlusProfile"u8, preview);
@@ -119,8 +117,13 @@ public sealed class CustomizePlusAssociationsTab(
         }
 
         var association = Selection.CustomizePlusAssociation;
-        if (association is { IsSet: true, Characters.Count: > 0 })
-            Im.Tooltip.OnHover($"关联角色：{string.Join(", ", association.Characters.Select(FormatCharacter))}");
+        if (association.IsSet)
+        {
+            if (AssociationMissingFromCustomizePlusList(association))
+                Im.Tooltip.OnHover("未在 Customize+ 角色配置中找到此关联配置（可能已被删除）。"u8);
+            else if (association.Characters.Count > 0)
+                Im.Tooltip.OnHover($"关联角色：{string.Join(", ", association.Characters.Select(FormatCharacter))}");
+        }
 
         Im.Line.SameInner();
         _customizePlusModeButton.DrawButton(default);
@@ -131,7 +134,13 @@ public sealed class CustomizePlusAssociationsTab(
         var currentPlayer = objects.PlayerData.Identifier;
         var hasPlayer = currentPlayer.IsValid;
 
-        if (!hasPlayer)
+        if (Selection.CustomizePlusAssociation.IsSet
+         && AssociationMissingFromCustomizePlusList(Selection.CustomizePlusAssociation))
+        {
+            using (ImGuiColor.Text.Push(ColorId.ActorUnavailable.Value()))
+                Im.Text("未在 Customize+ 角色配置中找到此关联配置（可能已被删除）。"u8);
+        }
+        else if (!hasPlayer)
             Im.Text("当前玩家不可用，无法校验角色匹配。"u8);
         else if (Selection.CustomizePlusAssociation.IsSet)
         {
@@ -145,7 +154,7 @@ public sealed class CustomizePlusAssociationsTab(
         if (bridgeLoaded)
         {
             using (ImGuiColor.Text.Push(ColorId.FolderLine.Value()))
-                Im.Text("DynamicBridge 已加载，Glamourer 侧 Customize+ 关联已禁用。"u8);
+                Im.Text("DynamicBridge 已加载，此功能已被禁用。"u8);
         }
 
         if (!customizePlus.IsAvailable(out var reason))
@@ -155,7 +164,6 @@ public sealed class CustomizePlusAssociationsTab(
         }
     }
 
-    // 刷新后把设计里已关联的配置与 IPC 最新数据对齐（例如在 C+ 里为该配置新加了角色）。
     private void RefreshCustomizePlusProfiles()
     {
         var profiles = customizePlus.GetProfiles(true);
@@ -170,6 +178,30 @@ public sealed class CustomizePlusAssociationsTab(
             manager.ChangeCustomizePlusAssociation(Selection, profile);
             break;
         }
+    }
+
+    private string CustomizePlusAssociationComboPreview()
+    {
+        var assoc = Selection.CustomizePlusAssociation;
+        if (!assoc.IsSet)
+            return "选择 Customize+ 角色配置...";
+
+        var name = DisplayName(assoc);
+        return AssociationMissingFromCustomizePlusList(assoc) ? $"{name}（此配置已失效）" : name;
+    }
+
+    private bool AssociationMissingFromCustomizePlusList(in CustomizePlusAssociation assoc)
+    {
+        if (!assoc.IsSet || !customizePlus.IsAvailable(out _))
+            return false;
+
+        foreach (var profile in customizePlus.GetProfiles())
+        {
+            if (profile.ProfileId == assoc.ProfileId)
+                return false;
+        }
+
+        return true;
     }
 
     private static string DisplayName(CustomizePlusAssociation association)
