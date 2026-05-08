@@ -75,7 +75,7 @@ public sealed class CustomizePlusAssociationsTab(
             if (combo)
             {
                 Im.Item.SetNextWidthFull();
-                ImEx.InputOnDeactivation.Text("##CustomizePlusFilter"u8, _filter, out _filter);
+                Im.Input.Text("##CustomizePlusFilter"u8, ref _filter, "筛选名称或路径..."u8);
                 foreach (var profile in customizePlus.GetProfiles())
                 {
                     if (_filter.Length > 0
