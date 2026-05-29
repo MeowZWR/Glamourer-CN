@@ -18,49 +18,47 @@ public class EquipmentBarWindow : OverlayWindow, IDisposable
             ? WindowFlags.NoDecoration | WindowFlags.NoDocking | WindowFlags.NoFocusOnAppearing | WindowFlags.NoMove
             : WindowFlags.NoDecoration | WindowFlags.NoDocking | WindowFlags.NoFocusOnAppearing;
 
-    private readonly Configuration    _config;
-    private readonly ActorSelection   _selection;
-    private readonly StateManager     _stateManager;
-    private readonly EquipmentDrawer  _equipmentDrawer;
-    private readonly MainWindow       _mainWindow;
-    private readonly ActorPanel       _actorPanel;
-    private readonly AdvancedDyePopup _advancedDyes;
+    private readonly Configuration     _config;
+    private readonly ActorSelection    _selection;
+    private readonly StateManager      _stateManager;
+    private readonly EquipmentDrawer   _equipmentDrawer;
+    private readonly NavigationService _navigator;
+    private readonly AdvancedDyePopup  _advancedDyes;
 
     private readonly Im.ColorStyleDisposable _style = new();
 
     public EquipmentBarWindow(Configuration config, ActorSelection selection, StateManager stateManager, EquipmentDrawer equipmentDrawer,
-        MainWindow mainWindow, ActorPanel actorPanel, AdvancedDyePopup advancedDyes)
+        AdvancedDyePopup advancedDyes, NavigationService navigator)
         : base("Glamourer Equipment Bar", WindowFlags.NoDecoration | WindowFlags.NoDocking | WindowFlags.NoFocusOnAppearing)
     {
         _config          = config;
         _selection       = selection;
         _stateManager    = stateManager;
         _equipmentDrawer = equipmentDrawer;
-        _mainWindow      = mainWindow;
-        _actorPanel      = actorPanel;
         _advancedDyes    = advancedDyes;
+        _navigator       = navigator;
 
-        mainWindow.Open             += OnMainWindowOpen;
-        actorPanel.OpenEquipmentBar += OnActorPanelOpenEqpBar;
+        _navigator.MainWindowOpened   += OnMainWindowOpen;
+        _navigator.ToggleEquipmentBar += OnEquipmentBarOpened;
 
         Size               = Vector2.Zero;
         RespectCloseHotkey = false;
     }
 
+    private void OnEquipmentBarOpened(bool? open)
+        => IsOpen = open ?? !IsOpen;
+
     public void Dispose()
     {
-        _mainWindow.Open             -= OnMainWindowOpen;
-        _actorPanel.OpenEquipmentBar -= OnActorPanelOpenEqpBar;
+        _navigator.MainWindowOpened   -= OnMainWindowOpen;
+        _navigator.ToggleEquipmentBar -= OnEquipmentBarOpened;
     }
-
-    private void OnActorPanelOpenEqpBar()
-        => IsOpen = true;
 
     private void OnMainWindowOpen()
         => IsOpen = false;
 
     public override void OnOpen()
-        => _mainWindow.IsOpen = false;
+        => _navigator.SetMainWindow(false);
 
     public override bool DrawConditions()
     {
@@ -90,8 +88,8 @@ public class EquipmentBarWindow : OverlayWindow, IDisposable
         ImEx.TextFramed(_selection.ShortName, buttonWidth,
             textColor: _selection.Data.Valid ? ColorId.ActorAvailable.Value() : ColorId.ActorUnavailable.Value(),
             frameColor: ImGuiColor.Button.Get());
-        if (ImEx.Icon.LabeledButton(FontAwesomeIcon.TheaterMasks.Icon(), "展开"u8, "切换到Glamourer主窗口。"u8, buttonWidth))
-            _mainWindow.IsOpen = true;
+        if (ImEx.Icon.LabeledButton(FontAwesomeIcon.TheaterMasks.Icon(), "展开"u8, "返回到Glamourer主窗口。"u8, buttonWidth))
+            _navigator.SetMainWindow(true);
 
         _equipmentDrawer.Prepare(true);
 

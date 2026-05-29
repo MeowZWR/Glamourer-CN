@@ -214,7 +214,7 @@ public sealed class SetPanel(
         Im.Table.NextRow();
 
         table.NextColumn();
-        table.DrawFrameColumn($"#{_selection.Set!.Designs.Count + 1}");
+        table.DrawFrameColumn($"#{_selection.Set!.Designs.Count + 1:D2}");
         table.NextColumn();
         designCombo.Draw(_selection.Set!, null, -1);
         table.DrawFrameColumn("添加新设计"u8);
