@@ -425,11 +425,7 @@ public class StateEditor(
                     Editor.ChangeMetaState(state, meta, mergedDesign.Design.DesignData.GetMeta(meta), Source(meta), out _, settings.Key);
             }
 
-            if (settings.ResetMaterials)
-            {
-                state.Materials.Clear();
-            }
-            else if (!settings.RespectManual && mergedDesign.ResetAdvancedDyes is not 0)
+            if (settings.ResetMaterials || !settings.RespectManual && mergedDesign.ResetAdvancedDyes is not 0)
             {
                 if (settings.ResetMaterials || mergedDesign.ResetAdvancedDyes.HasFlag(EquipFlagExtensions.AllCombined))
                     state.Materials.Clear();
