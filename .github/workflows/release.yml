@@ -6,13 +6,25 @@ on:
       - '*-cn'
       - '!testing_*'
 
+concurrency:
+  group: glamourer-cn-repo-update
+  cancel-in-progress: false
+
 jobs:
   build:
     runs-on: windows-latest
     steps:
       - uses: actions/checkout@v5
         with:
+          fetch-depth: 0
           submodules: recursive
+      - name: Verify release branch
+        run: |
+          git fetch origin stable
+          git merge-base --is-ancestor "$env:GITHUB_SHA" origin/stable
+          if ($LASTEXITCODE -ne 0) {
+            throw "Stable releases must be tagged from the stable branch."
+          }
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
         with:
@@ -64,6 +76,11 @@ jobs:
           asset_name: Glamourer.zip
           asset_content_type: application/zip
 
+      - name: Check out metadata branch
+        run: |
+          git fetch origin cn
+          git checkout -B cn origin/cn
+
       - name: Write out repo.json
         run: |
           $ver = '${{ github.ref_name }}'
@@ -71,9 +88,7 @@ jobs:
           $path = './repo.json'
           $json = Get-Content -Raw $path | ConvertFrom-Json
           $json[0].AssemblyVersion = $verBase
-          $json[0].TestingAssemblyVersion = $verBase
           $json[0].DownloadLinkInstall = $json.DownloadLinkInstall -replace '[^/]+/Glamourer.zip',"$ver/Glamourer.zip"
-          $json[0].DownloadLinkTesting = $json.DownloadLinkTesting -replace '[^/]+/Glamourer.zip',"$ver/Glamourer.zip"
           $json[0].DownloadLinkUpdate = $json.DownloadLinkUpdate -replace '[^/]+/Glamourer.zip',"$ver/Glamourer.zip"
           $content = $json | ConvertTo-Json -AsArray
           set-content -Path $path -Value $content
@@ -82,9 +97,6 @@ jobs:
         run: |
           git config --global user.name "Actions User"
           git config --global user.email "actions@github.com"
-          git fetch origin cn
-          git branch -f cn ${{ github.sha }}
-          git checkout cn
           git add repo.json
           git commit -m "[CI] Updating repo.json for ${{ github.ref_name }}" || true
           git push origin cn
