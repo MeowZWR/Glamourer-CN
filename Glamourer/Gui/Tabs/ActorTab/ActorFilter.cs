@@ -46,13 +46,13 @@ public sealed class ActorFilter : TextFilterBase<ActorCacheItem>, IUiService
             changes = Clear();
         }
 
-        Im.Tooltip.OnHover("Filter actors for their type.\nMiddle-Click to clear all filters, including the text-filter."u8);
+        Im.Tooltip.OnHover("按类型筛选角色。\n中键点击清除所有筛选，包括文本筛选。"u8);
 
         if (!combo)
             return changes;
 
         var filter = _config.ActorTypeFilter ^ ActorTypeFilter.All;
-        if (Im.Checkbox("Everything"u8, ref filter, ActorTypeFilter.All))
+        if (Im.Checkbox("全部"u8, ref filter, ActorTypeFilter.All))
         {
             _config.ActorTypeFilter = filter ^ ActorTypeFilter.All;
             changes                 = true;

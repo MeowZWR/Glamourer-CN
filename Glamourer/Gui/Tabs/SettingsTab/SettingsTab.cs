@@ -267,7 +267,7 @@ public sealed class SettingsTab(
             v => config.Ephemeral.LockMainWindow = v);
         Checkbox("在游戏开始时打开主窗口"u8, "启动游戏后，Glamourer主窗口是打开还是关闭状态。"u8,
             config.OpenWindowAtStart,                v => config.OpenWindowAtStart = v);
-        EphemeralCheckbox("Lock Equipment Bar"u8, "Prevent the equipment bar from being moved and lock it in place."u8,
+        EphemeralCheckbox("锁定装备栏"u8, "防止装备栏被移动，将其锁定在当前位置。"u8,
             config.Ephemeral.LockEquipmentBar,
             v => config.Ephemeral.LockEquipmentBar = v);
         Im.Dummy(Vector2.Zero);

@@ -20,72 +20,72 @@ public readonly struct ColorIdData : IColorData<ColorId>
 
     private static ColorData<ColorId>[] CreateData()
     {
-        var designs    = "Design Selector"u8;
-        var metadata   = "Metadata"u8;
-        var automation = "Automation"u8;
-        var actors     = "Actors & NPCs"u8;
-        var qdb        = "Quick Design Bar"u8;
+        var designs    = "设计选择器"u8;
+        var metadata   = "元数据"u8;
+        var automation = "自动执行"u8;
+        var actors     = "角色与 NPC"u8;
+        var qdb        = "快速设计栏"u8;
 
         var ret = new ColorData<ColorId>[ColorId.Values.Count];
 
-        ret[(int)NormalDesign] = new ColorData<ColorId>(ImGuiColor.Text, "Normal Design"u8, "A design with no specific traits."u8, designs);
-        ret[(int)CustomizationDesign] = new ColorData<ColorId>(0xFFC000C0, "Customization Design"u8,
-            "A design that only changes customizations on a character."u8, designs);
-        ret[(int)StateDesign] = new ColorData<ColorId>(0xFF00C0C0, "State Design"u8,
-            "A design that does not change equipment or customizations on a character."u8, designs);
+        ret[(int)NormalDesign] = new ColorData<ColorId>(ImGuiColor.Text, "普通设计"u8, "没有特殊规则设置的设计。"u8, designs);
+        ret[(int)CustomizationDesign] = new ColorData<ColorId>(0xFFC000C0, "外貌设计"u8,
+            "仅修改角色外貌的设计。"u8, designs);
+        ret[(int)StateDesign] = new ColorData<ColorId>(0xFF00C0C0, "状态设计"u8,
+            "不修改角色外貌或装备的设计。"u8, designs);
         ret[(int)EquipmentDesign] =
-            new ColorData<ColorId>(0xFF00C000, "Equipment Design"u8, "A design that only changes equipment on a character."u8, designs);
-        ret[(int)ActorAvailable] = new ColorData<ColorId>(DalamudColor.SuccessForeground, "Actor Available"u8,
-            "The header in the Actor tab panel if the currently selected actor exists in the game world at least once."u8, actors);
-        ret[(int)ActorUnavailable] = new ColorData<ColorId>(DalamudColor.ErrorForeground, "Actor Unavailable"u8,
-            "The Header in the Actor tab panel if the currently selected actor does not exist in the game world."u8, actors);
+            new ColorData<ColorId>(0xFF00C000, "装备设计"u8, "只修改角色装备的设计。"u8, designs);
+        ret[(int)ActorAvailable] = new ColorData<ColorId>(DalamudColor.SuccessForeground, "角色可用"u8,
+            "如果在游戏世界中此角色至少存在过一次，附近角色选项卡中的角色标题会显示为此颜色。"u8, actors);
+        ret[(int)ActorUnavailable] = new ColorData<ColorId>(DalamudColor.ErrorForeground, "角色不可用"u8,
+            "如果在游戏世界中此角色当前不存在，附近角色选项卡中的角色标题会显示为此颜色。"u8, actors);
         ret[(int)FolderExpanded] =
-            new ColorData<ColorId>(FolderLine, "Expanded Design Folder"u8, "A design folder that is currently expanded."u8, designs);
+            new ColorData<ColorId>(FolderLine, "展开的设计折叠组"u8, "当前展开的设计折叠组，标题会显示为此颜色。"u8, designs);
         ret[(int)FolderCollapsed] =
-            new ColorData<ColorId>(FolderLine, "Collapsed Design Folder"u8, "A design folder that is currently collapsed."u8, designs);
-        ret[(int)FolderLine] = new ColorData<ColorId>(0xFFFFF0C0, "Expanded Design Folder Line"u8,
-            "The line signifying which descendants belong to an expanded design folder."u8, designs);
-        ret[(int)EnabledAutoSet] = new ColorData<ColorId>(0xFFA0F0A0, "Enabled Automation Set"u8,
-            "An automation set that is currently enabled. Only one set can be enabled for each identifier at once."u8, automation);
+            new ColorData<ColorId>(FolderLine, "收起的设计折叠组"u8, "当前收起的设计折叠组，标题会显示为此颜色。"u8, designs);
+        ret[(int)FolderLine] = new ColorData<ColorId>(0xFFFFF0C0, "展开设计折叠组竖线"u8,
+            "表示哪些子设计隶属于展开的折叠组，用于标识树形目录结构的竖线会显示为此颜色。"u8, designs);
+        ret[(int)EnabledAutoSet] = new ColorData<ColorId>(0xFFA0F0A0, "已启用的自动执行集"u8,
+            "当前已启用的自动化执行集。每个角色只能启用一个。"u8, automation);
         ret[(int)DisabledAutoSet] =
-            new ColorData<ColorId>(ImGuiColor.TextDisabled, "Disabled Automation Set"u8, "An automation set that is currently disabled."u8, automation);
-        ret[(int)AutomationActorAvailable] = new ColorData<ColorId>(ImGuiColor.Text, "Automation Actor Available"u8,
-            "A character associated with the given automated design set is currently visible."u8, automation);
-        ret[(int)AutomationActorUnavailable] = new ColorData<ColorId>(ImGuiColor.TextDisabled, "Automation Actor Unavailable"u8,
-            "No character associated with the given automated design set is currently visible."u8, automation);
-        ret[(int)HeaderButtons] = new ColorData<ColorId>(0xFFFFF0C0, "Header Buttons"u8,
-            "The text and border color of buttons in the header, like the Incognito toggle."u8, metadata);
-        ret[(int)FavoriteStarOn] = new ColorData<ColorId>(0xFF40D0D0, "Favored Item"u8,
-            "The color of the star for favored items and of the border in the unlock overview tab."u8, metadata);
-        ret[(int)FavoriteStarHovered] = new ColorData<ColorId>(0xFFD040D0, "Favorite Star Hovered"u8,
-            "The color of the star for favored items when it is hovered."u8, metadata);
-        ret[(int)FavoriteStarOff] = new ColorData<ColorId>(0x20808080, "Favorite Star Outline"u8,
-            "The color of the star for items that are not favored when it is not hovered."u8, metadata);
-        ret[(int)QuickDesignButton] = new ColorData<ColorId>(0x900A0A0A, "Quick Design Bar Button Background"u8,
-            "The color of button frames in the quick design bar."u8, qdb);
-        ret[(int)QuickDesignFrame] = new ColorData<ColorId>(0x90383838, "Quick Design Bar Combo Background"u8,
-            "The color of the combo background in the quick design bar."u8, qdb);
-        ret[(int)QuickDesignBg] = new ColorData<ColorId>(0x00F0F0F0, "Quick Design Bar Window Background"u8,
-            "The color of the window background in the quick design bar."u8, qdb);
-        ret[(int)TriStateCheck] = new ColorData<ColorId>(0xFF00D000, "Checkmark in Tri-State Checkboxes"u8,
-            "The color of the checkmark indicating positive change in tri-state checkboxes."u8, metadata);
-        ret[(int)TriStateCross] = new ColorData<ColorId>(0xFF0000D0, "Cross in Tri-State Checkboxes"u8,
-            "The color of the cross indicating negative change in tri-state checkboxes."u8, metadata);
-        ret[(int)TriStateNeutral] = new ColorData<ColorId>(0xFFD0D0D0, "Dot in Tri-State Checkboxes"u8,
-            "The color of the dot indicating no change in tri-state checkboxes."u8, metadata);
-        ret[(int)BattleNpc] = new ColorData<ColorId>(ImGuiColor.Text, "Battle NPC in NPC Tab"u8,
-            "The color of the names of battle NPCs in the NPC tab that do not have a more specific color assigned."u8, actors);
-        ret[(int)EventNpc] = new ColorData<ColorId>(ImGuiColor.Text, "Event NPC in NPC Tab"u8,
-            "The color of the names of event NPCs in the NPC tab that do not have a more specific color assigned."u8, actors);
-        ret[(int)ModdedItemMarker] = new ColorData<ColorId>(0xFFFF20FF, "Modded Item Marker"u8,
-            "The color of dot in the unlocks overview tab signaling that the item is modded in the currently selected Penumbra collection."u8,
+            new ColorData<ColorId>(ImGuiColor.TextDisabled, "已禁用的自动执行集"u8, "当前已禁用的自动化执行集。"u8, automation);
+        ret[(int)AutomationActorAvailable] = new ColorData<ColorId>(ImGuiColor.Text, "自动执行关联角色存在"u8,
+            "与自动执行集关联的角色当前存在。"u8, automation);
+        ret[(int)AutomationActorUnavailable] = new ColorData<ColorId>(ImGuiColor.TextDisabled, "自动执行关联角色不存在"u8,
+            "与自动执行集关联的角色当前不存在。"u8, automation);
+        ret[(int)HeaderButtons] = new ColorData<ColorId>(0xFFFFF0C0, "标题按钮"u8,
+            "标题处按钮的文本和边框颜色。比如匿名开关按钮。"u8, metadata);
+        ret[(int)FavoriteStarOn] = new ColorData<ColorId>(0xFF40D0D0, "收藏物品"u8,
+            "收藏物品的五角星和已解锁选项卡总览模式中的边框的颜色。"u8, metadata);
+        ret[(int)FavoriteStarHovered] = new ColorData<ColorId>(0xFFD040D0, "收藏五角星悬停"u8,
+            "鼠标在收藏物品五角星按钮上悬停时的颜色。"u8, metadata);
+        ret[(int)FavoriteStarOff] = new ColorData<ColorId>(0x20808080, "收藏五角星轮廓"u8,
+            "收藏品五角星的默认颜色。"u8, metadata);
+        ret[(int)QuickDesignButton] = new ColorData<ColorId>(0x900A0A0A, "快速设计栏按钮背景"u8,
+            "快速设计栏中按钮框体的颜色。"u8, qdb);
+        ret[(int)QuickDesignFrame] = new ColorData<ColorId>(0x90383838, "快速设计栏选择器背景"u8,
+            "快速设计栏中设计选择器的背景颜色。"u8, qdb);
+        ret[(int)QuickDesignBg] = new ColorData<ColorId>(0x00F0F0F0, "快速设计栏窗口背景"u8,
+            "快速设计栏中窗口的背景颜色。"u8, qdb);
+        ret[(int)TriStateCheck] = new ColorData<ColorId>(0xFF00D000, "三态复选框√（打勾）"u8,
+            "复选框中表示选中的符号的颜色。"u8, metadata);
+        ret[(int)TriStateCross] = new ColorData<ColorId>(0xFF0000D0, "三态复选框×（打叉）"u8,
+            "复选框中表示反选的符号的颜色。"u8, metadata);
+        ret[(int)TriStateNeutral] = new ColorData<ColorId>(0xFFD0D0D0, "三态复选框●（点选）"u8,
+            "复选框中表示保持原样的符号的颜色。"u8, metadata);
+        ret[(int)BattleNpc] = new ColorData<ColorId>(ImGuiColor.Text, "NPC 选项卡中的战斗 NPC"u8,
+            "NPC 选项卡中没有指定其他颜色的战斗 NPC 名称的颜色。"u8, actors);
+        ret[(int)EventNpc] = new ColorData<ColorId>(ImGuiColor.Text, "NPC 选项卡中的事件 NPC"u8,
+            "NPC 选项卡中没有指定其他颜色的事件 NPC 名称的颜色。"u8, actors);
+        ret[(int)ModdedItemMarker] = new ColorData<ColorId>(0xFFFF20FF, "已修改物品标记"u8,
+            "在解锁总览选项卡中表示该物品在当前选择的 Penumbra 合集中的颜色。"u8,
             metadata);
-        ret[(int)ContainsItemsEnabled] = new ColorData<ColorId>(0xFFA0F0A0, "Enabled Mod Contains Design Items"u8,
-            "The color of enabled mods in the associated mod dropdown menu when they contain items used in this design."u8, metadata);
-        ret[(int)ContainsItemsDisabled] = new ColorData<ColorId>(0x80A0F0A0, "Disabled Mod Contains Design Items"u8,
-            "The color of disabled mods in the associated mod dropdown menu when they contain items used in this design."u8, metadata);
-        ret[(int)AdvancedDyeActive] = new ColorData<ColorId>(0xFF58DDFF, "Advanced Dyes Active"u8,
-            "The highlight color for the advanced dye button and marker if any advanced dyes are active for this slot."u8, metadata);
+        ret[(int)ContainsItemsEnabled] = new ColorData<ColorId>(0xFFA0F0A0, "启用的模组包含设计物品"u8,
+            "在关联模组下拉菜单中启用的模组包含此设计中使用的物品时的颜色。"u8, metadata);
+        ret[(int)ContainsItemsDisabled] = new ColorData<ColorId>(0x80A0F0A0, "禁用的模组包含设计物品"u8,
+            "在关联模组下拉菜单中禁用的模组包含此设计中使用的物品时的颜色。"u8, metadata);
+        ret[(int)AdvancedDyeActive] = new ColorData<ColorId>(0xFF58DDFF, "高级染料激活"u8,
+            "如果此槽位有任何高级染料激活，高级染料按钮和标记的高亮颜色。"u8, metadata);
 
         foreach (var data in ret)
         {
