@@ -101,9 +101,9 @@ internal class CustomizeSetFactory(
     }
 
     private readonly ExcelSheet<CharaMakeCustomize> _customizeSheet = gameData.GetExcelSheet<CharaMakeCustomize>(ClientLanguage.English);
-    private readonly ExcelSheet<Lobby>              _lobbySheet     = gameData.GetExcelSheet<Lobby>(ClientLanguage.English);
     private readonly ExcelSheet<RawRow>             _hairSheet      = gameData.GetExcelSheet<RawRow>(ClientLanguage.English, "HairMakeType");
-    private readonly ExcelSheet<Tribe>              _tribeSheet     = gameData.GetExcelSheet<Tribe>(ClientLanguage.English);
+    private readonly ExcelSheet<Lobby> _lobbySheet = gameData.GetExcelSheet<Lobby>(gameData.Language);
+    private readonly ExcelSheet<Tribe> _tribeSheet = gameData.GetExcelSheet<Tribe>(gameData.Language);
 
     // Those color pickers are shared between all races.
     private readonly CustomizeData[] _highlightPicker      = colors.GetColors(CustomizeIndex.HighlightsColor);
@@ -220,7 +220,7 @@ internal class CustomizeSetFactory(
             {
                 // If none exists and the id corresponds to highlights, set the Highlights name.
                 if (c == CustomizeIndex.Highlights)
-                    return _lobbySheet.TryGetRow(237, out var text) ? new StringU8(text.Text.ExtractText()) : new StringU8("Highlights"u8);
+                    return _lobbySheet.TryGetRow(237, out var text) ? new StringU8(text.Text.ExtractText()) : CustomizeIndex.Highlights.ToNameU8();
 
                 // Otherwise there is an error and we use the default name.
                 return c.ToNameU8();

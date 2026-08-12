@@ -54,5 +54,5 @@ public sealed class WeaponCombo(FavoriteManager favorites, ItemManager items, Co
     }
 
     private static StringU8 GetLabel(FullEquipType type)
-        => type.IsUnknown() ? new StringU8("Mainhand"u8) : new StringU8(type.ToName());
+        => type.IsUnknown() ? new StringU8("主手"u8) : new StringU8(type.ToName());
 }
