@@ -6,6 +6,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Penumbra.GameData.Actors;
 using Penumbra.GameData.Structs;
+using System.Text;
 using System.Text.Json;
 
 namespace Glamourer.Config;
@@ -70,27 +71,27 @@ public sealed partial class UiConfig : ConfigurationFile<FilenameService>, IDisp
         }
     }
 
-    protected override void LoadData(JObject j)
+    protected override void LoadData(in JsonElement j)
     {
-        // TODO: Optimize this entire type to not use newtonsoft...
-        _actorsTabScale          = TwoPanelWidth.ReadJson(j, "ActorsTab",     new TwoPanelWidth(250,  ScalingMode.Absolute));
-        _designsTabScale         = TwoPanelWidth.ReadJson(j, "DesignsTab",    new TwoPanelWidth(0.3f, ScalingMode.Percentage));
-        _automationTabScale      = TwoPanelWidth.ReadJson(j, "AutomationTab", new TwoPanelWidth(0.3f, ScalingMode.Percentage));
-        _npcTabScale             = TwoPanelWidth.ReadJson(j, "NpcTab",        new TwoPanelWidth(250,  ScalingMode.Absolute));
-        _selectedNpc             = j["SelectedNpc"]?.Value<uint>() ?? 0;
-        _selectedAutomationIndex = j["SelectedAutomationIndex"]?.Value<int>() ?? -1;
-        _selectedActor           = _actors.FromJson(j["SelectedActor"] as JObject);
-        if (j["Colors"] is { } token)
+        _actorsTabScale          = TwoPanelWidth.ReadJson(j, "ActorsTab"u8,     new TwoPanelWidth(250,  ScalingMode.Absolute));
+        _designsTabScale         = TwoPanelWidth.ReadJson(j, "DesignsTab"u8,    new TwoPanelWidth(0.3f, ScalingMode.Percentage));
+        _automationTabScale      = TwoPanelWidth.ReadJson(j, "AutomationTab"u8, new TwoPanelWidth(0.3f, ScalingMode.Percentage));
+        _npcTabScale             = TwoPanelWidth.ReadJson(j, "NpcTab"u8,        new TwoPanelWidth(250,  ScalingMode.Absolute));
+        _selectedNpc             = (NpcId)j.PropertyOrDefault("SelectedNpc"u8, 0u);
+        _selectedAutomationIndex = j.PropertyOrDefault("SelectedAutomationIndex"u8, -1);
+        _selectedActor           = j.TryReadObject("SelectedActor"u8, out var actor)
+            ? _actors.FromJson(JObject.Parse(actor.GetRawText()))
+            : ActorIdentifier.Invalid;
+
+        if (j.TryGetProperty("Colors"u8, out var colorsElement)
+         && colorsElement.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined)
         {
-            var backToText = Encoding.UTF8.GetBytes(token.ToString(Formatting.None));
-            if (backToText.Length > 0)
+            var bytes  = Encoding.UTF8.GetBytes(colorsElement.GetRawText());
+            var reader = new Utf8JsonReader(bytes, JsonFunctions.ReaderOptions);
+            if (reader.Read())
             {
-                var reader = new Utf8JsonReader(backToText, JsonFunctions.ReaderOptions);
-                if (reader.Read())
-                {
-                    var colors = ColorDictionary<ColorId, ColorIdData>.Deserialize(Messager, ref reader, true, true, true);
-                    Colors.Apply(colors, true);
-                }
+                var colors = ColorDictionary<ColorId, ColorIdData>.Deserialize(Messager, ref reader, true, true, true);
+                Colors.Apply(colors, true);
             }
         }
         else
