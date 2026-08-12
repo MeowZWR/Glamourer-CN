@@ -99,8 +99,8 @@ public sealed class AutomationButtons : ButtonFooter
             Im.Text("自动执行集"u8);
             Im.BulletText("首先，你需要创建“自动执行集”。一个自动执行集可以是："u8);
             using var indent = Im.Indent();
-            Im.BulletText("……已启用状态，或者"u8, ColorId.EnabledAutoSet.Value());
-            Im.BulletText("……已禁用状态。"u8,   ColorId.DisabledAutoSet.Value());
+            Im.BulletText("……已启用状态，或者"u8, ColorId.EnabledAutoSet.Vector);
+            Im.BulletText("……已禁用状态。"u8,   ColorId.DisabledAutoSet.Vector);
             indent.Unindent();
             Im.BulletText("你可以创建新的、空的自动执行集，或复制现有的自动执行集。"u8);
             Im.BulletText("你可以为自动执行集随意命名。"u8);

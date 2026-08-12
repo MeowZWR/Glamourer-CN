@@ -79,7 +79,7 @@ public sealed class MultiDesignPanel(
             ++_numDesignsForcedRedraw;
         if (l.Value.ResetAdvancedDyes is not 0)
             ++_numDesignsResetSomeDyes;
-        if (l.Value.ResetAdvancedDyes.HasFlag(EquipFlagExtensions.AllCombined))
+        if (l.Value.ResetAdvancedDyes.HasFlag(ModelCombinedSlotsExtensions.All))
             ++_numDesignsResetAllDyes;
         if (l.Value.Materials.Count > 0)
         {
@@ -265,7 +265,7 @@ public sealed class MultiDesignPanel(
                 ? $"全部 {fileSystem.Selection.DataNodes.Count} 个选中的设计已重置高级染色。"
                 : $"设置全部 {fileSystem.Selection.DataNodes.Count} 个选中的设计重置高级染色。影响 {diff} 个设计。", diff is 0))
             foreach (var design in fileSystem.Selection.DataNodes)
-                editor.ChangeResetAdvancedDyes(design.GetValue<Design>()!, EquipFlagExtensions.AllCombined);
+                editor.ChangeResetAdvancedDyes(design.GetValue<Design>()!, ModelCombinedSlotsExtensions.All);
 
         Im.Line.SameInner();
         if (ImEx.Button("移除重置染色"u8, width, _numDesignsLocked is 0

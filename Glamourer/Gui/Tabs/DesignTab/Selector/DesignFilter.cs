@@ -20,7 +20,7 @@ public sealed class DesignFilter : TokenizedFilter<DesignFilterTokenType, Design
             return;
 
         using var tt             = Im.Tooltip.Begin();
-        var       highlightColor = ColorId.EnabledAutoSet.Value().ToVector();
+        var       highlightColor = ColorId.EnabledAutoSet.Vector;
         Im.Text("根据路径或名称中的关键词进行筛选，多个关键词请用空格分隔。"u8);
         ImEx.TextMultiColored("输入 "u8).Then("m:[关键词]"u8, highlightColor)
             .Then(" 筛选包含指定模组关联的设计。"u8).End();

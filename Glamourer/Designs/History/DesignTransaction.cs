@@ -231,7 +231,7 @@ public record ApplicationTransaction(object Index, bool Old, bool New)
 }
 
 /// <remarks> Only Designs. </remarks>
-public record ResetAdvancedDyesTransaction(CombinedItemSlotFlag Old, CombinedItemSlotFlag New)
+public record ResetAdvancedDyesTransaction(ModelCombinedSlots Old, ModelCombinedSlots New)
     : ITransaction
 {
     public ITransaction? Merge(ITransaction other)
@@ -244,7 +244,7 @@ public record ResetAdvancedDyesTransaction(CombinedItemSlotFlag Old, CombinedIte
 }
 
 /// <remarks> Only Designs. </remarks>
-public record SlotMaterialRevertTransaction(CombinedItemSlotFlag Old, CombinedItemSlotFlag New)
+public record SlotMaterialRevertTransaction(ModelCombinedSlots Old, ModelCombinedSlots New)
     : ITransaction
 {
     public ITransaction? Merge(ITransaction other)

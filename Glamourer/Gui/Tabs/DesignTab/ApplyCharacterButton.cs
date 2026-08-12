@@ -1,6 +1,7 @@
 ﻿using Dalamud.Interface;
 using Dalamud.Interface.ImGuiNotification;
 using Glamourer.Designs;
+using Glamourer.GameData;
 using Glamourer.State;
 using ImSharp;
 using Luna;
@@ -43,6 +44,7 @@ public sealed class ApplyCharacterButton(
 
             var design = converter.Convert(state, ApplicationRules.FromModifiers(state))
              ?? throw new Exception("剪贴板不包含有效数据。");
+            design.Application.Parameters = CustomizeParameterExtensions.All;
             selection.GetMaterialDataRef().Clear();
             manager.ApplyDesign(selection, design);
         }

@@ -10,6 +10,7 @@ using Glamourer.Gui.Customization;
 using Glamourer.Gui.Equipment;
 using Glamourer.Gui.Materials;
 using Glamourer.Interop;
+using Glamourer.Interop.Material;
 using Glamourer.Services;
 using ImSharp;
 using Luna;
@@ -155,7 +156,8 @@ public class DesignPanel : IPanel
             return;
 
         if (_customizationDrawer.Draw(Selection.DesignData.Customize, Selection.Application.Customize,
-                Selection.WriteProtected(), false))
+                Selection.WriteProtected(), false, false,
+                Selection.GetMaterialDataRef().CheckExistenceSlots(ModelCombinedSlotsExtensions.AllCustomization)))
             foreach (var idx in CustomizeIndex.Values)
             {
                 var flag     = idx.ToFlag();

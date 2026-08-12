@@ -1,4 +1,5 @@
 using Dalamud.Interface.ImGuiNotification;
+using FFXIVClientStructs.FFXIV.Client.UI;
 using Glamourer.Automation;
 using Glamourer.Designs.CustomizePlus;
 using Glamourer.Designs.Links;
@@ -60,8 +61,8 @@ public sealed class Design : DesignBase, ISavable, IDesignStandIn, IFileSystemVa
     public string[]                     Tags                   { get; internal set; } = [];
     public int                          Index                  { get; internal set; }
     public bool                         ForcedRedraw           { get; internal set; }
-    public CombinedItemSlotFlag         ResetAdvancedDyes      { get; internal set; }
-    public CombinedItemSlotFlag         RevertAdvancedDyes     { get; internal set; }
+    public ModelCombinedSlots           ResetAdvancedDyes      { get; internal set; }
+    public ModelCombinedSlots           RevertAdvancedDyes     { get; internal set; }
     public bool                         ResetTemporarySettings { get; internal set; }
     public bool                         ApplyCustomizePlusAssociation { get; internal set; } = true;
     public CustomizePlusApplicationMode CustomizePlusApplicationMode { get; internal set; } = CustomizePlusApplicationMode.PermanentProfile;
@@ -125,11 +126,11 @@ public sealed class Design : DesignBase, ISavable, IDesignStandIn, IFileSystemVa
             ["Name"]                   = Name,
             ["Description"]            = Description,
             ["ForcedRedraw"]           = ForcedRedraw,
-            ["ResetAdvancedDyes"]      = (uint)ResetAdvancedDyes,
+            ["ResetAdvancedDyes"]      = SerializeCombinedSlots(ResetAdvancedDyes),
             ["ResetTemporarySettings"] = ResetTemporarySettings,
             ["ApplyCustomizePlusAssociation"] = ApplyCustomizePlusAssociation,
             ["CustomizePlusApplicationMode"]  = CustomizePlusApplicationMode.ToString(),
-            ["RevertAdvancedDyes"]     = (uint)RevertAdvancedDyes,
+            ["RevertAdvancedDyes"]            = SerializeCombinedSlots(RevertAdvancedDyes),
             ["Color"]                  = Color,
             ["QuickDesign"]            = QuickDesign,
             ["Tags"]                   = JArray.FromObject(Tags),
@@ -178,6 +179,35 @@ public sealed class Design : DesignBase, ISavable, IDesignStandIn, IFileSystemVa
         }
 
         return ret;
+    }
+
+    private static JToken SerializeCombinedSlots(ModelCombinedSlots slots)
+    {
+        if (slots is 0)
+            return false;
+
+        // If all the existing slots are included in the mask, save the intent of "All",
+        // so that future slots get included as well on deserialization.
+        if (slots.HasFlag(ModelCombinedSlotsExtensions.All))
+            return true;
+
+        // If we only have AllEquipmentPieces (or a subset), this format is not ambiguous.
+        if ((slots & ~ModelCombinedSlotsExtensions.AllEquipmentPieces) is 0)
+            return (ulong)slots;
+
+        var human    = unchecked((uint)slots);
+        var mainhand = unchecked((byte)((ulong)slots >> 32));
+        var offhand  = unchecked((byte)((ulong)slots >> 40));
+
+        var obj = new JObject();
+        if (human is not 0)
+            obj["Human"] = human;
+        if (mainhand is not 0)
+            obj["Mainhand"] = mainhand;
+        if (offhand is not 0)
+            obj["Offhand"] = offhand;
+
+        return obj;
     }
 
     #endregion
@@ -290,31 +320,20 @@ public sealed class Design : DesignBase, ISavable, IDesignStandIn, IFileSystemVa
         LoadLinks(linkLoader, json["Links"], design);
         design.Color                  = json["Color"]?.ToObject<string>() ?? string.Empty;
         design.ForcedRedraw           = json["ForcedRedraw"]?.ToObject<bool>() ?? false;
-        design.ResetAdvancedDyes      = ParseCombinedItemSlotFlag(json["ResetAdvancedDyes"]);
+        design.ResetAdvancedDyes      = ParseCombinedSlots(json["ResetAdvancedDyes"]);
         design.ResetTemporarySettings = json["ResetTemporarySettings"]?.ToObject<bool>() ?? false;
-        design.RevertAdvancedDyes     = ParseCombinedItemSlotFlag(json["RevertAdvancedDyes"]);
-        design.ApplyCustomizePlusAssociation = json["ApplyCustomizePlusAssociation"]?.ToObject<bool>() ?? true;
-        design.CustomizePlusApplicationMode =
+        design.RevertAdvancedDyes              = ParseCombinedSlots(json["RevertAdvancedDyes"]);
+        design.ApplyCustomizePlusAssociation   = json["ApplyCustomizePlusAssociation"]?.ToObject<bool>() ?? true;
+        design.CustomizePlusApplicationMode    =
             json["CustomizePlusApplicationMode"]?.ToObject<CustomizePlusApplicationMode>()
          ?? CustomizePlusApplicationMode.PermanentProfile;
-        design.CustomizePlusAssociation      = CustomizePlusAssociation.Load(json["CustomizePlusAssociation"]);
+        design.CustomizePlusAssociation        = CustomizePlusAssociation.Load(json["CustomizePlusAssociation"]);
         return design;
 
         static string[] ParseTags(JObject json)
         {
             var tags = json["Tags"]?.ToObject<string[]>() ?? [];
             return tags.OrderBy(t => t).Distinct().ToArray();
-        }
-
-        static CombinedItemSlotFlag ParseCombinedItemSlotFlag(JToken? json)
-        {
-            if (json is null)
-                return 0;
-
-            if (json.Type is JTokenType.Boolean)
-                return (bool)json ? EquipFlagExtensions.AllCombined : 0;
-
-            return (CombinedItemSlotFlag)(uint)json;
         }
     }
 
@@ -371,6 +390,47 @@ public sealed class Design : DesignBase, ISavable, IDesignStandIn, IFileSystemVa
         }
     }
 
+    private static ModelCombinedSlots ParseCombinedSlots(JToken? json)
+    {
+        if (json is null)
+            return 0;
+
+        return json.Type switch
+        {
+            JTokenType.Boolean => (bool)json ? ModelCombinedSlotsExtensions.All : 0,
+            JTokenType.Integer => ParseLegacyOrCompactValue((ulong)json),
+            JTokenType.Object  => ParseObjectValue((JObject)json),
+            _                  => 0,
+        };
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static ModelCombinedSlots ParseLegacyOrCompactValue(ulong value)
+        {
+            // Legacy (CombinedItemSlotFlag) mask, or compact form for unambiguous values.
+            if ((value & ~(ulong)ModelCombinedSlotsExtensions.AllEquipmentPieces) is 0)
+                return (ModelCombinedSlots)value;
+
+            // Treat the legacy "All" value as the current "All" (that will be serialized as `true`).
+            if ((value & 0x1FFF) is 0x1FFF)
+                return ModelCombinedSlotsExtensions.All;
+                
+            var equipment = (ModelCombinedSlots)value & ModelCombinedSlotsExtensions.AllEquipmentPieces;
+            var bonus     = (ModelCombinedSlots)(value << 4) & ModelCombinedSlotsExtensions.BonusItemFlagMask;
+            var mainhand  = (ModelCombinedSlots)(value << 22) & ModelCombinedSlots.Mainhand;
+            var offhand   = (ModelCombinedSlots)(value << 29) & ModelCombinedSlots.Offhand;
+            return equipment | bonus | mainhand | offhand;
+        }
+
+        [MethodImpl(MethodImplOptions.AggressiveInlining)]
+        static ModelCombinedSlots ParseObjectValue(JObject json)
+        {
+            ulong human    = json["Human"]?.ToObject<uint>() ?? 0;
+            ulong mainhand = json["Mainhand"]?.ToObject<byte>() ?? 0;
+            ulong offhand  = json["Offhand"]?.ToObject<byte>() ?? 0;
+            return (ModelCombinedSlots)(human | (mainhand << 32) | (offhand << 40));
+        }
+    }
+
     #endregion
 
     internal bool SetCustomizePlusAssociation(CustomizePlusAssociation association)
@@ -386,7 +446,7 @@ public sealed class Design : DesignBase, ISavable, IDesignStandIn, IFileSystemVa
 
     public void Save(Stream stream)
     {
-        using var writer = new StreamWriter(stream);
+        using var writer = new StreamWriter(stream, leaveOpen: true);
         using var j      = new JsonTextWriter(writer);
         j.Formatting = Formatting.Indented;
         var obj = JsonSerialize();

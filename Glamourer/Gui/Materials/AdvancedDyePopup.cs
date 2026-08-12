@@ -52,7 +52,7 @@ public sealed unsafe class AdvancedDyePopup(
     public void DrawButton(BonusItemFlag slot, Rgba32 color, bool sameLine, bool hasDyes)
         => DrawButton(MaterialValueIndex.FromSlot(slot), color, sameLine, hasDyes);
 
-    private void DrawButton(MaterialValueIndex index, Rgba32 color, bool sameLine, bool hasDyes)
+    public void DrawButton(MaterialValueIndex index, Rgba32 color, bool sameLine, bool hasDyes)
     {
         if (config.HideDesignPanel.HasFlag(DesignPanelFlag.AdvancedDyes))
             return;
@@ -60,10 +60,10 @@ public sealed unsafe class AdvancedDyePopup(
         if (sameLine)
             Im.Line.Same();
         using var id     = Im.Id.Push(index.SlotIndex | ((int)index.DrawObject << 8));
-        var       isOpen = index == _drawIndex;
+        var       isOpen = _drawIndex is { } drawIndex && index.SlotEquals(drawIndex);
 
         var (textColor, buttonColor) = isOpen
-            ? (ColorId.HeaderButtons.Value(), ImGuiColor.ButtonActive.Get())
+            ? (ColorId.HeaderButtons.Value, ImGuiColor.ButtonActive.Value)
             : (hasDyes ? color : ColorParameter.Default, ColorParameter.Default);
 
         using (ImStyleBorder.Frame.Push(textColor, 2 * Im.Style.GlobalScale, isOpen))
@@ -125,7 +125,7 @@ public sealed unsafe class AdvancedDyePopup(
             return;
 
         var table          = new ColorTable.Table();
-        var highLightColor = ColorId.AdvancedDyeActive.Value();
+        var highLightColor = ColorId.AdvancedDyeActive.Vector;
         for (byte i = 0; i < MaterialService.MaterialsPerModel; ++i)
         {
             var index = _drawIndex!.Value with { MaterialIndex = i };
@@ -389,7 +389,7 @@ public sealed unsafe class AdvancedDyePopup(
                 var weapon = slot is EquipSlot.MainHand or EquipSlot.OffHand
                     ? _state.ModelData.Weapon(slot)
                     : _state.ModelData.Armor(slot).ToWeapon(0);
-                var value = new MaterialValueState(internalRow, internalRow, weapon, StateSource.Manual);
+                var value = new MaterialValueState(ColorRow.From(table[idx], _mode), internalRow, weapon, StateSource.Manual);
                 stateManager.ChangeMaterialValue(_state, materialIndex with { RowIndex = (byte)idx }, value, ApplySettings.Manual);
             }
 

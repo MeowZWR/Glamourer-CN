@@ -15,7 +15,7 @@ namespace Glamourer.Config;
 
 public sealed partial class Configuration : IPluginConfiguration, ISavable, IService
 {
-    public const int CurrentVersion = 13;
+    public const int CurrentVersion = 14;
 
     [JsonIgnore]
     public readonly EphemeralConfig Ephemeral;
@@ -56,6 +56,9 @@ public sealed partial class Configuration : IPluginConfiguration, ISavable, ISer
     public bool            AllowDoubleClickToApply          { get; set; } = false;
     public bool            RespectManualOnAutomationUpdate  { get; set; } = false;
     public bool            PreventRandomRepeats             { get; set; } = false;
+
+    [ConfigProperty(EventName = "ActorSortModeChanged")]
+    private ActorSortMode _actorSortMode = ActorSortMode.Default;
 
     [ConfigProperty]
     private bool _groupUnlocksByModel;
@@ -107,9 +110,6 @@ public sealed partial class Configuration : IPluginConfiguration, ISavable, ISer
 #endif
 
     public int Version { get; set; } = CurrentVersion;
-
-    public Dictionary<ColorId, uint> Colors { get; private set; }
-        = ColorId.Values.ToDictionary(c => c, c => c.Data().DefaultColor);
 
     [JsonIgnore]
     private readonly SaveService _saveService;
@@ -163,7 +163,7 @@ public sealed partial class Configuration : IPluginConfiguration, ISavable, ISer
 
     public void Save(Stream stream)
     {
-        using var writer  = new StreamWriter(stream);
+        using var writer  = new StreamWriter(stream, leaveOpen: true);
         using var jWriter = new JsonTextWriter(writer);
         jWriter.Formatting = Formatting.Indented;
         var serializer = new JsonSerializer { Formatting = Formatting.Indented };

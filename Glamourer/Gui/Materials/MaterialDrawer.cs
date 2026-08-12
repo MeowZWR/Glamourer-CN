@@ -8,7 +8,7 @@ using Penumbra.GameData.Files.MaterialStructs;
 
 namespace Glamourer.Gui.Materials;
 
-public class MaterialDrawer(DesignManager designManager, Configuration config) : IService
+public unsafe class MaterialDrawer(DesignManager designManager, Configuration config) : IService
 {
     public const float SliderWidth      = 90;
     public const float ModeWidth        = 45;
@@ -50,8 +50,8 @@ public class MaterialDrawer(DesignManager designManager, Configuration config) :
         using var _ = Im.Disabled(design.WriteProtected());
 
         var any      = design.Materials.Count > 0;
-        var disabled = !config.DeleteDesignModifier.IsActive();
-        var size     = new Vector2(200 * Im.Style.GlobalScale, 0);
+        var disabled = !LunaStyle.Modifier.Destructive.Active;
+        var size     = ImEx.ScaledVectorX(200);
         if (ImEx.Button("启用所有高级染色"u8, size,
                 any
                     ? "启用所有包含的高级染色而不删除它们。"u8
@@ -59,8 +59,9 @@ public class MaterialDrawer(DesignManager designManager, Configuration config) :
                 !any || disabled))
             designManager.ChangeApplyMulti(design, null, null, null, null, null, null, true, null);
 
-        if (disabled && any)
-            Im.Tooltip.OnHover($"按住 {config.DeleteDesignModifier} 点击以启用。");
+        if (any)
+            LunaStyle.Modifier.Destructive.TooltipLineBreak("enable"u8);
+
         Im.Line.Same();
         if (ImEx.Button("禁用所有高级染色"u8, size,
                 any
@@ -68,16 +69,16 @@ public class MaterialDrawer(DesignManager designManager, Configuration config) :
                     : "此设计不包含任何高级染色。"u8,
                 !any || disabled))
             designManager.ChangeApplyMulti(design, null, null, null, null, null, null, false, null);
-        if (disabled && any)
-            Im.Tooltip.OnHover($"按住 {config.DeleteDesignModifier} 点击以禁用。");
+        if (any)
+            LunaStyle.Modifier.Destructive.TooltipLineBreak("disable"u8);
 
         if (ImEx.Button("删除所有高级染色"u8, size, any ? StringU8.Empty : "此设计不包含任何高级染色。"u8,
                 !any || disabled))
             while (design.Materials.Count > 0)
                 designManager.ChangeMaterialValue(design, MaterialValueIndex.FromKey(design.Materials[0].Item1), null);
 
-        if (disabled && any)
-            Im.Tooltip.OnHover($"按住 {config.DeleteDesignModifier} 点击以删除。");
+        if (any)
+            LunaStyle.Modifier.Destructive.TooltipLineBreak("delete"u8);
     }
 
     private void DrawRevertSlots(Design design)
@@ -236,29 +237,15 @@ public class MaterialDrawer(DesignManager designManager, Configuration config) :
         using (var combo = Im.Combo.Begin("##slot"u8, _newKey.SlotName()))
         {
             if (combo)
-            {
-                var currentSlot = _newKey.ToEquipSlot();
-                foreach (var tmpSlot in EquipSlotExtensions.FullSlots)
+                foreach (var slot in MaterialValueIndex.AllSlots)
                 {
-                    if (Im.Selectable(tmpSlot.ToNameU8(), tmpSlot == currentSlot) && currentSlot != tmpSlot)
-                        _newKey = MaterialValueIndex.FromSlot(tmpSlot) with
+                    if (Im.Selectable(slot.SlotName(), slot.SlotEquals(_newKey)) && !slot.SlotEquals(_newKey))
+                        _newKey = slot with
                         {
                             MaterialIndex = (byte)_newMaterialIdx,
                             RowIndex = (byte)_newRowIdx,
                         };
                 }
-
-                var currentBonus = _newKey.ToBonusSlot();
-                foreach (var bonusSlot in BonusExtensions.AllFlags)
-                {
-                    if (Im.Selectable(bonusSlot.ToNameU8(), bonusSlot == currentBonus) && bonusSlot != currentBonus)
-                        _newKey = MaterialValueIndex.FromSlot(bonusSlot) with
-                        {
-                            MaterialIndex = (byte)_newMaterialIdx,
-                            RowIndex = (byte)_newRowIdx,
-                        };
-                }
-            }
         }
 
         Im.Tooltip.OnHover("为高级染色选择一个装备类型。"u8);
@@ -354,8 +341,8 @@ public class MaterialDrawer(DesignManager designManager, Configuration config) :
         if (mode is not ColorRow.Mode.Dawntrail)
             return;
 
-        var tmp = row;
-        using var _ = Im.Disabled(disabled);
+        var       tmp = row;
+        using var _   = Im.Disabled(disabled);
 
         if (!compact)
             Im.Dummy(_buttonSize with { X = _buttonSize.X * 3 + _spacing * 2 });
