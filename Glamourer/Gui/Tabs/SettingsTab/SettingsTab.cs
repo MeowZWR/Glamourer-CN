@@ -112,7 +112,8 @@ public sealed class SettingsTab(
         {
             Im.Line.SameInner();
             ImEx.Icon.DrawAligned(LunaStyle.WarningIcon, Colors.SelectedRed);
-            Im.Tooltip.OnHover("你已在 Dalamud 中禁用了“节日事件”。\n\nGlamourer 将优先遵循该全局设置。若不开启全局开关，此处的选项将无法生效。");
+            Im.Tooltip.OnHover(
+                "你已在 Dalamud 中禁用了“节日事件”。\n\nGlamourer 将优先遵循该全局设置。若不开启全局开关，此处的选项将无法生效。");
         }
 
         if (config.FestivalMode is not FestivalSetting.Undefined)
@@ -130,7 +131,9 @@ public sealed class SettingsTab(
                     });
         }
         else
+        {
             Im.FrameDummy();
+        }
 
         DrawPenumbraIntegrationSettings1();
         Checkbox("在更换区域时撤销手动更改"u8,
@@ -236,9 +239,7 @@ public sealed class SettingsTab(
             config.ShowQuickBarInTabs, v => config.ShowQuickBarInTabs = v);
         DrawQuickDesignBoxes();
 
-        Im.Dummy(Vector2.Zero);
-        Im.Separator();
-        Im.Dummy(Vector2.Zero);
+        LunaStyle.DrawSeparator();
 
         Checkbox("启用游戏右键菜单"u8, "在可装备物品的游戏右键菜单中增加一个Glamourer试穿按钮。"u8,
             config.EnableGameContextMenu,       v =>
@@ -309,10 +310,7 @@ public sealed class SettingsTab(
             config.Save();
         });
 
-
-        Im.Dummy(Vector2.Zero);
-        Im.Separator();
-        Im.Dummy(Vector2.Zero);
+        LunaStyle.DrawSeparator();
 
         Checkbox("允许双击应用设计"u8,
             "在设计选择其中双击角色设计条目时，尝试将该设计应用于玩家的角色。"u8,
@@ -341,11 +339,14 @@ public sealed class SettingsTab(
             config.DebugMode,
             v => config.DebugMode = v);
 
-        Im.Dummy(Vector2.Zero);
-        Im.Separator();
-        Im.Dummy(Vector2.Zero);
+        LunaStyle.DrawSeparator();
 
         EquipmentDrawer.DrawKeepItemFilter(config);
+
+        var sortMode = config.ActorSortMode;
+        Im.Item.SetNextWidthScaled(300);
+        if (Im.Combo.DrawEnum("角色选项卡排序模式"u8, ref sortMode, ActorSortModeExtensions.ToNameU8, ActorSortModeExtensions.Tooltip))
+            config.ActorSortMode = sortMode;
 
         Checkbox("跨会话保留设计筛选"u8,
             "是否在“设计”选项卡中记录筛选输入，并在下次启动时恢复到与上次运行相同的筛选状态。"u8,
