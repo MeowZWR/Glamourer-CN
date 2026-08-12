@@ -89,7 +89,7 @@ public sealed class CustomizePlusAssociationsTab(
                     var selectableLabel = matchesCurrent
                         ? $"{DisplayName(profile)}##{profile.ProfileId}"
                         : $"{DisplayName(profile)}（不可用于当前角色）##{profile.ProfileId}";
-                    using (ImGuiColor.Text.Push(ColorId.ActorUnavailable.Value(), !matchesCurrent))
+                    using (ImGuiColor.Text.Push(ColorId.ActorUnavailable.Value, !matchesCurrent))
                     {
                         if (Im.Selectable(selectableLabel, selected) && matchesCurrent)
                         {
@@ -137,7 +137,7 @@ public sealed class CustomizePlusAssociationsTab(
         if (Selection.CustomizePlusAssociation.IsSet
          && AssociationMissingFromCustomizePlusList(Selection.CustomizePlusAssociation))
         {
-            using (ImGuiColor.Text.Push(ColorId.ActorUnavailable.Value()))
+            using (ImGuiColor.Text.Push(ColorId.ActorUnavailable.Value))
                 Im.Text("未在 Customize+ 角色配置中找到此关联配置（可能已被删除）。"u8);
         }
         else if (!hasPlayer)
@@ -145,7 +145,7 @@ public sealed class CustomizePlusAssociationsTab(
         else if (Selection.CustomizePlusAssociation.IsSet)
         {
             var matches = CustomizePlusIpcService.Matches(currentPlayer, Selection.CustomizePlusAssociation);
-            using (ImGuiColor.Text.Push(matches ? ColorId.ActorAvailable.Value() : ColorId.ActorUnavailable.Value()))
+            using (ImGuiColor.Text.Push(matches ? ColorId.ActorAvailable.Value : ColorId.ActorUnavailable.Value))
                 Im.Text(matches
                     ? "此设计关联的 Customize+ 配置可对当前角色生效。"u8
                     : "此设计关联的 Customize+ 配置不会对当前角色生效。"u8);
@@ -153,13 +153,13 @@ public sealed class CustomizePlusAssociationsTab(
 
         if (bridgeLoaded)
         {
-            using (ImGuiColor.Text.Push(ColorId.FolderLine.Value()))
+            using (ImGuiColor.Text.Push(ColorId.FolderLine.Value))
                 Im.Text("DynamicBridge 已加载，此功能已被禁用。"u8);
         }
 
         if (!customizePlus.IsAvailable(out var reason))
         {
-            using (ImGuiColor.Text.Push(ColorId.FolderLine.Value()))
+            using (ImGuiColor.Text.Push(ColorId.FolderLine.Value))
                 Im.Text($"{reason}");
         }
     }
