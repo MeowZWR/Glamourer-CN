@@ -45,6 +45,8 @@ public readonly struct ColorIdData : IColorData<ColorId>
             new ColorData<ColorId>(FolderLine, "收起的设计折叠组"u8, "当前收起的设计折叠组，标题会显示为此颜色。"u8, designs);
         ret[(int)FolderLine] = new ColorData<ColorId>(0xFFFFF0C0, "展开设计折叠组竖线"u8,
             "表示哪些子设计隶属于展开的折叠组，用于标识树形目录结构的竖线会显示为此颜色。"u8, designs);
+        ret[(int)AlternatingFolderLine] = new ColorData<ColorId>(FolderLine, "交错折叠组竖线"u8,
+            "偶数层展开折叠组用来标识子项归属的竖线颜色。"u8, designs);
         ret[(int)EnabledAutoSet] = new ColorData<ColorId>(0xFFA0F0A0, "已启用的自动执行集"u8,
             "当前已启用的自动化执行集。每个角色只能启用一个。"u8, automation);
         ret[(int)DisabledAutoSet] =
@@ -61,6 +63,10 @@ public readonly struct ColorIdData : IColorData<ColorId>
             "鼠标在收藏物品五角星按钮上悬停时的颜色。"u8, metadata);
         ret[(int)FavoriteStarOff] = new ColorData<ColorId>(0x20808080, "收藏五角星轮廓"u8,
             "收藏品五角星的默认颜色。"u8, metadata);
+        ret[(int)PredefinedTagAdd] = new ColorData<ColorId>(DalamudColor.SuccessBackground, "预定义标签：添加"u8,
+            "当前设计尚未包含、可以添加的预定义标签。"u8, metadata);
+        ret[(int)PredefinedTagRemove] = new ColorData<ColorId>(DalamudColor.ErrorBackground, "预定义标签：移除"u8,
+            "当前设计已包含、可以移除的预定义标签。"u8, metadata);
         ret[(int)QuickDesignButton] = new ColorData<ColorId>(0x900A0A0A, "快速设计栏按钮背景"u8,
             "快速设计栏中按钮框体的颜色。"u8, qdb);
         ret[(int)QuickDesignFrame] = new ColorData<ColorId>(0x90383838, "快速设计栏选择器背景"u8,
@@ -109,6 +115,7 @@ public readonly struct ColorIdData : IColorData<ColorId>
             FolderExpanded             => 0xFFFFF0C0,
             FolderCollapsed            => 0xFFFFF0C0,
             FolderLine                 => 0xFFFFF0C0,
+            AlternatingFolderLine      => 0xFFFFF0C0,
             EnabledAutoSet             => 0xFFA0F0A0,
             DisabledAutoSet            => 0xFF808080,
             AutomationActorAvailable   => 0xFFFFFFFF,
@@ -117,6 +124,8 @@ public readonly struct ColorIdData : IColorData<ColorId>
             FavoriteStarOn             => 0xFF40D0D0,
             FavoriteStarHovered        => 0xFFD040D0,
             FavoriteStarOff            => 0x20808080,
+            PredefinedTagAdd           => 0xFF18C018,
+            PredefinedTagRemove        => 0xFF1818C0,
             QuickDesignButton          => 0x900A0A0A,
             QuickDesignFrame           => 0x90383838,
             QuickDesignBg              => 0x00F0F0F0,

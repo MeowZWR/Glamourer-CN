@@ -11,14 +11,14 @@ namespace Glamourer.Gui;
 
 public sealed class MainWindow : Window, IDisposable
 {
-    private readonly Configuration     _config;
-    private readonly PenumbraService   _penumbra;
-    private readonly DesignQuickBar    _quickBar;
-    private readonly MainTabBar        _mainTabBar;
-    private readonly NavigationService _navigation;
-    private          bool              _ignorePenumbra;
+    private readonly Configuration      _config;
+    private readonly PenumbraSubscriber _penumbra;
+    private readonly DesignQuickBar     _quickBar;
+    private readonly MainTabBar         _mainTabBar;
+    private readonly NavigationService  _navigation;
+    private          bool               _ignorePenumbra;
 
-    public MainWindow(IDalamudPluginInterface pi, Configuration config, PenumbraService penumbra,
+    public MainWindow(IDalamudPluginInterface pi, Configuration config, PenumbraSubscriber penumbra,
         MainTabBar mainTabBar, DesignQuickBar quickBar, NavigationService navigation)
         : base("###GlamourerMainWindow")
     {
@@ -36,8 +36,8 @@ public sealed class MainWindow : Window, IDisposable
         _mainTabBar = mainTabBar;
         IsOpen      = _config.OpenWindowAtStart;
 
-        _penumbra.DrawSettingsSection += _mainTabBar.Settings.DrawPenumbraIntegrationSettings;
-        _navigation.ToggleMainWindow  += SetOpen;
+        _penumbra.Ui.DrawSettingsSection += _mainTabBar.Settings.DrawPenumbraIntegrationSettings;
+        _navigation.ToggleMainWindow     += SetOpen;
     }
 
     public override void OnOpen()
@@ -56,8 +56,8 @@ public sealed class MainWindow : Window, IDisposable
 
     public void Dispose()
     {
-        _penumbra.DrawSettingsSection -= _mainTabBar.Settings.DrawPenumbraIntegrationSettings;
-        _navigation.ToggleMainWindow  -= SetOpen;
+        _penumbra.Ui.DrawSettingsSection -= _mainTabBar.Settings.DrawPenumbraIntegrationSettings;
+        _navigation.ToggleMainWindow     -= SetOpen;
     }
 
     public override void Draw()
@@ -65,19 +65,15 @@ public sealed class MainWindow : Window, IDisposable
         var yPos = Im.Cursor.Y;
         if (!_penumbra.Available && !_ignorePenumbra)
         {
-            if (_penumbra.CurrentMajor is 0)
+            if (_penumbra.CurrentMajorVersion is 0)
                 DrawProblemWindow(
                     "无法附加到 Penumbra。请确保 Penumbra 已安装并正在运行。\n\nGlamourer 需要 Penumbra 才能正常工作。"u8);
-            else if (_penumbra is
-                     {
-                         CurrentMajor: PenumbraService.RequiredPenumbraBreakingVersion,
-                         CurrentMinor: >= PenumbraService.RequiredPenumbraFeatureVersion,
-                     })
+            else if (_penumbra.MatchesVersions)
                 DrawProblemWindow(
-                    $"您当前未连接到 Penumbra，似乎是通过手动断开连接的。\n\nPenumbra 的最后 API 版本是 {_penumbra.CurrentMajor}.{_penumbra.CurrentMinor}。\n\nGlamourer 需要 Penumbra 才能正常工作。");
+                    $"您当前未连接到 Penumbra，似乎是通过手动断开连接的。\n\nPenumbra 的最后 API 版本是 {_penumbra.CurrentMajorVersion}.{_penumbra.CurrentMinorVersion}。\n\nGlamourer 需要 Penumbra 才能正常工作。");
             else
                 DrawProblemWindow(
-                    $"连接到 Penumbra 失败。\n\nPenumbra 的 API 版本是 {_penumbra.CurrentMajor}.{_penumbra.CurrentMinor}，但 Glamourer 需要的版本是 {PenumbraService.RequiredPenumbraBreakingVersion}.{PenumbraService.RequiredPenumbraFeatureVersion}，其中主版本号必须完全匹配，次版本号必须大于或等于。\n您可能需要更新 Penumbra 或为这个版本的 Glamourer 启用测试构建。\n\nGlamourer 需要 Penumbra 才能正常工作。");
+                    $"连接到 Penumbra 失败。\n\nPenumbra 的 API 版本是 {_penumbra.CurrentMajorVersion}.{_penumbra.CurrentMinorVersion}，但 Glamourer 需要的版本是 {_penumbra.RequiredMajorVersion}.{_penumbra.RequiredMinorVersion}，其中主版本号必须完全匹配，次版本号必须大于或等于。\n您可能需要更新 Penumbra 或为这个版本的 Glamourer 启用测试构建。\n\nGlamourer 需要 Penumbra 才能正常工作。");
         }
         else
         {

@@ -30,12 +30,16 @@ public sealed class IgnoredMods : ConfigurationFile<FilenameService>, IReadOnlyS
     protected override void LoadData(in JsonElement j)
     {
         _ignoredMods.Clear();
-        if (!j.TryReadArray("IgnoredMods"u8, out var array))
+        if (!j.TryReadArray("IgnoredMods"u8, out var ignoredMods))
             return;
 
-        foreach (var element in array.EnumerateArray())
+        foreach (var value in ignoredMods.EnumerateArray())
         {
-            if (element.ValueKind is JsonValueKind.String && element.GetString() is { } mod)
+            if (value.ValueKind is not JsonValueKind.String)
+                continue;
+
+            var mod = value.GetString();
+            if (!string.IsNullOrEmpty(mod))
                 _ignoredMods.Add(mod);
         }
     }

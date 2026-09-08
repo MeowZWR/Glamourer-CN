@@ -296,7 +296,7 @@ public class StateEditor(
     public void ApplyDesign(object data, MergedDesign mergedDesign, ApplySettings settings)
     {
         var state = (ActorState)data;
-        modApplier.HandleStateApplication(state, mergedDesign, settings.Source, true, settings.RespectManual);
+        modApplier.HandleStateApplication(state, mergedDesign, settings.Source, true, settings.RespectManual, settings.ForceModAssociations);
         if (!Editor.ChangeModelId(state, mergedDesign.Design.DesignData.ModelId, mergedDesign.Design.DesignData.Customize,
                 mergedDesign.Design.GetDesignDataRef().GetEquipmentPtr(), settings.Source, out var oldModelId, settings.Key))
             return;
@@ -434,7 +434,7 @@ public class StateEditor(
                     var slotsToReset = mergedDesign.ResetAdvancedDyes;
                     while (slotsToReset is not 0)
                     {
-                        // TODO Consider working on bit ranges to improve performance?
+                        // TODO 20260824 Consider working on bit ranges to improve performance?
                         var slot = slotsToReset.First;
                         state.Materials.RemoveValues(MaterialValueIndex.Min(slot), MaterialValueIndex.Max(slot));
                         slotsToReset &= ~slot;

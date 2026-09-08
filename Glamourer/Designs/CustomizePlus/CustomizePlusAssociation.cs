@@ -1,3 +1,5 @@
+using System.Text.Json;
+using Luna;
 using Newtonsoft.Json.Linq;
 
 namespace Glamourer.Designs.CustomizePlus;
@@ -101,5 +103,71 @@ public sealed class CustomizePlusAssociation
                 ? array.Select(CustomizePlusCharacterAssociation.Load)
                 : []);
         return association;
+    }
+
+    public void WriteJson(Utf8JsonWriter j, ReadOnlySpan<byte> propertyName)
+    {
+        j.WritePropertyName(propertyName);
+        WriteJson(j);
+    }
+
+    public void WriteJson(Utf8JsonWriter j)
+    {
+        j.WriteStartObject();
+        j.WriteString("ProfileId"u8, ProfileId);
+        j.WriteNonEmptyString("ProfileName"u8, ProfileName);
+        j.WriteNonEmptyString("ProfilePath"u8, ProfilePath);
+        if (_characters.Length > 0)
+        {
+            j.WriteStartArray("Characters"u8);
+            foreach (var character in _characters)
+            {
+                j.WriteStartObject();
+                j.WriteNonEmptyString("Name"u8, character.Name);
+                j.WriteNumber("WorldId"u8, character.WorldId);
+                j.WriteNumber("CharacterType"u8, character.CharacterType);
+                j.WriteNumber("CharacterSubType"u8, character.CharacterSubType);
+                j.WriteEndObject();
+            }
+
+            j.WriteEndArray();
+        }
+
+        j.WriteEndObject();
+    }
+
+    public static CustomizePlusAssociation Load(in JsonElement? token)
+    {
+        var association = new CustomizePlusAssociation();
+        if (token is not { } json || json.ValueKind is not JsonValueKind.Object)
+            return association;
+
+        association.Update(
+            json.TryReadProperty("ProfileId"u8, out Guid? id) ? id.GetValueOrDefault() : Guid.Empty,
+            json.PropertyOrDefault("ProfileName"u8, string.Empty),
+            json.PropertyOrDefault("ProfilePath"u8, string.Empty),
+            LoadCharacters(json));
+        return association;
+    }
+
+    private static IEnumerable<CustomizePlusCharacterAssociation> LoadCharacters(in JsonElement json)
+    {
+        if (!json.TryReadArray("Characters"u8, out var array))
+            return [];
+
+        List<CustomizePlusCharacterAssociation> characters = [];
+        foreach (var entry in array.EnumerateArray())
+        {
+            if (entry.ValueKind is not JsonValueKind.Object)
+                continue;
+
+            characters.Add(new CustomizePlusCharacterAssociation(
+                entry.PropertyOrDefault("Name"u8, string.Empty),
+                entry.PropertyOrDefault("WorldId"u8, (ushort)0),
+                entry.PropertyOrDefault("CharacterType"u8, (byte)0),
+                entry.PropertyOrDefault("CharacterSubType"u8, (ushort)0)));
+        }
+
+        return characters;
     }
 }

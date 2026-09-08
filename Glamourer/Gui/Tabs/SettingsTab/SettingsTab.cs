@@ -33,7 +33,8 @@ public sealed class SettingsTab(
     AutoRedrawChanged autoRedraw,
     PredefinedTagManager predefinedTags,
     PcpService pcpService,
-    IgnoredMods ignoredMods)
+    IgnoredMods ignoredMods,
+    DesignColorUi designColors)
     : ITab<MainTabType>
 {
     private readonly VirtualKey[] _validKeys = keys.GetValidVirtualKeys().Prepend(VirtualKey.NO_KEY).ToArray();
@@ -156,7 +157,7 @@ public sealed class SettingsTab(
             });
         Checkbox("关联至PCP处理"u8,
             "当Penumbra创建PCP时添加角色的Glamourer状态，并在Penumbra安装PCP时尽可能创建设计并应用"u8,
-            config.AttachToPcp, pcpService.Set);
+            config.AttachToPcp, v => config.AttachToPcp = v);
         var active = config.DeleteDesignModifier.IsActive();
         Im.Line.Same();
         if (ImEx.Button("删除所有PCP设计"u8, default, "从设计列表中删除所有带有'PCP'标签的设计。"u8, !active))
@@ -465,6 +466,12 @@ public sealed class SettingsTab(
     /// <summary> Draw the entire Color subsection. </summary>
     private void DrawColorSettings()
     {
+        using (var tree = Im.Tree.HeaderId("自定义设计颜色"u8))
+        {
+            if (tree)
+                designColors.Draw();
+        }
+
         using var header = Im.Tree.HeaderId("配色设置"u8);
         if (!header)
             return;

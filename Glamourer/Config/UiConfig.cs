@@ -2,24 +2,20 @@
 using Glamourer.Services;
 using Luna;
 using Luna.Generators;
-using Newtonsoft.Json;
-using Newtonsoft.Json.Linq;
 using Penumbra.GameData.Actors;
 using Penumbra.GameData.Structs;
-using System.Text;
 using System.Text.Json;
 
 namespace Glamourer.Config;
 
 public sealed partial class UiConfig : ConfigurationFile<FilenameService>, IDisposable
 {
-    [JsonIgnore]
     public readonly ColorCache<ColorId, ColorIdData> ColorCache;
 
     private readonly ActorManager _actors;
 
     public UiConfig(SaveService saveService, MessageService messageService, ActorManager actors)
-        : base(saveService, messageService, TimeSpan.FromMinutes(5))
+        : base(saveService, messageService, TimeSpan.FromSeconds(5))
     {
         _actors    = actors;
         ColorCache = new ColorCache<ColorId, ColorIdData>(Colors);
@@ -64,40 +60,33 @@ public sealed partial class UiConfig : ConfigurationFile<FilenameService>, IDisp
         j.WriteUnsignedIfNot("SelectedNpc"u8, _selectedNpc, NpcId.Zero);
         j.WriteSignedIfNot("SelectedAutomationIndex"u8, _selectedAutomationIndex, -1);
         if (_selectedActor.IsValid)
-        {
-            // TODO
-            j.WritePropertyName("SelectedActor"u8);
-            j.WriteRawValue(_selectedActor.ToJson().ToString(Formatting.Indented));
-        }
+            j.WriteJson("SelectedActor"u8, _selectedActor);
     }
 
     protected override void LoadData(in JsonElement j)
     {
-        _actorsTabScale          = TwoPanelWidth.ReadJson(j, "ActorsTab"u8,     new TwoPanelWidth(250,  ScalingMode.Absolute));
-        _designsTabScale         = TwoPanelWidth.ReadJson(j, "DesignsTab"u8,    new TwoPanelWidth(0.3f, ScalingMode.Percentage));
-        _automationTabScale      = TwoPanelWidth.ReadJson(j, "AutomationTab"u8, new TwoPanelWidth(0.3f, ScalingMode.Percentage));
-        _npcTabScale             = TwoPanelWidth.ReadJson(j, "NpcTab"u8,        new TwoPanelWidth(250,  ScalingMode.Absolute));
-        _selectedNpc             = (NpcId)j.PropertyOrDefault("SelectedNpc"u8, 0u);
-        _selectedAutomationIndex = j.PropertyOrDefault("SelectedAutomationIndex"u8, -1);
-        _selectedActor           = j.TryReadObject("SelectedActor"u8, out var actor)
-            ? _actors.FromJson(JObject.Parse(actor.GetRawText()))
-            : ActorIdentifier.Invalid;
-
-        if (j.TryGetProperty("Colors"u8, out var colorsElement)
-         && colorsElement.ValueKind is not JsonValueKind.Null and not JsonValueKind.Undefined)
+        _selectedNpc             = j.PropertyOrDefault("SelectedNpc"u8,             (uint)_selectedNpc);
+        _selectedAutomationIndex = j.PropertyOrDefault("SelectedAutomationIndex"u8, _selectedAutomationIndex);
+        _actorsTabScale          = TwoPanelWidth.ReadJson(j, "ActorsTab"u8,     _actorsTabScale);
+        _designsTabScale         = TwoPanelWidth.ReadJson(j, "DesignsTab"u8,    _designsTabScale);
+        _automationTabScale      = TwoPanelWidth.ReadJson(j, "AutomationTab"u8, _automationTabScale);
+        _npcTabScale             = TwoPanelWidth.ReadJson(j, "NpcTab"u8,        _npcTabScale);
+        if (j.TryReadObject("Colors"u8, out var colors))
         {
-            var bytes  = Encoding.UTF8.GetBytes(colorsElement.GetRawText());
-            var reader = new Utf8JsonReader(bytes, JsonFunctions.ReaderOptions);
-            if (reader.Read())
-            {
-                var colors = ColorDictionary<ColorId, ColorIdData>.Deserialize(Messager, ref reader, true, true, true);
-                Colors.Apply(colors, true);
-            }
+#pragma warning disable CA1869
+            var options = new JsonSerializerOptions(JsonFunctions.SerializerOptions);
+#pragma warning restore CA1869
+            options.Converters.Add(new ColorDictionaryConverter<ColorId, ColorIdData>(Messager, true, true, true));
+            if (colors.Deserialize<ColorDictionary<ColorId, ColorIdData>>(options) is { } dict)
+                Colors.Apply(dict, true);
         }
         else
         {
             Colors.ResetToDefault();
         }
+
+        if (j.TryGetProperty("SelectedActor"u8, out var selectedActor))
+            _selectedActor = _actors.FromJson(selectedActor);
     }
 
     public override string ToFilePath(FilenameService fileNames)

@@ -15,6 +15,7 @@ public enum ColorId
     FolderExpanded,
     FolderCollapsed,
     FolderLine,
+    AlternatingFolderLine,
     EnabledAutoSet,
     DisabledAutoSet,
     AutomationActorAvailable,
@@ -35,12 +36,14 @@ public enum ColorId
     ContainsItemsEnabled,
     ContainsItemsDisabled,
     AdvancedDyeActive,
+    PredefinedTagAdd,
+    PredefinedTagRemove,
 }
 
 public static class Colors
 {
-    public const uint SelectedRed = 0xFF2020D0;
-    private static ColorCache<ColorId, ColorIdData>   _colors = null!;
+    public const   uint                             SelectedRed = 0xFF2020D0;
+    private static ColorCache<ColorId, ColorIdData> _colors     = null!;
 
     extension(ColorId color)
     {

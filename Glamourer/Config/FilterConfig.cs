@@ -37,22 +37,22 @@ public sealed partial class FilterConfig : ConfigurationFile<FilenameService>
 
     protected override void LoadData(in JsonElement j)
     {
-        if (j.TryReadObject("Actors"u8, out var actors))
+        if (j.TryGetProperty("Actors"u8, out var actors))
         {
-            _actorFilter     = actors.PropertyOrDefault("Filter"u8, string.Empty);
-            _actorTypeFilter = (ActorTypeFilter)(actors.PropertyOrDefault("Type"u8, 0u) & (uint)AllFiltered);
+            _actorFilter     = actors.PropertyOrDefault("Filter"u8, _actorFilter);
+            _actorTypeFilter = actors.EnumOrDefault("Type"u8, _actorTypeFilter) & AllFiltered;
         }
 
-        if (j.TryReadObject("Designs"u8, out var designs))
-            _designFilter = designs.PropertyOrDefault("Filter"u8, string.Empty);
+        if (j.TryGetProperty("Designs"u8, out var designs))
+            _designFilter = designs.PropertyOrDefault("Filter"u8, _designFilter);
 
-        if (j.TryReadObject("Npcs"u8, out var npcs))
-            _npcFilter = npcs.PropertyOrDefault("Filter"u8, string.Empty);
+        if (j.TryGetProperty("Npcs"u8, out var npcs))
+            _npcFilter = npcs.PropertyOrDefault("Filter"u8, _npcFilter);
 
-        if (j.TryReadObject("Automation"u8, out var automation))
+        if (j.TryGetProperty("Automation"u8, out var automation))
         {
-            _automationFilter = automation.PropertyOrDefault("Filter"u8, string.Empty);
-            _automationStateFilter = automation.TryReadProperty("State"u8, out bool? state, true) ? state : null;
+            _automationFilter      = automation.PropertyOrDefault("Filter"u8, _automationFilter);
+            _automationStateFilter = automation.TryReadProperty("State"u8, out bool? value, true) ? value : _automationStateFilter;
         }
 
         LoadUnlocksTab(j);
@@ -135,22 +135,22 @@ public sealed partial class FilterConfig : ConfigurationFile<FilenameService>
 
     private void LoadUnlocksTab(in JsonElement j)
     {
-        if (!j.TryReadObject("Unlocks"u8, out var unlocks))
+        if (!j.TryGetProperty("Unlocks"u8, out var unlocks))
             return;
 
-        _unlocksFavoriteFilter  = (YesNoFlag)unlocks.PropertyOrDefault("Favorite"u8,  (uint)YesNoFlag.Either);
-        _unlocksCrestFilter     = (YesNoFlag)unlocks.PropertyOrDefault("Crest"u8,     (uint)YesNoFlag.Either);
-        _unlocksTradableFilter  = (YesNoFlag)unlocks.PropertyOrDefault("Tradable"u8,  (uint)YesNoFlag.Either);
-        _unlocksUnlockedFilter  = (YesNoFlag)unlocks.PropertyOrDefault("Unlocked"u8,  (uint)YesNoFlag.Either);
-        _unlocksModdedFilter    = (UnlockCacheItem.Modded)unlocks.PropertyOrDefault("Modded"u8,    (uint)UnlockCacheItem.ModdedAll);
-        _unlocksDyabilityFilter = (UnlockCacheItem.Dyability)unlocks.PropertyOrDefault("Dyability"u8, (uint)UnlockCacheItem.DyableAll);
-        _unlocksSlotFilter      = (EquipFlag)unlocks.PropertyOrDefault("Slot"u8,      (uint)UnlockCacheItem.SlotsAll);
-        _unlocksJobFilter       = (JobFlag)unlocks.PropertyOrDefault("Job"u8,         (ulong)_jobs.AllAvailableJobs);
-        _unlocksLevelFilter     = unlocks.PropertyOrDefault("Level"u8,     string.Empty);
-        _unlocksModelDataFilter = unlocks.PropertyOrDefault("ModelData"u8, string.Empty);
-        _unlocksItemIdFilter    = unlocks.PropertyOrDefault("ItemId"u8,    string.Empty);
-        _unlocksNameFilter      = unlocks.PropertyOrDefault("Name"u8,      string.Empty);
-        _unlocksTypeFilter      = unlocks.PropertyOrDefault("Type"u8,      string.Empty);
+        _unlocksFavoriteFilter  = unlocks.EnumOrDefault("Favorite"u8,  _unlocksFavoriteFilter);
+        _unlocksCrestFilter     = unlocks.EnumOrDefault("Crest"u8,     _unlocksCrestFilter);
+        _unlocksTradableFilter  = unlocks.EnumOrDefault("Tradable"u8,  _unlocksTradableFilter);
+        _unlocksUnlockedFilter  = unlocks.EnumOrDefault("Unlocked"u8,  _unlocksUnlockedFilter);
+        _unlocksModdedFilter    = unlocks.EnumOrDefault("Modded"u8,    _unlocksModdedFilter);
+        _unlocksDyabilityFilter = unlocks.EnumOrDefault("Dyability"u8, _unlocksDyabilityFilter);
+        _unlocksSlotFilter      = unlocks.EnumOrDefault("Slot"u8,      _unlocksSlotFilter);
+        _unlocksJobFilter       = unlocks.EnumOrDefault("Job"u8,       _unlocksJobFilter);
+        _unlocksLevelFilter     = unlocks.PropertyOrDefault("Level"u8,     _unlocksLevelFilter);
+        _unlocksModelDataFilter = unlocks.PropertyOrDefault("ModelData"u8, _unlocksModelDataFilter);
+        _unlocksItemIdFilter    = unlocks.PropertyOrDefault("ItemId"u8,    _unlocksItemIdFilter);
+        _unlocksNameFilter      = unlocks.PropertyOrDefault("Name"u8,      _unlocksNameFilter);
+        _unlocksTypeFilter      = unlocks.PropertyOrDefault("Type"u8,      _unlocksTypeFilter);
     }
 
 
