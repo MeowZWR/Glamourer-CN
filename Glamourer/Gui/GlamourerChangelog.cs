@@ -50,6 +50,8 @@ public sealed class GlamourerChangelog : IUiService
         AddDummy(Changelog);
         Add1_6_0_0(Changelog);
         Add1_6_1_0(Changelog);
+        AddDummy(Changelog);
+        Add1_7_1_0(Changelog);
     }
 
     private (int, ChangeLogDisplayType) ConfigData()
@@ -69,6 +71,58 @@ public sealed class GlamourerChangelog : IUiService
             _config.Save();
         }
     }
+
+    private static void Add1_7_1_0(Changelog log)
+        => log.NextVersion("Version 1.7.1.0"u8)
+            .RegisterHighlight("新增对驯兽师职业组与武器的支持。"u8)
+            .RegisterEntry(
+                "单手斧现已与单手剑互为兼容武器类型，因此驯兽师与剑术师/骑士可以互相使用对方的主手武器。"u8,
+                1)
+            .RegisterHighlight("改进了附近角色标签页的筛选与排序。"u8)
+            .RegisterHighlight("新增聊天命令，可用角色当前状态更新已有设计。"u8)
+            .RegisterHighlight("新增对剩余槽位高级染色的编辑选项（感谢 Ny！）。"u8)
+            .RegisterEntry(
+                "通常这些槽位没有可编辑的材质，除非带有配件（如发型）或使用了 Mod。"u8, 1)
+            .RegisterEntry(
+                "面部、发型以及耳朵或尾巴的高级染色可在角色标签页通过高级染色按钮编辑，也可直接在设计中编辑。"u8,
+                1)
+            .RegisterEntry(
+                "Connector 与 Body 3 槽位目前只能直接在设计中添加和编辑；在未 Mod 的一般情况下，它们通常没有可编辑内容。"u8,
+                1)
+            .RegisterHighlight(
+                "在「额外」分类的高级染色中新增曝光、各向异性、球体贴图索引以及球体贴图强度（感谢 Ny！）。"u8)
+            .RegisterEntry(
+                "Glamourer 现在可以使用 Penumbra 风格的预设来存储 Mod 关联，待后续界面完成后，将能更灵活地选择实际应用哪些选项。"u8)
+            .RegisterEntry("设计选择器的主右键菜单现可更改全局排序模式。"u8)
+            .RegisterEntry("更新了颜色处理：支持依赖颜色、更合理的默认值以及分类颜色。"u8)
+            .RegisterEntry("为部分聊天命令新增了应用规则。"u8)
+            .RegisterEntry("自动执行套装中的随机设计现可设置自定义名称，以便区分多个随机设计。"u8)
+            .RegisterEntry("新增文件夹行交替着色选项，并可在对应文件夹设置中选择颜色。"u8)
+            .RegisterEntry("文件夹现可设置独立于路径的显示名称。"u8)
+            .RegisterEntry("修复了启动时不必要地保存配置文件的问题。"u8)
+            .RegisterEntry("预定义标签的添加与移除按钮现可配置颜色。"u8)
+            .RegisterEntry("修复了维埃拉耳朵状态应用的问题。"u8)
+            .RegisterEntry("修复了高级染色表内「重置全部高级染色」按钮的问题。"u8)
+            .RegisterEntry(
+                "修复了「覆盖为当前角色状态」与「撤销设计应用」未正确考虑高级外貌与高级染色的问题。"u8)
+            .RegisterEntry("修复了通过聊天命令应用 Mod 关联时的问题。"u8)
+            .RegisterEntry("修复了趣味模块中未考虑种族变化的问题。"u8)
+            .RegisterEntry("修复了 Glamourer 的头部装备可见状态会影响肖像所用校验和的问题。"u8)
+            .RegisterEntry("修复了右键菜单试穿时第二染色未正确应用的问题（感谢 Ny！）。"u8)
+            .RegisterEntry("修复了钐镰客形态等变身状态与高级染色相关的问题。"u8)
+            .RegisterEntry("修复了高级染色状态的若干问题。"u8)
+            .RegisterEntry("新增用于管理 Glamourer 界面导航的 API 与 IPC（1.6.1.7）。"u8)
+            .RegisterEntry("新增右键点击高级染色按钮以移除该槽位全部高级染色的选项（1.6.1.7）。"u8)
+            .RegisterEntry("修复了通过 IPC 应用时高级染色未能清除的问题（感谢 UniversalConquistador！）（1.6.1.7）。"u8)
+            .RegisterEntry("修复了高级染色中无穷大值的相关问题（1.6.1.7）。"u8)
+            .RegisterEntry("修复了未显示应用规则时标签缺失的问题（1.6.1.7）。"u8)
+            .RegisterEntry("修复了额外物品与头部装备位互相影响的问题（1.6.1.7）。"u8)
+            .RegisterEntry("新增用于切换装备栏显示的聊天命令（1.6.1.5）。"u8)
+            .RegisterEntry("修复了应用设计时副手装备的相关问题（1.6.1.5）。"u8)
+            .RegisterEntry("修复了装备栏拖放相关的问题（1.6.1.5）。"u8)
+            .RegisterEntry("修复了重置高级染色的若干问题（1.6.1.5）。"u8)
+            .RegisterEntry("修复了按更新日期反向排序时的问题（1.6.1.3）。"u8)
+            .RegisterEntry("修复了自动执行中兼容武器类型应用的若干问题（1.6.1.3）。"u8);
 
     private static void Add1_6_1_0(Changelog log)
         => log.NextVersion("Version 1.6.1.0"u8)

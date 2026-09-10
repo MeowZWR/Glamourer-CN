@@ -28,9 +28,9 @@ public sealed class NpcFilter : TokenizedFilter<NpcFilter.TokenType, NpcCacheIte
         using var style = Im.Style.PushDefault();
         using var tt    = Im.Tooltip.Begin();
         Im.Text("按指定字符串来筛选NPC。"u8);
-        ImEx.TextMultiColored("输入 "u8).Then("i:[数字]"u8, ColorId.TriStateCheck.Value()).Then(" 按NPC的确切ID来筛选。"u8)
+        ImEx.TextMultiColored("输入 "u8).Then("i:[数字]"u8, ColorId.TriStateCheck.Value).Then(" 按NPC的确切ID来筛选。"u8)
             .End();
-        ImEx.TextMultiColored("输入 "u8).Then("c:[字符串]"u8, ColorId.TriStateCheck.Value())
+        ImEx.TextMultiColored("输入 "u8).Then("c:[字符串]"u8, ColorId.TriStateCheck.Value)
             .Then(" 按NPC外观详情里的指定配色来筛选。"u8).End();
     }
 

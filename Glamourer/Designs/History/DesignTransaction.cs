@@ -1,7 +1,6 @@
 using Glamourer.GameData;
 using Glamourer.Designs.CustomizePlus;
 using Glamourer.Interop.Material;
-using Glamourer.Interop.Penumbra;
 using Penumbra.GameData.Enums;
 
 namespace Glamourer.Designs.History;
@@ -86,7 +85,7 @@ public record TagChangedTransaction(string Old, string New, int IndexOld, int In
 }
 
 /// <remarks> Only Designs. </remarks>
-public record ModAddedTransaction(Mod Mod, ModSettings Settings)
+public record ModAddedTransaction(ModIdentifier Mod, SettingPresetData Settings)
     : ITransaction
 {
     public ITransaction? Merge(ITransaction other)
@@ -97,7 +96,7 @@ public record ModAddedTransaction(Mod Mod, ModSettings Settings)
 }
 
 /// <remarks> Only Designs. </remarks>
-public record ModRemovedTransaction(Mod Mod, ModSettings Settings)
+public record ModRemovedTransaction(ModIdentifier Mod, SettingPresetData Settings)
     : ITransaction
 {
     public ITransaction? Merge(ITransaction other)
@@ -108,7 +107,7 @@ public record ModRemovedTransaction(Mod Mod, ModSettings Settings)
 }
 
 /// <remarks> Only Designs. </remarks>
-public record ModUpdatedTransaction(Mod Mod, ModSettings Old, ModSettings New)
+public record ModUpdatedTransaction(ModIdentifier Mod, SettingPresetData Old, SettingPresetData New)
     : ITransaction
 {
     public ITransaction? Merge(ITransaction older)
@@ -231,7 +230,7 @@ public record ApplicationTransaction(object Index, bool Old, bool New)
 }
 
 /// <remarks> Only Designs. </remarks>
-public record ResetAdvancedDyesTransaction(CombinedItemSlotFlag Old, CombinedItemSlotFlag New)
+public record ResetAdvancedDyesTransaction(ModelCombinedSlots Old, ModelCombinedSlots New)
     : ITransaction
 {
     public ITransaction? Merge(ITransaction other)
@@ -244,7 +243,7 @@ public record ResetAdvancedDyesTransaction(CombinedItemSlotFlag Old, CombinedIte
 }
 
 /// <remarks> Only Designs. </remarks>
-public record SlotMaterialRevertTransaction(CombinedItemSlotFlag Old, CombinedItemSlotFlag New)
+public record SlotMaterialRevertTransaction(ModelCombinedSlots Old, ModelCombinedSlots New)
     : ITransaction
 {
     public ITransaction? Merge(ITransaction other)

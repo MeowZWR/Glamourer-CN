@@ -46,13 +46,13 @@ public sealed class ActorFilter : TextFilterBase<ActorCacheItem>, IUiService
             changes = Clear();
         }
 
-        Im.Tooltip.OnHover("Filter actors for their type.\nMiddle-Click to clear all filters, including the text-filter."u8);
+        Im.Tooltip.OnHover("按类型筛选角色。\n中键点击清除所有筛选，包括文本筛选。"u8);
 
         if (!combo)
             return changes;
 
         var filter = _config.ActorTypeFilter ^ ActorTypeFilter.All;
-        if (Im.Checkbox("Everything"u8, ref filter, ActorTypeFilter.All))
+        if (Im.Checkbox("全部"u8, ref filter, ActorTypeFilter.All))
         {
             _config.ActorTypeFilter = filter ^ ActorTypeFilter.All;
             changes                 = true;
@@ -81,6 +81,42 @@ public sealed class ActorFilter : TextFilterBase<ActorCacheItem>, IUiService
     {
         var filterRegion = availableRegion with { X = availableRegion.X - Im.Style.FrameHeight };
         var ret          = base.DrawFilter(label, filterRegion);
+
+        if (Im.Item.Hovered())
+        {
+            using var tt = Im.Tooltip.Begin();
+            Im.Text("筛选包含输入名称的角色。"u8);
+            Im.Dummy(new Vector2(0, Im.Style.TextHeight / 2));
+            Im.Text("可按类型筛选："u8);
+            var color = ColorId.HeaderButtons.Value;
+            Im.Text("<p>"u8, color);
+            Im.Line.NoSpacing();
+            Im.Text(": 仅显示玩家角色。"u8);
+
+            Im.Text("<o>"u8, color);
+            Im.Line.NoSpacing();
+            Im.Text(": 仅显示所属游戏对象。"u8);
+
+            Im.Text("<n>"u8, color);
+            Im.Line.NoSpacing();
+            Im.Text(": 仅显示NPC。"u8);
+
+            Im.Text("<r>"u8, color);
+            Im.Line.NoSpacing();
+            Im.Text(": 仅显示雇员。"u8);
+
+            Im.Text("<s>"u8, color);
+            Im.Line.NoSpacing();
+            Im.Text(": 仅显示特殊屏幕角色。"u8);
+
+            Im.Text("<w>"u8, color);
+            Im.Line.NoSpacing();
+            Im.Text(": 仅显示你的服务器的玩家。"u8);
+
+            if (Text.Length > 0)
+                Im.Text("\n中键点击清除筛选。"u8);
+        }
+
         Im.Line.NoSpacing();
         ret |= DrawCombo();
 

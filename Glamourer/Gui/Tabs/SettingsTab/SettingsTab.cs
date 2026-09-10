@@ -25,7 +25,6 @@ public sealed class SettingsTab(
     IUiBuilder uiBuilder,
     GlamourerChangelog changelog,
     IKeyState keys,
-    DesignColorUi designColorUi,
     PaletteImport paletteImport,
     CollectionOverrideDrawer overrides,
     CodeDrawer codeDrawer,
@@ -34,7 +33,8 @@ public sealed class SettingsTab(
     AutoRedrawChanged autoRedraw,
     PredefinedTagManager predefinedTags,
     PcpService pcpService,
-    IgnoredMods ignoredMods)
+    IgnoredMods ignoredMods,
+    DesignColorUi designColors)
     : ITab<MainTabType>
 {
     private readonly VirtualKey[] _validKeys = keys.GetValidVirtualKeys().Prepend(VirtualKey.NO_KEY).ToArray();
@@ -112,8 +112,7 @@ public sealed class SettingsTab(
         {
             Im.Line.SameInner();
             ImEx.Icon.DrawAligned(LunaStyle.WarningIcon, Colors.SelectedRed);
-            Im.Tooltip.OnHover(
-                "你已在 Dalamud 中禁用了“节日事件”。\n\nGlamourer 将优先遵循该全局设置。若不开启全局开关，此处的选项将无法生效。");
+            Im.Tooltip.OnHover("你已在 Dalamud 中禁用了“节日事件”。\n\nGlamourer 将优先遵循该全局设置。若不开启全局开关，此处的选项将无法生效。");
         }
 
         if (config.FestivalMode is not FestivalSetting.Undefined)
@@ -158,7 +157,7 @@ public sealed class SettingsTab(
             });
         Checkbox("关联至PCP处理"u8,
             "当Penumbra创建PCP时添加角色的Glamourer状态，并在Penumbra安装PCP时尽可能创建设计并应用"u8,
-            config.AttachToPcp, pcpService.Set);
+            config.AttachToPcp, v => config.AttachToPcp = v);
         var active = config.DeleteDesignModifier.IsActive();
         Im.Line.Same();
         if (ImEx.Button("删除所有PCP设计"u8, default, "从设计列表中删除所有带有'PCP'标签的设计。"u8, !active))
@@ -269,7 +268,7 @@ public sealed class SettingsTab(
             v => config.Ephemeral.LockMainWindow = v);
         Checkbox("在游戏开始时打开主窗口"u8, "启动游戏后，Glamourer主窗口是打开还是关闭状态。"u8,
             config.OpenWindowAtStart,                v => config.OpenWindowAtStart = v);
-        EphemeralCheckbox("Lock Equipment Bar"u8, "Prevent the equipment bar from being moved and lock it in place."u8,
+        EphemeralCheckbox("锁定装备栏"u8, "防止装备栏被移动，将其锁定在当前位置。"u8,
             config.Ephemeral.LockEquipmentBar,
             v => config.Ephemeral.LockEquipmentBar = v);
         Im.Dummy(Vector2.Zero);
@@ -467,29 +466,20 @@ public sealed class SettingsTab(
     /// <summary> Draw the entire Color subsection. </summary>
     private void DrawColorSettings()
     {
-        if (!Im.Tree.Header("配色设置"u8))
-            return;
-
-        using (var tree = Im.Tree.Node("自定义设计颜色"u8))
+        using (var tree = Im.Tree.HeaderId("自定义设计颜色"u8))
         {
             if (tree)
-                designColorUi.Draw();
+                designColors.Draw();
         }
 
-        using (var tree = Im.Tree.Node("配色设置"u8))
-        {
-            if (tree)
-                foreach (var color in ColorId.Values)
-                {
-                    var (defaultColor, name, description) = color.Data();
-                    var currentColor = config.Colors.GetValueOrDefault(color, defaultColor);
-                    if (!ImEx.ColorPicker(name, description, currentColor, out var newColor, defaultColor))
-                        continue;
+        using var header = Im.Tree.HeaderId("配色设置"u8);
+        if (!header)
+            return;
 
-                    config.Colors[color] = newColor.Color;
-                    CacheManager.Instance.SetColorsDirty();
-                    config.Save();
-                }
+        if (ColorSettingsDrawer.Draw(Glamourer.Messager, config.Ui.Colors, config.Ui.ColorCache))
+        {
+            CacheManager.Instance.SetColorsDirty();
+            config.Ui.Save();
         }
 
         Im.Line.New();

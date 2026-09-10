@@ -5,13 +5,16 @@ using Glamourer.Interop.Penumbra;
 using Glamourer.State;
 using ImSharp;
 using Luna;
+using Penumbra.Api.Preset;
+using Penumbra.GameData.Gui;
 
 namespace Glamourer.Gui.Tabs.DesignTab;
 
-public sealed class ModAssociationsTab(PenumbraService penumbra, DesignFileSystem fileSystem, DesignManager manager, Configuration config) : IUiService
+public sealed class ModAssociationsTab(PenumbraSubscriber penumbra, DesignFileSystem fileSystem, DesignManager manager, Configuration config)
+    : IUiService
 {
-    private readonly ModCombo              _modCombo = new(penumbra, fileSystem);
-    private          (Mod, ModSettings)[]? _copy;
+    private readonly ModCombo                              _modCombo = new(penumbra, fileSystem);
+    private          (ModIdentifier, SettingPresetData)[]? _copy;
 
     private Design Selection
         => (Design)fileSystem.Selection.Selection!.Value;
@@ -66,7 +69,7 @@ public sealed class ModAssociationsTab(PenumbraService penumbra, DesignFileSyste
 
     private void DrawApplyAllButton()
     {
-        var (id, name) = penumbra.CurrentCollection;
+        var (id, name, _) = penumbra.CurrentCollection;
         if (config.Ephemeral.IncognitoMode)
             name = id.ShortGuid();
         if (ImEx.Button($"尝试应用所有关联的模组到：{name}##applyAll",
@@ -76,7 +79,7 @@ public sealed class ModAssociationsTab(PenumbraService penumbra, DesignFileSyste
 
     public void DrawApplyButton()
     {
-        var (id, name) = penumbra.CurrentCollection;
+        var (id, name, _) = penumbra.CurrentCollection;
         if (ImEx.Button("应用模组关联"u8, Vector2.Zero,
                 $"尝试应用所有关联的模组设置到 Penumbra 当前的合集：{name}",
                 Selection.AssociatedMods.Count is 0 || id == Guid.Empty))
@@ -91,22 +94,19 @@ public sealed class ModAssociationsTab(PenumbraService penumbra, DesignFileSyste
 
     private void DrawTable()
     {
-        using var table = Im.Table.Begin("Mods"u8, config.UseTemporarySettings ? 7 : 6, TableFlags.RowBackground);
+        using var table = Im.Table.Begin("Mods"u8, 5, TableFlags.RowBackground);
         if (!table)
             return;
 
         table.SetupColumn("##Buttons"u8, TableColumnFlags.WidthFixed, Im.Style.FrameHeight * 3 + Im.Style.ItemInnerSpacing.X * 2);
         table.SetupColumn("模组名称"u8,  TableColumnFlags.WidthStretch);
-        if (config.UseTemporarySettings)
-            table.SetupColumn("移除"u8, TableColumnFlags.WidthFixed, Im.Font.CalculateSize("移除"u8).X);
-        table.SetupColumn("继承"u8,   TableColumnFlags.WidthFixed, Im.Font.CalculateSize("继承"u8).X);
-        table.SetupColumn("状态"u8,     TableColumnFlags.WidthFixed, Im.Font.CalculateSize("状态"u8).X);
-        table.SetupColumn("优先级"u8,  TableColumnFlags.WidthFixed, Im.Font.CalculateSize("优先级"u8).X);
-        table.SetupColumn("##Options"u8, TableColumnFlags.WidthFixed, Im.Font.CalculateSize("应用"u8).X + Im.Style.FramePadding.X);
+        table.SetupColumn("状态"u8,     TableColumnFlags.WidthFixed, 85 * Im.Style.GlobalScale);
+        table.SetupColumn("优先级"u8,  TableColumnFlags.WidthFixed, Im.Font.CalculateSize("优先级"u8).X + Im.Style.FrameHeightWithSpacing);
+        table.SetupColumn("##Options"u8, TableColumnFlags.WidthFixed, Im.Font.CalculateSize("应用"u8).X);
         table.HeaderRow();
 
-        Mod?                             removedMod = null;
-        (Mod mod, ModSettings settings)? updatedMod = null;
+        ModIdentifier?                                   removedMod = null;
+        (ModIdentifier mod, SettingPresetData settings)? updatedMod = null;
         foreach (var (idx, (mod, settings)) in Selection.AssociatedMods.Index())
         {
             using var id = Im.Id.Push(idx);
@@ -126,8 +126,8 @@ public sealed class ModAssociationsTab(PenumbraService penumbra, DesignFileSyste
             manager.UpdateMod(Selection, updatedMod.Value.mod, updatedMod.Value.settings);
     }
 
-    private void DrawAssociatedModRow(in Im.TableDisposable table, Mod mod, ModSettings settings, out Mod? removedMod,
-        out (Mod, ModSettings)? updatedMod)
+    private void DrawAssociatedModRow(in Im.TableDisposable table, ModIdentifier mod, SettingPresetData settings, out ModIdentifier? removedMod,
+        out (ModIdentifier, SettingPresetData)? updatedMod)
     {
         removedMod = null;
         updatedMod = null;
@@ -155,14 +155,13 @@ public sealed class ModAssociationsTab(PenumbraService penumbra, DesignFileSyste
             if (source.Length > 0)
                 Im.Text($"使用由 {source} 创建的临时设置。");
             Im.Separator();
-            var namesDifferent = mod.Name != mod.DirectoryName;
+            var namesDifferent = mod.Name != mod.Identifier;
             Im.Dummy(300 * Im.Style.GlobalScale);
             using (Im.Group())
             {
                 if (namesDifferent)
                     Im.Text("目录名称"u8);
-                Im.Text("强制继承"u8);
-                Im.Text("已启用"u8);
+                Im.Text("状态"u8);
                 Im.Text("优先级"u8);
                 ModCombo.DrawSettingsLeft(newSettings);
             }
@@ -171,11 +170,9 @@ public sealed class ModAssociationsTab(PenumbraService penumbra, DesignFileSyste
             using (Im.Group())
             {
                 if (namesDifferent)
-                    Im.Text(mod.DirectoryName);
-
-                Im.Text($"{newSettings.ForceInherit}");
-                Im.Text($"{newSettings.Enabled}");
-                Im.Text($"{newSettings.Priority}");
+                    Im.Text(mod.Identifier);
+                Im.Text(newSettings.State.StringU8);
+                Im.Text(newSettings._hasPriority ? $"{newSettings._priority}" : "忽略"u8);
                 ModCombo.DrawSettingsRight(newSettings);
             }
         }
@@ -183,63 +180,51 @@ public sealed class ModAssociationsTab(PenumbraService penumbra, DesignFileSyste
         table.NextColumn();
 
         if (Im.Selectable($"{mod.Name}##name"))
-            penumbra.OpenModPage(mod);
-        Im.Tooltip.OnHover($"模组目录：    {mod.DirectoryName}\n\n点击以在 Penumbra 中打开模组页面。");
-        if (config.UseTemporarySettings)
-        {
-            table.NextColumn();
-            var remove = settings.Remove;
-            if (ImEx.TwoStateCheckbox("##Remove"u8, ref remove))
-                updatedMod = (mod, settings with { Remove = remove });
-            Im.Tooltip.OnHover(
-                "移除由 Glamourer 应用的任何临时设置，而不是应用已配置的设置。仅在使用临时设置时有效，否则会被忽略。"u8);
-        }
+            penumbra.Ui.OpenMod(mod);
+        Im.Tooltip.OnHover($"模组目录：    {mod.Identifier}\n\n点击以在 Penumbra 中打开模组页面。");
 
         table.NextColumn();
-        var inherit = settings.ForceInherit;
-        if (ImEx.TwoStateCheckbox("##ForceInherit"u8, ref inherit))
-            updatedMod = (mod, settings with { ForceInherit = inherit });
-        Im.Tooltip.OnHover("强制模组从继承的合集中继承其设置。"u8);
+        if (settings.DrawState(Im.ContentRegion.Available with { Y = 0 }, out var newState))
+            updatedMod = (mod, settings with { _state = (byte)newState });
         table.NextColumn();
-        var enabled = settings.Enabled;
-        if (ImEx.TwoStateCheckbox("##Enabled"u8, ref enabled))
-            updatedMod = (mod, settings with { Enabled = enabled });
-
+        if (settings.DrawPriority(Im.ContentRegion.Available with { Y = 0 }, out var newPriority))
+            updatedMod = (mod, settings with
+            {
+                _hasPriority = newPriority.HasValue,
+                _priority = newPriority ?? 0,
+            });
         table.NextColumn();
-        var priority = settings.Priority;
-        Im.Item.SetNextWidthFull();
-        if (ImEx.InputOnDeactivation.Scalar("##Priority"u8, ref priority))
-            updatedMod = (mod, settings with { Priority = priority });
-        table.NextColumn();
-        if (ImEx.Button("应用"u8, Im.ContentRegion.Available with { Y = 0 }, StringU8.Empty, !penumbra.Available))
+        var modIndex = !penumbra.Available ? -1 : penumbra.Mods.IndexByName(mod);
+        if (ImEx.Button("应用"u8, Im.ContentRegion.Available with { Y = 0 }, StringU8.Empty, modIndex < 0))
         {
             var text = penumbra.SetMod(mod, settings, StateSource.Manual, false);
             if (text.Length > 0)
                 Glamourer.Messager.NotificationMessage(text, NotificationType.Warning, false);
         }
 
-        DrawAssociatedModTooltip(settings);
+        DrawApplicationTooltip(modIndex, settings);
     }
 
-    private static void DrawAssociatedModTooltip(ModSettings settings)
+    private void DrawApplicationTooltip(int modIndex, in SettingPresetData settings)
     {
-        if (settings is not { Enabled: true, Settings.Count: > 0 } || !Im.Item.Hovered())
+        if (!Im.Item.Hovered(HoveredFlags.AllowWhenDisabled))
             return;
 
         using var t = Im.Tooltip.Begin();
-        Im.Text("还将尝试将以下设置也应用到当前合集："u8);
-
-        Im.Line.New();
-        using (Im.Group())
+        if (modIndex < 0)
         {
-            ModCombo.DrawSettingsLeft(settings);
+            Im.Text("当前未安装与所存模组名称匹配的模组。"u8, LunaStyle.ErrorForeground);
+            return;
         }
 
-        Im.Line.Same(Im.ContentRegion.Available.X / 2);
-        using (Im.Group())
-        {
-            ModCombo.DrawSettingsRight(settings);
-        }
+        using var collection = penumbra.Current;
+        if (collection is null)
+            Im.Text("未连接到 Penumbra。"u8);
+        else if (collection.CanUnlock(modIndex, PenumbraSubscriber.KeyManual))
+            collection.DrawPresetTooltip(modIndex, settings);
+        else
+            Im.Text($"匹配的模组已有由 {collection.GetTemporarySource(modIndex)} 创建的锁定临时设置。",
+                LunaStyle.ErrorForeground);
     }
 
     private void DrawNewModRow(in Im.TableDisposable table)
@@ -248,12 +233,12 @@ public sealed class ModAssociationsTab(PenumbraService penumbra, DesignFileSyste
         table.NextColumn();
         var tt = currentDir.Length is 0
             ? "请先选择一个模组。"u8
-            : Selection.AssociatedMods.ContainsKey(new Mod(_modCombo.SelectionName, currentDir))
+            : Selection.AssociatedMods.ContainsKey(new ModIdentifier(currentDir, _modCombo.SelectionName))
                 ? "此设计已经关联了选中的模组。"u8
                 : StringU8.Empty;
 
         if (ImEx.Icon.Button(LunaStyle.AddObjectIcon, tt, tt.Length > 0))
-            manager.AddMod(Selection, new Mod(_modCombo.SelectionName, _modCombo.Selection), _modCombo.Settings);
+            manager.AddMod(Selection, new ModIdentifier(_modCombo.Selection, _modCombo.SelectionName), _modCombo.Settings);
         table.NextColumn();
         _modCombo.Draw("##new"u8, Im.ContentRegion.Available.X);
     }

@@ -121,7 +121,7 @@ public sealed class StateManager(
 
         // Model ID is only unambiguously contained in the game object.
         // The draw object only has the object type.
-        // TODO reverse search model data to get model id from model.
+        // TODO 20260824 reverse search model data to get model id from model.
         if (!humans.IsHuman((uint)actor.AsCharacter->ModelContainer.ModelCharaId))
         {
             ret.LoadNonHuman((uint)actor.AsCharacter->ModelContainer.ModelCharaId, *(CustomizeArray*)&actor.AsCharacter->DrawData.CustomizeData,
@@ -276,9 +276,16 @@ public sealed class StateManager(
         foreach (var flag in CustomizeParameterExtensions.AllFlags)
             state.Sources[flag] = StateSource.Game;
 
-        state.Materials.Clear();
-
         var objects = ActorData.Invalid;
+        if (!redraw)
+        {
+            objects = Applier.GetData(state);
+            if (source is not StateSource.Game)
+                foreach (var (idx, mat) in state.Materials.Values)
+                    Applier.ChangeMaterialValue(state, objects, MaterialValueIndex.FromKey(idx), mat.Game);
+        }
+
+        state.Materials.Clear();
         if (source is not StateSource.Game)
             objects = Applier.ApplyAll(state, redraw, true);
 
@@ -294,11 +301,6 @@ public sealed class StateManager(
     {
         if (!state.Unlock(key) || !state.ModelData.IsHuman)
             return;
-
-        state.ModelData.Parameters = state.BaseData.Parameters;
-
-        foreach (var flag in CustomizeParameterExtensions.AllFlags)
-            state.Sources[flag] = StateSource.Game;
 
         var objects = Applier.GetData(state);
         if (source is not StateSource.Game)
@@ -328,10 +330,8 @@ public sealed class StateManager(
         if (source is not StateSource.Game)
             objects = Applier.ChangeParameters(state, CustomizeParameterExtensions.All, true);
 
-        state.Materials.Clear();
-
         Glamourer.Log.Verbose(
-            $"Reset advanced customization and dye state of {state.Identifier.Incognito(null)} to game base. [Affecting {objects.ToLazyString("nothing")}.]");
+            $"Reset advanced customization state of {state.Identifier.Incognito(null)} to game base. [Affecting {objects.ToLazyString("nothing")}.]");
         StateChanged.Invoke(new StateChanged.Arguments(StateChangeType.Reset, source, state, objects));
         // Update that we have completed a full operation. (We can do this directly as nothing else is linked)
         StateFinalized.Invoke(new StateFinalized.Arguments(StateFinalizationType.RevertAdvanced, objects));
