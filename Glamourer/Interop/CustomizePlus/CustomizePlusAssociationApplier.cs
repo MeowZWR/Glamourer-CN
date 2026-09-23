@@ -100,7 +100,9 @@ public sealed class CustomizePlusAssociationApplier(
     {
         RestorePermanent(identifier);
 
-        if (_applied.TryGetValue(identifier, out var existing) && existing.SourceProfileId == association.ProfileId)
+        if (_applied.TryGetValue(identifier, out var existing)
+         && existing.SourceProfileId == association.ProfileId
+         && IsTemporaryProfileActive(objectIndex, existing.TemporaryProfileId))
         {
             SetManualState(identifier, applySource);
             return;
@@ -167,6 +169,25 @@ public sealed class CustomizePlusAssociationApplier(
 
         SetManualState(identifier, applySource);
     }
+
+    /// <summary>
+    /// Reapply the temporary C+ profile after redraw or a zone change.
+    /// </summary>
+    public void ReapplyTemporary(ActorIdentifier identifier, in ObjectIndex objectIndex)
+    {
+        if (!_applied.TryGetValue(identifier, out var existing))
+            return;
+
+        if (!customizePlus.TryGetProfile(existing.SourceProfileId, out var association))
+            return;
+
+        var source = _manualCustomizePlus.Contains(identifier) ? StateSource.Manual : StateSource.Fixed;
+        ApplyTemporary(identifier, objectIndex, association, source);
+    }
+
+    private bool IsTemporaryProfileActive(in ObjectIndex objectIndex, Guid temporaryProfileId)
+        => customizePlus.TryGetActiveProfileId(objectIndex, out var activeId, out _)
+         && activeId == temporaryProfileId;
 
     private void RestoreTemporary(ActorIdentifier identifier)
     {
