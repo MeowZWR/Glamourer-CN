@@ -303,8 +303,15 @@ public sealed class AutoDesignApplier : IDisposable, IRequiredService
         else if (!GetPlayerSet(identifier, out set!))
         {
             if (state.UpdateTerritory(_clientState.TerritoryType) && _config.RevertManualChangesOnZoneChange)
+            {
                 _state.ResetState(state, StateSource.Game);
-            _customizePlus.RestoreUnavailable(identifier);
+                _customizePlus.RestoreUnavailable(identifier);
+            }
+            else
+            {
+                _customizePlus.ReapplyTemporary(identifier, actor.Index);
+            }
+
             return true;
         }
 
