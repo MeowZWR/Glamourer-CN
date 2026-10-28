@@ -306,6 +306,15 @@ public sealed class ActorPanel : IPanel
 
     private void DrawMonsterPanel()
     {
+        if (HumanModelPolicy.AllowsHumanModelOverride(_selection.Identifier))
+        {
+            if (ImEx.Button("变为人类"u8, Vector2.Zero,
+                    "将宠物或召唤物的绘制模型改为人类，以便套用人类设计和模组。\n可能在和他人同步时造成未知问题，请谨慎使用。"u8,
+                    _selection.State!.IsLocked))
+                _stateManager.TurnHuman(_selection.State, StateSource.Manual);
+            Im.Separator();
+        }
+
         var names = _modelChara[_selection.State!.ModelData.ModelId];
         using (Im.ListBox.Begin("##MonsterList"u8, Im.ContentRegion.Available with { Y = 10 * Im.Style.TextHeightWithSpacing }))
         {

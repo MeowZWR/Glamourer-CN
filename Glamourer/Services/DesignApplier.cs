@@ -48,7 +48,7 @@ public sealed class DesignApplier(StateManager stateManager, ActorObjectManager 
         if (!targetData.Valid)
             return DeniedApplicationReason.TargetUnavailable;
 
-        if (!targetData.Objects[0].IsHuman(humans))
+        if (!targetData.Objects[0].IsHuman(humans) && !HumanModelPolicy.AllowsHumanModelOverride(targetIdentifier))
             return DeniedApplicationReason.TargetNonHuman;
 
         return DeniedApplicationReason.None;
