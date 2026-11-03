@@ -8,10 +8,10 @@ public readonly struct CreationDate : ISortMode
     public static readonly CreationDate Instance = new();
 
     public ReadOnlySpan<byte> Name
-        => "Creation Date (Older First)"u8;
+        => "创建日期 (旧优先)"u8;
 
     public ReadOnlySpan<byte> Description
-        => "In each folder, sort all subfolders lexicographically, then sort all leaves using their creation date."u8;
+        => "在每个折叠组中，按字典顺序排序所有子组，随后按创建日期排序所有叶子节点（文件）。"u8;
 
     public IEnumerable<IFileSystemNode> GetChildren(IFileSystemFolder f)
         => ISortMode.GetFolderLike(f).Concat(ISortMode.GetLeaveLike(f).OrderBy(l => l switch
@@ -27,10 +27,10 @@ public readonly struct UpdateDate : ISortMode
     public static readonly UpdateDate Instance = new();
 
     public ReadOnlySpan<byte> Name
-        => "Update Date (Older First)"u8;
+        => "更新日期 (旧优先)"u8;
 
     public ReadOnlySpan<byte> Description
-        => "In each folder, sort all subfolders lexicographically, then sort all leaves using their last update date."u8;
+        => "在每个折叠组中，按字典顺序排序所有子组，随后按更新日期排序所有叶子节点（文件）。"u8;
 
     public IEnumerable<IFileSystemNode> GetChildren(IFileSystemFolder f)
         => ISortMode.GetFolderLike(f).Concat(ISortMode.GetLeaveLike(f).OrderBy(l => l switch
@@ -46,10 +46,10 @@ public readonly struct InverseCreationDate : ISortMode
     public static readonly InverseCreationDate Instance = new();
 
     public ReadOnlySpan<byte> Name
-        => "Creation Date (Newer First)"u8;
+        => "创建日期 (新优先)"u8;
 
     public ReadOnlySpan<byte> Description
-        => "In each folder, sort all subfolders lexicographically, then sort all leaves using their inverse creation date."u8;
+        => "在每个折叠组中，按字典顺序排序所有子组，随后按创建日期倒序排序所有叶子节点（文件）。"u8;
 
     public IEnumerable<IFileSystemNode> GetChildren(IFileSystemFolder f)
         => ISortMode.GetFolderLike(f).Concat(ISortMode.GetLeaveLike(f).OrderByDescending(l => l switch
@@ -65,10 +65,10 @@ public readonly struct InverseUpdateDate : ISortMode
     public static readonly InverseUpdateDate Instance = new();
 
     public ReadOnlySpan<byte> Name
-        => "Update Date (Newer First)"u8;
+        => "更新日期 (新优先)"u8;
 
     public ReadOnlySpan<byte> Description
-        => "In each folder, sort all subfolders lexicographically, then sort all leaves using their inverse last update date."u8;
+        => "在每个折叠组中，按字典顺序排序所有子组，随后按更新日期倒序排序所有叶子节点（文件）。"u8;
 
     public IEnumerable<IFileSystemNode> GetChildren(IFileSystemFolder f)
         => ISortMode.GetFolderLike(f).Concat(ISortMode.GetLeaveLike(f).OrderByDescending(l => l switch
