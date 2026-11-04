@@ -1,6 +1,6 @@
 ﻿using Dalamud.Plugin.Services;
 using Luna;
-using Penumbra.GameData.Files.MaterialStructs;
+using Penumbra.GameData.Files.Materials;
 using Penumbra.String.Functions;
 using SharpGen.Runtime;
 using Vortice.Direct3D11;
@@ -39,7 +39,7 @@ public unsafe class DirectXService(IFramework framework) : IService
                     return false;
             }
 
-            Glamourer.Log.Verbose($"[{Thread.CurrentThread.ManagedThreadId}] Replaced texture {(ulong)*original:X} with new ColorTable.");
+            Glamourer.Log.Verbose($"[{Environment.CurrentManagedThreadId}] Replaced texture {(ulong)*original:X} with new ColorTable.");
             texture.Exchange(ref *(nint*)original);
         }
 
@@ -105,7 +105,7 @@ public unsafe class DirectXService(IFramework framework) : IService
 
         var ret = resource.Device.As<ID3D11Device3>().CreateTexture2D1(desc);
         Glamourer.Log.Excessive(
-            $"[{Thread.CurrentThread.ManagedThreadId}] Cloning resource {resource.NativePointer:X} to {ret.NativePointer:X}");
+            $"[{Environment.CurrentManagedThreadId}] Cloning resource {resource.NativePointer:X} to {ret.NativePointer:X}");
         return ret;
     }
 
@@ -161,10 +161,10 @@ public unsafe class DirectXService(IFramework framework) : IService
 
         res.Device.ImmediateContext.CopyResource(stagingRes, res);
         Glamourer.Log.Excessive(
-            $"[{Thread.CurrentThread.ManagedThreadId}] Copied resource data {res.NativePointer:X} to {stagingRes.NativePointer:X}");
+            $"[{Environment.CurrentManagedThreadId}] Copied resource data {res.NativePointer:X} to {stagingRes.NativePointer:X}");
         stagingRes.Device.ImmediateContext.Map(stagingRes, 0, MapMode.Read, MapFlags.None, out var mapInfo).CheckError();
         Glamourer.Log.Excessive(
-            $"[{Thread.CurrentThread.ManagedThreadId}] Mapped resource data for {stagingRes.NativePointer:X} to {mapInfo.DataPointer:X}");
+            $"[{Environment.CurrentManagedThreadId}] Mapped resource data for {stagingRes.NativePointer:X} to {mapInfo.DataPointer:X}");
 
         try
         {
@@ -172,9 +172,9 @@ public unsafe class DirectXService(IFramework framework) : IService
         }
         finally
         {
-            Glamourer.Log.Excessive($"[{Thread.CurrentThread.ManagedThreadId}] Obtained resource data.");
+            Glamourer.Log.Excessive($"[{Environment.CurrentManagedThreadId}] Obtained resource data.");
             stagingRes.Device.ImmediateContext.Unmap(stagingRes, 0);
-            Glamourer.Log.Excessive($"[{Thread.CurrentThread.ManagedThreadId}] Unmapped resource data for {stagingRes.NativePointer:X}");
+            Glamourer.Log.Excessive($"[{Environment.CurrentManagedThreadId}] Unmapped resource data for {stagingRes.NativePointer:X}");
         }
     }
 

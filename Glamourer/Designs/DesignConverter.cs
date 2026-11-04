@@ -5,7 +5,7 @@ using Glamourer.State;
 using Luna;
 using Penumbra.GameData.DataContainers;
 using Penumbra.GameData.Enums;
-using Penumbra.GameData.Files.MaterialStructs;
+using Penumbra.GameData.Files.Materials;
 using Penumbra.GameData.Structs;
 using System.Text.Json;
 

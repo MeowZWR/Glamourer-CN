@@ -362,12 +362,12 @@ public sealed class PenumbraSubscriber : BasePenumbraSubscriber, IApiService
 
     protected override void PluginInitialized()
     {
-        if (!GameState.Reconnect(PluginInterface, 1))
-            throw new Exception("Unable to connect to GameState adapter.");
-        if (!Mods.Reconnect(PluginInterface, 1))
-            throw new Exception("Unable to connect to ModManager adapter.");
-        if (!Collections.Reconnect(PluginInterface, 1))
-            throw new Exception("Unable to connect to CollectionManager adapter.");
+        if (!GameState.Reconnect(PluginInterface, 2))
+            GameState.ThrowAdapterVersionMismatch(2);
+        if (!Mods.Reconnect(PluginInterface, 2))
+            Mods.ThrowAdapterVersionMismatch(2);
+        if (!Collections.Reconnect(PluginInterface, 2))
+            Collections.ThrowAdapterVersionMismatch(2);
 
         Ui.Attach();
         _reloaded?.Invoke();

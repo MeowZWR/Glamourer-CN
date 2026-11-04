@@ -4,7 +4,7 @@ using FFXIVClientStructs.FFXIV.Client.System.Resource.Handle;
 using ImSharp;
 using Newtonsoft.Json;
 using Penumbra.GameData.Enums;
-using Penumbra.GameData.Files.MaterialStructs;
+using Penumbra.GameData.Files.Materials;
 using Penumbra.GameData.Interop;
 
 namespace Glamourer.Interop.Material;

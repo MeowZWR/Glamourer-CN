@@ -5,6 +5,7 @@ using Glamourer.Services;
 using Luna;
 using Luna.Generators;
 using Newtonsoft.Json;
+using Penumbra.GameData.Gui;
 using ErrorEventArgs = Newtonsoft.Json.Serialization.ErrorEventArgs;
 
 namespace Glamourer.Config;
@@ -16,11 +17,15 @@ public partial class EphemeralConfig : ISavable, IService
     [ConfigProperty]
     private bool _incognitoMode;
 
-    public bool        UnlockDetailMode    { get; set; } = true;
-    public bool        ShowDesignQuickBar  { get; set; }
-    public bool        LockDesignQuickBar  { get; set; }
-    public bool        LockMainWindow      { get; set; }
-    public bool        LockEquipmentBar    { get; set; }
+    [ConfigProperty]
+    private PenumbraOptionDisplay _penumbraOptionDisplay;
+
+    public bool UnlockDetailMode   { get; set; } = true;
+    public bool ShowDesignQuickBar { get; set; }
+    public bool LockDesignQuickBar { get; set; }
+    public bool LockMainWindow     { get; set; }
+    public bool LockEquipmentBar   { get; set; }
+
     public MainTabType SelectedMainTab     { get; set; } = MainTabType.Settings;
     public Guid        SelectedQuickDesign { get; set; } = Guid.Empty;
     public int         LastSeenVersion     { get; set; } = GlamourerChangelog.LastChangelogVersion;
@@ -71,7 +76,7 @@ public partial class EphemeralConfig : ISavable, IService
 
     public void Save(Stream stream)
     {
-        using var writer = new StreamWriter(stream, leaveOpen: true);
+        using var writer  = new StreamWriter(stream, leaveOpen: true);
         using var jWriter = new JsonTextWriter(writer);
         jWriter.Formatting = Formatting.Indented;
         var serializer = new JsonSerializer { Formatting = Formatting.Indented };

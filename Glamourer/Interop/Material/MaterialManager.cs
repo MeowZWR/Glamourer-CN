@@ -1,13 +1,12 @@
 ﻿using FFXIVClientStructs.FFXIV.Client.Graphics.Scene;
 using FFXIVClientStructs.FFXIV.Client.System.Resource.Handle;
-using Glamourer.Config;
 using Glamourer.Designs;
 using Glamourer.Interop.Penumbra;
 using Glamourer.State;
 using Luna;
 using Penumbra.GameData.Actors;
 using Penumbra.GameData.Enums;
-using Penumbra.GameData.Files.MaterialStructs;
+using Penumbra.GameData.Files.Materials;
 using Penumbra.GameData.Interop;
 using Penumbra.GameData.Structs;
 
@@ -24,8 +23,7 @@ public sealed unsafe class MaterialManager : IRequiredService, IDisposable
 
     private readonly ThreadLocal<List<MaterialValueIndex>> _deleteList = new(() => []);
 
-    public MaterialManager(PrepareColorSet prepareColorSet, StateManager stateManager, ActorManager actors, PenumbraSubscriber penumbra,
-        Configuration config)
+    public MaterialManager(PrepareColorSet prepareColorSet, StateManager stateManager, ActorManager actors, PenumbraSubscriber penumbra)
     {
         _stateManager = stateManager;
         _actors       = actors;
@@ -229,8 +227,8 @@ public sealed unsafe class MaterialManager : IRequiredService, IDisposable
     private static CharacterWeapon GetTempSlot(Weapon* weapon)
     {
         var changedData = weapon->ChangedData;
-        if (changedData == null)
-            return new CharacterWeapon(weapon->ModelSetId, weapon->SecondaryId, (Variant)weapon->Variant, StainIds.FromWeapon(*weapon));
+        if (changedData is null)
+            return new CharacterWeapon(weapon->ModelSetId, weapon->SecondaryId, (byte)weapon->Variant, StainIds.FromWeapon(*weapon));
 
         return new CharacterWeapon(weapon->ModelSetId, changedData->SecondaryId, changedData->Variant,
             new StainIds(changedData->Stain0, changedData->Stain1));

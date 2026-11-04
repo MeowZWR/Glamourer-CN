@@ -1,4 +1,5 @@
-﻿using Dalamud.Interface.ImGuiNotification;
+﻿global using ModObjectIdentifier = (System.Guid Identifier, string? Name);
+using Dalamud.Interface.ImGuiNotification;
 using Glamourer.Config;
 using Glamourer.Designs;
 using Glamourer.Interop.Penumbra;
@@ -15,6 +16,11 @@ public sealed class ModAssociationsTab(PenumbraSubscriber penumbra, DesignFileSy
 {
     private readonly ModCombo                              _modCombo = new(penumbra, fileSystem);
     private          (ModIdentifier, SettingPresetData)[]? _copy;
+
+    private string _groupNameInput        = string.Empty;
+    private string _optionNameInput       = string.Empty;
+    private Guid   _groupIdentifierInput  = Guid.Empty;
+    private Guid   _optionIdentifierInput = Guid.Empty;
 
     private Design Selection
         => (Design)fileSystem.Selection.Selection!.Value;
@@ -102,7 +108,8 @@ public sealed class ModAssociationsTab(PenumbraSubscriber penumbra, DesignFileSy
         table.SetupColumn("模组名称"u8,  TableColumnFlags.WidthStretch);
         table.SetupColumn("状态"u8,     TableColumnFlags.WidthFixed, 85 * Im.Style.GlobalScale);
         table.SetupColumn("优先级"u8,  TableColumnFlags.WidthFixed, Im.Font.CalculateSize("优先级"u8).X + Im.Style.FrameHeightWithSpacing);
-        table.SetupColumn("##Options"u8, TableColumnFlags.WidthFixed, Im.Font.CalculateSize("应用"u8).X);
+        table.SetupColumn("##Options"u8, TableColumnFlags.WidthFixed,
+            Im.Font.CalculateSize("应用"u8).X + Im.Style.FrameHeight + Im.Style.ItemInnerSpacing.X);
         table.HeaderRow();
 
         ModIdentifier?                                   removedMod = null;
@@ -156,7 +163,7 @@ public sealed class ModAssociationsTab(PenumbraSubscriber penumbra, DesignFileSy
                 Im.Text($"使用由 {source} 创建的临时设置。");
             Im.Separator();
             var namesDifferent = mod.Name != mod.Identifier;
-            Im.Dummy(300 * Im.Style.GlobalScale);
+            Im.ScaledDummy(300);
             using (Im.Group())
             {
                 if (namesDifferent)
@@ -195,7 +202,7 @@ public sealed class ModAssociationsTab(PenumbraSubscriber penumbra, DesignFileSy
             });
         table.NextColumn();
         var modIndex = !penumbra.Available ? -1 : penumbra.Mods.IndexByName(mod);
-        if (ImEx.Button("应用"u8, Im.ContentRegion.Available with { Y = 0 }, StringU8.Empty, modIndex < 0))
+        if (ImEx.Button("应用"u8, Vector2.Zero, StringU8.Empty, modIndex < 0))
         {
             var text = penumbra.SetMod(mod, settings, StateSource.Manual, false);
             if (text.Length > 0)
@@ -203,6 +210,102 @@ public sealed class ModAssociationsTab(PenumbraSubscriber penumbra, DesignFileSy
         }
 
         DrawApplicationTooltip(modIndex, settings);
+        Im.Line.SameInner();
+        if (ImEx.Icon.Button(LunaStyle.EditIcon, "打开弹窗以编辑此预设的设置。"u8))
+            Im.Popup.Open("##popup"u8);
+
+        if (DrawPopup(mod, settings, out var updatedMod2))
+            updatedMod = updatedMod2;
+    }
+
+    private bool DrawPopup(ModIdentifier mod, SettingPresetData settings, out (ModIdentifier, SettingPresetData)? updatedMod)
+    {
+        updatedMod = null;
+        Im.Window.SetNextSizeConstraints(ImEx.ScaledVector(200), ImEx.ScaledVector(1000, 640));
+        using var popup = Im.Popup.Begin("##popup"u8, WindowFlags.AlwaysAutoResize);
+        if (!popup)
+            return false;
+
+        var                        indent       = Im.Style.FrameHeight + Im.Style.ItemInnerSpacing.X;
+        var                        size         = ImEx.ScaledVectorX(400f, Im.Style.FrameHeight);
+        var                        optionSize   = size.AddX(-indent);
+        using var                  modReference = penumbra.Mods.GetByName(mod);
+        using var                  id           = Im.Id.Empty();
+        Action<SettingPresetData>? update       = null;
+        ImEx.TextCentered($"正在编辑 {mod.Name} 的设置{(modReference is null ? "（未找到）" : string.Empty)}");
+        Im.Line.Same(Im.ContentRegion.Maximum.X - Im.Style.FrameHeight);
+        if (PenumbraOptionDisplay.DrawConfigButton(config.Ephemeral.PenumbraOptionDisplay, out var newDisplay))
+            config.Ephemeral.PenumbraOptionDisplay = newDisplay;
+
+        foreach (var (idx, (group, groupSettings)) in settings.Settings.Index())
+        {
+            id.Push(idx);
+            var (actualGroupIndex, actualGroupId) = modReference?.FindGroup(group) ?? (-1, default);
+            LunaStyle.DrawSeparator();
+
+            if (SettingPresetData.DrawGroup(size, idx, group, actualGroupIndex >= 0 ? actualGroupId : null, groupSettings.DisableAllUnknown,
+                    out var newGroup, out var disable, config.Ephemeral.PenumbraOptionDisplay))
+                update = s =>
+                {
+                    if (disable.HasValue)
+                        s.SetDisableUnknownOptions(group, disable.Value);
+                    else if (newGroup.HasValue)
+                        s.Settings.ReplaceGroupIdentifier(group, newGroup.Value);
+                    else
+                        s.Settings.Remove(group);
+                };
+
+            using var i = Im.Indent(indent);
+            foreach (var (optionIndex, (optionIdentifier, optionState)) in groupSettings.Options.Index())
+            {
+                id.Push(optionIndex);
+                var (actualOptionIndex, actualOptionIdentifier) = modReference?.FindOption(optionIdentifier, actualGroupIndex) ?? (-1, default);
+
+                if (!config.Ephemeral.PenumbraOptionDisplay.CheckAll(PenumbraOptionDisplay.HideIndex
+                      | PenumbraOptionDisplay.HideIds
+                      | PenumbraOptionDisplay.HideResolve))
+                    Im.Cursor.Y += Im.Style.ItemSpacing.Y;
+
+                if (SettingPresetData.DrawOption(optionSize, optionIndex, optionIdentifier,
+                        actualOptionIndex >= 0 ? actualOptionIdentifier : null,
+                        (OptionState)optionState, out var changedOption, out var newState, config.Ephemeral.PenumbraOptionDisplay))
+                    update = s =>
+                    {
+                        if (newState.HasValue)
+                            groupSettings.Options[optionIdentifier] = (byte)newState;
+                        else if (changedOption.HasValue)
+                            s.Settings.ReplaceOptionIdentifiers(optionIdentifier, changedOption.Value, group);
+                        else
+                            groupSettings.Options.Remove(optionIdentifier);
+                    };
+
+                id.Pop();
+            }
+
+            if (!config.Ephemeral.PenumbraOptionDisplay.HasFlag(PenumbraOptionDisplay.HideAddOption))
+                Im.Cursor.Y += Im.Style.ItemSpacing.Y;
+            var currentNewOption = new ModObjectIdentifier(_optionIdentifierInput, _optionNameInput);
+            if (SettingPresetData.DrawAddOption(optionSize, groupSettings, ref _optionIdentifierInput, ref _optionNameInput,
+                    out var newOption, modReference?.FindOption(currentNewOption, actualGroupIndex).Option,
+                    config.Ephemeral.PenumbraOptionDisplay))
+                update = _ => groupSettings.Options.Add(newOption, (byte)OptionState.Ignored);
+
+            id.Pop();
+        }
+
+        if (!config.Ephemeral.PenumbraOptionDisplay.HasFlag(PenumbraOptionDisplay.HideAddOption))
+            LunaStyle.DrawSeparator();
+        var currentNewGroup = new ModObjectIdentifier(_groupIdentifierInput, _groupNameInput);
+        if (settings.DrawAddGroup(size, ref _groupIdentifierInput, ref _groupNameInput, out var newGroupIdentifier,
+                modReference?.FindGroup(currentNewGroup).Group, config.Ephemeral.PenumbraOptionDisplay))
+            update = s => s.AddGroup(newGroupIdentifier);
+
+        if (update is null)
+            return false;
+
+        update.Invoke(settings);
+        updatedMod = (mod, settings);
+        return true;
     }
 
     private void DrawApplicationTooltip(int modIndex, in SettingPresetData settings)

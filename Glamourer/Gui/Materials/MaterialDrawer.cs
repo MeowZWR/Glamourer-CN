@@ -4,7 +4,7 @@ using Glamourer.Interop.Material;
 using ImSharp;
 using Luna;
 using Penumbra.GameData.Enums;
-using Penumbra.GameData.Files.MaterialStructs;
+using Penumbra.GameData.Files.Materials;
 using Penumbra.GameData.Gui;
 
 namespace Glamourer.Gui.Materials;

@@ -68,12 +68,15 @@ public sealed class MainWindow : Window, IDisposable
             if (_penumbra.CurrentMajorVersion is 0)
                 DrawProblemWindow(
                     "无法附加到 Penumbra。请确保 Penumbra 已安装并正在运行。\n\nGlamourer 需要 Penumbra 才能正常工作。"u8);
-            else if (_penumbra.MatchesVersions)
+            else if (_penumbra is { MatchesVersions: true, InitializationFailure: not AdapterVersionMismatchException })
                 DrawProblemWindow(
                     $"您当前未连接到 Penumbra，似乎是通过手动断开连接的。\n\nPenumbra 的最后 API 版本是 {_penumbra.CurrentMajorVersion}.{_penumbra.CurrentMinorVersion}。\n\nGlamourer 需要 Penumbra 才能正常工作。");
-            else
+            else if (!_penumbra.MatchesVersions)
                 DrawProblemWindow(
                     $"连接到 Penumbra 失败。\n\nPenumbra 的 API 版本是 {_penumbra.CurrentMajorVersion}.{_penumbra.CurrentMinorVersion}，但 Glamourer 需要的版本是 {_penumbra.RequiredMajorVersion}.{_penumbra.RequiredMinorVersion}，其中主版本号必须完全匹配，次版本号必须大于或等于。\n您可能需要更新 Penumbra 或为这个版本的 Glamourer 启用测试构建。\n\nGlamourer 需要 Penumbra 才能正常工作。");
+            else if (_penumbra.InitializationFailure is AdapterVersionMismatchException ex)
+                DrawProblemWindow(
+                    $"连接到 Penumbra 失败。\n\nPenumbra API 的 {ex.AdapterName} 版本是 {ex.ActualMajor}.{ex.ActualMinor}，但需要 {ex.RequiredMajor}.{ex.MinimumMinor} 或更高版本。\n您可能需要更新 Penumbra 或为这个版本的 Glamourer 启用测试构建。\n\nGlamourer 需要 Penumbra 才能正常工作。");
         }
         else
         {

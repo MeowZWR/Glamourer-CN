@@ -825,14 +825,14 @@ public class CommandService : IDisposable, IApiService
     {
         if (argument.Length is 0)
         {
-            _chat.Print(new SeStringBuilder().AddText("Use with /glamour copy ").AddGreen("[Character Identifier]").AddText(" | ")
+            _chat.Print(new SeStringBuilder().AddText("Use with /glamour copy ").AddGreen("[Character Identifier]").AddText("; ")
                 .AddBlue("<Application Type>")
                 .BuiltString);
             PlayerIdentifierHelp(false, true);
             ApplicationTypeHelp();
         }
 
-        var split = argument.Split('|', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var split = argument.Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         argument = split[0];
 
         if (!IdentifierHandling(argument, out var identifiers, false, true))
@@ -870,11 +870,11 @@ public class CommandService : IDisposable, IApiService
 
     private bool UpdateState(string arguments)
     {
-        var split = arguments.Split('|', 3, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var split = arguments.Split('|', 2, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         if (split.Length < 2)
         {
             _chat.Print(new SeStringBuilder().AddText("Use with /glamour update ").AddYellow("[Design Name, Path, or Identifier]")
-                .AddText(" | ").AddGreen("[Character Identifier]").AddText(" | ")
+                .AddText(" | ").AddGreen("[Character Identifier]").AddText("; ")
                 .AddBlue("<Application Type>").BuiltString);
             PrintDesignNameInfo(false, false, false, false);
             PlayerIdentifierHelp(false, true);
@@ -884,10 +884,11 @@ public class CommandService : IDisposable, IApiService
         if (!_resolver.GetDesign(split[0], out var existingDesign, false))
             return false;
 
-        if (!IdentifierHandling(split[1], out var identifiers, false, true))
+        var split2 = split[1].Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (!IdentifierHandling(split2[0], out var identifiers, false, true))
             return false;
 
-        if (!GetApplicationType(split.AsSpan(1), out var onlyEquip, out var onlyCustomize))
+        if (!GetApplicationType(split2, out var onlyEquip, out var onlyCustomize))
             return false;
 
         foreach (var identifier in identifiers)
@@ -910,20 +911,21 @@ public class CommandService : IDisposable, IApiService
 
     private bool SaveState(string arguments)
     {
-        var split = arguments.Split('|', 3, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var split = arguments.Split('|', 2, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
         if (split.Length < 2)
         {
             _chat.Print(new SeStringBuilder().AddText("Use with /glamour save ").AddYellow("[New Design Name]").AddText(" | ")
-                .AddGreen("[Character Identifier]").AddText(" | ")
+                .AddGreen("[Character Identifier]").AddText("; ")
                 .AddBlue("<Application Type>").BuiltString);
             PlayerIdentifierHelp(false, true);
             ApplicationTypeHelp();
         }
 
-        if (!IdentifierHandling(split[1], out var identifiers, false, true))
+        var split2 = split[1].Split(';', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (!IdentifierHandling(split2[0], out var identifiers, false, true))
             return false;
 
-        if (!GetApplicationType(split.AsSpan(1), out var onlyEquip, out var onlyCustomize))
+        if (!GetApplicationType(split2, out var onlyEquip, out var onlyCustomize))
             return false;
 
         foreach (var identifier in identifiers)

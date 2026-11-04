@@ -1,5 +1,5 @@
 ﻿using Glamourer.Interop.Material;
-using Penumbra.GameData.Files.MaterialStructs;
+using Penumbra.GameData.Files.Materials;
 
 namespace Glamourer.Gui.Materials;
 

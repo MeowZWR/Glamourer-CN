@@ -8,7 +8,7 @@ using Glamourer.State;
 using ImSharp;
 using Luna;
 using Penumbra.GameData.Enums;
-using Penumbra.GameData.Files.MaterialStructs;
+using Penumbra.GameData.Files.Materials;
 using Penumbra.GameData.Gui;
 using Penumbra.GameData.Interop;
 using Penumbra.String;

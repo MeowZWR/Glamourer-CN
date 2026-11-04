@@ -1,7 +1,7 @@
 ﻿using Dalamud.Plugin.Services;
 using ImSharp;
 using Luna;
-using Penumbra.GameData.Files.MaterialStructs;
+using Penumbra.GameData.Files.Materials;
 using Penumbra.GameData.Structs;
 
 namespace Glamourer.Interop.Material;

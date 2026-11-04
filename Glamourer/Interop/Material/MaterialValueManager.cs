@@ -8,7 +8,7 @@ using Luna;
 using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using Penumbra.GameData.Enums;
-using Penumbra.GameData.Files.MaterialStructs;
+using Penumbra.GameData.Files.Materials;
 using Penumbra.GameData.Files.StainMapStructs;
 using Penumbra.GameData.Structs;
 using JsonSerializer = Newtonsoft.Json.JsonSerializer;
