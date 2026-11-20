@@ -13,7 +13,8 @@ public sealed class SetSelector(
     AutoDesignManager manager,
     AutomationFilter filter,
     ActorObjectManager objects,
-    AutomationChanged automationChanged)
+    AutomationChanged automationChanged,
+    CompanionSetSelector companionSelector)
     : IPanel
 {
     private readonly AutomationFilter  _filter            = filter;
@@ -27,7 +28,7 @@ public sealed class SetSelector(
     {
         Im.Cursor.Y += Im.Style.FramePadding.Y;
         var       cache = CacheManager.Instance.GetOrCreateCache(Im.Id.Current, () => new Cache(this));
-        using var clip  = new Im.ListClipper(cache.Count, cache.SelectableSize.Y);
+        using var clip  = new Im.ListClipper(cache.Count, cache.SelectableSize.Y + Im.Style.ItemSpacing.Y);
         foreach (var item in clip.Iterate(cache))
         {
             Im.Cursor.X += Im.Style.FramePadding.X;
@@ -35,6 +36,8 @@ public sealed class SetSelector(
             using var group = Im.Group();
             DrawSetSelectable(cache, item);
         }
+
+        companionSelector.Draw();
     }
 
     private void DrawSetSelectable(Cache cache, in AutomationCacheItem item)

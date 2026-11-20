@@ -17,6 +17,7 @@ public sealed class AutomationSelection : IUiService, IDisposable
 
     public AutoDesignSet? Set       { get; private set; }
     public int            Index     { get; private set; } = -1;
+    public CompanionAutoSet? Companion { get; private set; }
     public StringU8       Name      { get; private set; } = NoSelection;
     public StringU8       Incognito { get; private set; } = NoSelection;
 
@@ -48,9 +49,21 @@ public sealed class AutomationSelection : IUiService, IDisposable
         }
     }
 
+    public void UpdateCompanion(CompanionAutoSet companion, int index)
+    {
+        Companion                       = companion;
+        Set                             = companion.Set;
+        _config.SelectedAutomationIndex = -1;
+        Index                           = -1;
+        Name                            = new StringU8(companion.Set.Name);
+        Incognito                       = new StringU8($"Companion Auto Design Set #{index + 1}");
+        SelectionChanged?.Invoke();
+    }
+
     public void Update(in AutomationCacheItem? item)
     {
-        Set = item?.Set;
+        Companion = null;
+        Set       = item?.Set;
         if (Set is null)
         {
             _config.SelectedAutomationIndex = -1;

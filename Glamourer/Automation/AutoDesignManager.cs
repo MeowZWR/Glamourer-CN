@@ -279,12 +279,12 @@ public sealed class AutoDesignManager : ISavable, IReadOnlyList<AutoDesignSet>, 
         _event.Invoke(new AutomationChanged.ChangedTemporarySettingsResetArguments(set, newValue));
     }
 
-    public void AddDesign(AutoDesignSet set, IDesignStandIn design)
+    public void AddDesign(AutoDesignSet set, IDesignStandIn design, ApplicationType type = ApplicationType.All)
     {
         var newDesign = new AutoDesign
         {
             Design     = design is RandomDesign ? new RandomDesign(_randomDesigns) : design,
-            Type       = ApplicationType.All,
+            Type       = type & ApplicationType.All,
             Conditions = _conditionsLoader.AlwaysTrue,
         };
         set.Designs.Add(newDesign);
@@ -580,7 +580,7 @@ public sealed class AutoDesignManager : ISavable, IReadOnlyList<AutoDesignSet>, 
         }
     }
 
-    private AutoDesign? ToDesignObject(string setName, in JsonElement jObj)
+    internal AutoDesign? ToDesignObject(string setName, in JsonElement jObj)
     {
         var             designIdentifier = jObj.TryReadProperty("Design"u8, out string? de, true) ? de : null;
         IDesignStandIn? design;

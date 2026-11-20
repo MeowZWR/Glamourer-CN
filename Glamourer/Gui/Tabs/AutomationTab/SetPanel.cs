@@ -32,7 +32,8 @@ public sealed class SetPanel(
     AutomationSelection selection,
     AutomationChanged automationChanged,
     ActorObjectManager actors,
-    HumanModelList humans) : IPanel
+    HumanModelList humans,
+    CompanionSetPanel companionPanel) : IPanel
 {
     private readonly AutomationSelection _selection         = selection;
     private readonly AutomationChanged   _automationChanged = automationChanged;
@@ -50,6 +51,13 @@ public sealed class SetPanel(
 
     public void Draw()
     {
+        if (_selection.Companion is { } companion)
+        {
+            companionPanel.Draw(companion);
+            randomDrawer.Draw();
+            return;
+        }
+
         if (_selection.Index < 0)
             return;
 

@@ -34,14 +34,16 @@ public sealed class AutoDesignApplier : IDisposable, IRequiredService
     private readonly IClientState                 _clientState;
     private readonly CustomizePlusAssociationApplier _customizePlus;
     private readonly DesignChanged                 _designChanged;
+    private readonly CompanionAutoManager          _companions;
 
     private readonly JobChangeState _jobChangeState;
 
     public AutoDesignApplier(Configuration config, AutoDesignManager manager, StateManager state, JobService jobs, ActorManager actors,
         AutomationChanged @event, ActorObjectManager objects, WeaponLoading weapons, HumanModelList humans, IClientState clientState,
         EquippedGearset equippedGearset, DesignMerger designMerger, JobChangeState jobChangeState,
-        CustomizePlusAssociationApplier customizePlus, DesignChanged designChanged)
+        CustomizePlusAssociationApplier customizePlus, DesignChanged designChanged, CompanionAutoManager companions)
     {
+        _companions      =  companions;
         _config          =  config;
         _manager         =  manager;
         _state           =  state;
@@ -342,17 +344,18 @@ public sealed class AutoDesignApplier : IDisposable, IRequiredService
         }
 
         forcedRedraw = false;
-        if (!_humans.IsHuman((uint)actor.AsCharacter->ModelContainer.ModelCharaId))
+        if (!_humans.IsHuman((uint)actor.AsCharacter->ModelContainer.ModelCharaId) && !_companions.Contains(set))
             return;
 
         if (actor.IsTransformed)
             return;
 
+        var currentCustomize = state.ModelData.IsHuman ? state.ModelData.Customize : CustomizeArray.Default;
         var mergedDesign = _designMerger.Merge(
             set.Designs.Where(d => d.Conditions.Match(actor))
                 .SelectMany(d => d.Design.AllLinks(newApplication, cond => cond.Match(actor))
                     .Select(l => (l.Design, l.Flags & d.Type, d.Conditions.JobFlags))),
-            state.ModelData.Customize, state.BaseData, true, _config.AlwaysApplyAssociatedMods);
+            currentCustomize, state.BaseData, true, _config.AlwaysApplyAssociatedMods);
 
         if (_objects.IsInGPose && actor.IsGPoseOrCutscene)
         {
@@ -389,6 +392,9 @@ public sealed class AutoDesignApplier : IDisposable, IRequiredService
             case IdentifierType.Npc:
                 return _manager.EnabledSets.TryGetValue(identifier, out set);
             case IdentifierType.Owned:
+                if (_companions.TryGetEnabledSet(identifier, out set))
+                    return true;
+
                 if (_manager.EnabledSets.TryGetValue(identifier, out set))
                     return true;
 

@@ -11,15 +11,17 @@ namespace Glamourer.Gui.Tabs.AutomationTab;
 
 public sealed class AutomationButtons : ButtonFooter
 {
-    public AutomationButtons(Configuration config, AutoDesignManager manager, AutomationSelection selection, ActorObjectManager objects)
+    public AutomationButtons(Configuration config, AutoDesignManager manager, AutomationSelection selection, ActorObjectManager objects,
+        CompanionAutoManager companions)
     {
-        Buttons.AddButton(new AddButton(objects, manager),              100);
-        Buttons.AddButton(new DuplicateButton(selection, manager),      90);
-        Buttons.AddButton(new HelpButton(),                             80);
-        Buttons.AddButton(new DeleteButton(selection, config, manager), 70);
+        Buttons.AddButton(new AddButton(objects, manager, companions),              100);
+        Buttons.AddButton(new DuplicateButton(selection, manager, companions),      90);
+        Buttons.AddButton(new HelpButton(),                                         80);
+        Buttons.AddButton(new DeleteButton(selection, config, manager, companions), 70);
     }
 
-    private sealed class AddButton(ActorObjectManager objects, AutoDesignManager manager) : BaseIconButton<AwesomeIcon>
+    private sealed class AddButton(ActorObjectManager objects, AutoDesignManager manager, CompanionAutoManager companions)
+        : BaseIconButton<AwesomeIcon>
     {
         private ActorIdentifier _identifier;
 
@@ -37,16 +39,27 @@ public sealed class AutomationButtons : ButtonFooter
         }
 
         public override void DrawTooltip()
-            => Im.Text($"创建一个新的自动执行集，与 {_identifier} 关联。关联的角色可以在以后更改。");
+        {
+            if (Im.Io.KeyControl)
+                Im.Text("创建一个新的自动执行集，管理当前玩家的宠物和召唤物。"u8);
+            else
+                Im.Text($"创建一个新的自动执行集，与 {_identifier} 关联。关联的角色可以在以后更改。\n按住 Ctrl 点击以创建管理当前玩家宠物和召唤物的自动执行集。");
+        }
 
         public override bool Enabled
-            => _identifier.IsValid;
+            => _identifier.IsValid || Im.Io.KeyControl;
 
         public override void OnClick()
-            => manager.AddDesignSet("新自动执行集", _identifier);
+        {
+            if (Im.Io.KeyControl)
+                companions.AddSet("新宠物自动执行集");
+            else
+                manager.AddDesignSet("新自动执行集", _identifier);
+        }
     }
 
-    private sealed class DuplicateButton(AutomationSelection selection, AutoDesignManager manager) : BaseIconButton<AwesomeIcon>
+    private sealed class DuplicateButton(AutomationSelection selection, AutoDesignManager manager, CompanionAutoManager companions)
+        : BaseIconButton<AwesomeIcon>
     {
         public override AwesomeIcon Icon
             => LunaStyle.DuplicateIcon;
@@ -61,7 +74,12 @@ public sealed class AutomationButtons : ButtonFooter
             => selection.Set is not null;
 
         public override void OnClick()
-            => manager.DuplicateDesignSet(selection.Set!);
+        {
+            if (selection.Companion is { } companion)
+                companions.DuplicateSet(companion);
+            else
+                manager.DuplicateDesignSet(selection.Set!);
+        }
     }
 
     private sealed class HelpButton : BaseIconButton<AwesomeIcon>
@@ -135,7 +153,11 @@ public sealed class AutomationButtons : ButtonFooter
         }
     }
 
-    private sealed class DeleteButton(AutomationSelection selection, Configuration config, AutoDesignManager manager)
+    private sealed class DeleteButton(
+        AutomationSelection selection,
+        Configuration config,
+        AutoDesignManager manager,
+        CompanionAutoManager companions)
         : BaseIconButton<AwesomeIcon>
     {
         private bool _enabled;
@@ -164,6 +186,16 @@ public sealed class AutomationButtons : ButtonFooter
             => (_enabled = config.DeleteDesignModifier.IsActive()) && selection.Set is not null;
 
         public override void OnClick()
-            => manager.DeleteDesignSet(selection.Index);
+        {
+            if (selection.Companion is { } companion)
+            {
+                companions.DeleteSet(companion);
+                selection.Update(null);
+            }
+            else
+            {
+                manager.DeleteDesignSet(selection.Index);
+            }
+        }
     }
 }

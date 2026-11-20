@@ -140,11 +140,14 @@ public abstract class DesignComboBase(
         {
             if (arguments.Type switch
                 {
-                    DesignChanged.Type.Created        => true,
-                    DesignChanged.Type.Renamed        => true,
-                    DesignChanged.Type.ChangedColor   => true,
-                    DesignChanged.Type.Deleted        => true,
-                    DesignChanged.Type.QuickDesignBar => true,
+                    DesignChanged.Type.Created         => true,
+                    DesignChanged.Type.Renamed         => true,
+                    DesignChanged.Type.ChangedColor    => true,
+                    DesignChanged.Type.Deleted         => true,
+                    DesignChanged.Type.QuickDesignBar  => true,
+                    DesignChanged.Type.ApplyCustomize  => true,
+                    DesignChanged.Type.EntireCustomize => true,
+                    DesignChanged.Type.Customize       => CompanionDesignRules.ChangesCustomizeSet(arguments.Transaction),
                     _                                 => false,
                 })
                 Dirty |= IManagedCache.DirtyFlags.Custom;

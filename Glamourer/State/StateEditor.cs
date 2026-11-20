@@ -295,7 +295,9 @@ public class StateEditor(
     /// <inheritdoc/>
     public void ApplyDesign(object data, MergedDesign mergedDesign, ApplySettings settings)
     {
-        var state = (ActorState)data;
+        var state    = (ActorState)data;
+        var wasHuman = state.ModelData.IsHuman;
+        var previous = state.ModelData;
         modApplier.HandleStateApplication(state, mergedDesign, settings.Source, true, settings.RespectManual, settings.ForceModAssociations);
         if (!Editor.ChangeModelId(state, mergedDesign.Design.DesignData.ModelId, mergedDesign.Design.DesignData.Customize,
                 mergedDesign.Design.GetDesignDataRef().GetEquipmentPtr(), settings.Source, out var oldModelId, settings.Key))
@@ -425,6 +427,9 @@ public class StateEditor(
                     Editor.ChangeMetaState(state, meta, mergedDesign.Design.DesignData.GetMeta(meta), Source(meta), out _, settings.Key);
             }
 
+            if (!wasHuman)
+                RestoreUnappliedEquipment(state, previous, mergedDesign.Design);
+
             if (settings.ResetMaterials || !settings.RespectManual && mergedDesign.ResetAdvancedDyes is not 0)
             {
                 if (settings.ResetMaterials || mergedDesign.ResetAdvancedDyes.HasFlag(ModelCombinedSlotsExtensions.All))
@@ -491,6 +496,51 @@ public class StateEditor(
 
             var source = mergedDesign.Sources[index];
             return source is StateSource.Game ? StateSource.Game : settings.Source;
+        }
+    }
+
+    private static void RestoreUnappliedEquipment(ActorState state, in DesignData previous, DesignBase design)
+    {
+        foreach (var slot in EquipSlotExtensions.FullSlots)
+        {
+            if (!design.DoApplyEquip(slot))
+            {
+                state.ModelData.SetItem(slot, previous.Item(slot));
+                state.Sources[slot, false] = StateSource.Game;
+            }
+
+            if (!design.DoApplyStain(slot))
+            {
+                state.ModelData.SetStain(slot, previous.Stain(slot));
+                state.Sources[slot, true] = StateSource.Game;
+            }
+        }
+
+        foreach (var slot in BonusExtensions.AllFlags)
+        {
+            if (!design.DoApplyBonusItem(slot))
+            {
+                state.ModelData.SetBonusItem(slot, previous.BonusItem(slot));
+                state.Sources[slot] = StateSource.Game;
+            }
+        }
+
+        foreach (var slot in CrestExtensions.AllRelevantSet)
+        {
+            if (!design.DoApplyCrest(slot))
+            {
+                state.ModelData.SetCrest(slot, previous.Crest(slot));
+                state.Sources[slot] = StateSource.Game;
+            }
+        }
+
+        foreach (var meta in MetaExtensions.AllRelevant)
+        {
+            if (design.DoApplyMeta(meta))
+                continue;
+
+            state.ModelData.SetMeta(meta, previous.GetMeta(meta));
+            state.Sources[meta] = StateSource.Game;
         }
     }
 
