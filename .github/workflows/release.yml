@@ -20,10 +20,17 @@ jobs:
           submodules: recursive
       - name: Verify release branch
         run: |
-          git fetch origin stable
-          git merge-base --is-ancestor "$env:GITHUB_SHA" origin/stable
-          if ($LASTEXITCODE -ne 0) {
-            throw "Stable releases must be tagged from the stable branch."
+          git fetch origin '+refs/heads/stable*:refs/remotes/origin/stable*'
+          $ok = $false
+          foreach ($ref in @(git for-each-ref --format='%(refname:short)' 'refs/remotes/origin/stable*')) {
+            git merge-base --is-ancestor "$env:GITHUB_SHA" $ref
+            if ($LASTEXITCODE -eq 0) {
+              $ok = $true
+              break
+            }
+          }
+          if (-not $ok) {
+            throw "Stable releases must be tagged from stable or a stable-* hotfix branch."
           }
       - name: Setup .NET
         uses: actions/setup-dotnet@v5
