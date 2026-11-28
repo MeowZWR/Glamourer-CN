@@ -5,16 +5,15 @@ using Luna;
 namespace Glamourer.MountReplacement.Gui;
 
 public sealed class MountCombo(MountReplacementManager manager, string firstLabel)
-    : FilterComboBase<MountCombo.MountCacheItem>(new MountFilter())
+    : FilterComboBase<MountCombo.MountCacheItem>(new MountFilter(), ConfigData.Default with { DirtyCacheOnClose = true })
 {
     public const string AnyLabel       = "任意坐骑";
     public const string UnsetLabel     = "请选择";
-    public const string NewSourceLabel = "在此处显示坐骑";
+    public const string NewSourceLabel = "在此处选择坐骑";
 
     private uint                                        _current;
     private Func<uint, bool>?                           _hide;
     private readonly Dictionary<ImGuiId, HashSet<uint>> _openFavorites = [];
-    private readonly Dictionary<ImGuiId, int>           _openFrame     = [];
 
     public readonly struct MountCacheItem(uint id, string name)
     {
@@ -38,9 +37,10 @@ public sealed class MountCombo(MountReplacementManager manager, string firstLabe
     {
         if (_hide?.Invoke(0) is not true)
             yield return new MountCacheItem(0, firstLabel);
-        _openFavorites.TryGetValue(CurrentId, out var favorites);
+        if (!_openFavorites.TryGetValue(CurrentId, out var favorites))
+            _openFavorites[CurrentId] = favorites = [..manager.Favorites];
         foreach (var mount in manager.Mounts.Values
-                     .OrderByDescending(m => favorites?.Contains(m.Id) ?? manager.IsFavorite(m.Id))
+                     .OrderByDescending(m => favorites.Contains(m.Id))
                      .ThenBy(m => m.Name, StringComparer.OrdinalIgnoreCase))
         {
             if (_hide?.Invoke(mount.Id) is true)
@@ -98,49 +98,13 @@ public sealed class MountCombo(MountReplacementManager manager, string firstLabe
         }
     }
 
-    protected override void PreDrawCombo(float width)
-    {
-        if (_openFavorites.ContainsKey(CurrentId))
-            return;
-
-        if (CacheManager.Instance.TryGetCache(CurrentId, out FilterComboBaseCache<MountCacheItem>? cache))
-            cache.Dirty |= IManagedCache.DirtyFlags.Custom;
-    }
-
     protected override bool HandleComboPopup(float width, ImGuiId id, ImSharp.Rectangle boundingBox, ImSharp.ComboFlags flags, out bool exit,
         out MountCacheItem ret)
     {
-        if (Im.Popup.IsOpen(id))
-        {
-            var frame = Im.State.FrameCount;
-            if (!_openFrame.TryGetValue(CurrentId, out var last) || last != frame - 1)
-            {
-                _openFavorites[CurrentId] = SnapshotFavorites();
-                if (CacheManager.Instance.TryGetCache(CurrentId, out FilterComboBaseCache<MountCacheItem>? cache))
-                    cache.Dirty |= IManagedCache.DirtyFlags.Custom;
-            }
-
-            _openFrame[CurrentId] = frame;
-        }
-        else
-        {
-            _openFrame.Remove(CurrentId);
+        if (!Im.Popup.IsOpen(id))
             _openFavorites.Remove(CurrentId);
-        }
 
         return base.HandleComboPopup(width, id, boundingBox, flags, out exit, out ret);
-    }
-
-    private HashSet<uint> SnapshotFavorites()
-    {
-        var favorites = new HashSet<uint>();
-        foreach (var mount in manager.Mounts.Values)
-        {
-            if (manager.IsFavorite(mount.Id))
-                favorites.Add(mount.Id);
-        }
-
-        return favorites;
     }
 
     protected override bool IsSelected(MountCacheItem item, int globalIndex)

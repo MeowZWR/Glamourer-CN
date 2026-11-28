@@ -17,19 +17,21 @@ namespace Glamourer.MountReplacement;
 
 public sealed unsafe class MountReplacementApplier : IRequiredService, IDisposable
 {
-    private const uint CompanyChocoboMountId = 1;
-    private const int  TemporaryModPriority  = 99;
-    private const string TemporaryModTag = "GlamourerMountReplacement";
+    private const uint   CompanyChocoboMountId = 1;
+    private const int    TemporaryModPriority  = 99;
+    private const int    RefreshCooldownFrames = 30;
+    private const string TemporaryModTag       = "GlamourerMountReplacement";
+    private const string BasePap               = "mount.pap";
 
     private const string SetRideBgmSig =
         "48 8B 05 ?? ?? ?? ?? 48 85 C0 74 ?? 83 78 08 06 76 ?? 48 8B 80 C0 00 00 00 66 89 88 4C 02 00 00";
 
     private static readonly string[] RiderPapNames =
     [
-        "mount.pap", "mount01.pap", "mount02.pap", "mount03.pap", "mount04.pap", "mount05.pap", "mount06.pap", "mount07.pap", "mount08.pap",
+        BasePap, "mount01.pap", "mount02.pap", "mount03.pap", "mount04.pap", "mount05.pap", "mount06.pap", "mount07.pap", "mount08.pap",
     ];
 
-    private readonly record struct RiderPap(string Race, string Name, string Path);
+    private static readonly HashSet<string> NoPaps = [];
 
     private readonly MountReplacementManager _manager;
     private readonly PenumbraSubscriber      _penumbra;
@@ -46,9 +48,9 @@ public sealed unsafe class MountReplacementApplier : IRequiredService, IDisposab
     private readonly EventSubscriber<ModSettingChange, Guid, string, bool> _modSettingChanged;
     private readonly Task<Hook<SetRideBgm>> _rideBgmHook;
 
-    private readonly Dictionary<(byte Type, ushort Model), RiderPap[]> _riderPaps = [];
-    private readonly Dictionary<string, string>                        _appliedPaps = new(StringComparer.OrdinalIgnoreCase);
-    private readonly PapLoadTable?                                     _papLoadTable;
+    private readonly Dictionary<(byte Type, ushort Model), HashSet<string>> _riderPaps = [];
+    private readonly PapLoadTable?                                          _papLoadTable;
+    private          Dictionary<string, string>                             _appliedPaps = new(StringComparer.OrdinalIgnoreCase);
 
     private Guid  _modCollection;
     private bool  _hasSwaps;
@@ -185,9 +187,7 @@ public sealed unsafe class MountReplacementApplier : IRequiredService, IDisposab
             return;
 
         _penumbra.Redraw(mount.Index.Index);
-        var player = _objects.Player;
-        if (player.Valid)
-            _penumbra.Redraw(player.Index.Index);
+        RedrawPlayer();
         _shownTarget = next;
     }
 
@@ -206,10 +206,8 @@ public sealed unsafe class MountReplacementApplier : IRequiredService, IDisposab
             return;
 
         if (_refreshCooldown == 0)
-            _refreshCooldown = 30;
-        var player = _objects.Player;
-        if (player.Valid)
-            _penumbra.Redraw(player.Index.Index);
+            _refreshCooldown = RefreshCooldownFrames;
+        RedrawPlayer();
     }
 
     private void OnFramework(IFramework framework)
@@ -235,8 +233,13 @@ public sealed unsafe class MountReplacementApplier : IRequiredService, IDisposab
         if (!refresh || !TryGetCurrentMount(out var mount, out _))
             return;
 
-        _refreshCooldown = 30;
+        _refreshCooldown = RefreshCooldownFrames;
         _penumbra.Redraw(mount.Index.Index);
+        RedrawPlayer();
+    }
+
+    private void RedrawPlayer()
+    {
         var player = _objects.Player;
         if (player.Valid)
             _penumbra.Redraw(player.Index.Index);
@@ -276,25 +279,16 @@ public sealed unsafe class MountReplacementApplier : IRequiredService, IDisposab
                     continue;
 
                 foreach (var source in _manager.Mounts.Values)
-                {
-                    if (source.Id != target.Id)
-                {
-                    AddAnimationSwaps(swaps, source, target);
-                    AddSoundSwaps(swaps, source, target);
-                }
-                }
+                    AddSwaps(swaps, source, target);
             }
 
             foreach (var rule in _manager.Rules)
             {
-                if (!rule.Enabled || rule.Source == 0
-                 || !_manager.Mounts.TryGetValue(rule.Source, out var source)
-                 || !_manager.Mounts.TryGetValue(rule.Target, out var target)
-                 || source.Id == target.Id)
-                    continue;
-
-                AddAnimationSwaps(swaps, source, target);
-                AddSoundSwaps(swaps, source, target);
+                if (rule.Enabled
+                 && rule.Source != 0
+                 && _manager.Mounts.TryGetValue(rule.Source, out var source)
+                 && _manager.Mounts.TryGetValue(rule.Target, out var target))
+                    AddSwaps(swaps, source, target);
             }
         }
 
@@ -302,34 +296,31 @@ public sealed unsafe class MountReplacementApplier : IRequiredService, IDisposab
         _riderSwapsChanged = CommitPapSwaps(swaps);
     }
 
+    private void AddSwaps(Dictionary<string, string> swaps, MountInfo source, MountInfo target)
+    {
+        if (source.Id == target.Id)
+            return;
+
+        AddAnimationSwaps(swaps, source, target);
+        AddSoundSwaps(swaps, source, target);
+    }
+
     private bool CommitPapSwaps(Dictionary<string, string> swaps)
     {
-        var count   = 0;
-        var changed = false;
-        foreach (var (key, value) in swaps)
-        {
-            if (!key.EndsWith(".pap", StringComparison.OrdinalIgnoreCase))
-                continue;
-
-            ++count;
-            if (!_appliedPaps.TryGetValue(key, out var applied) || !applied.Equals(value, StringComparison.OrdinalIgnoreCase))
-                changed = true;
-        }
-
-        if (_appliedPaps.Count != count)
-            changed = true;
-        if (!changed)
+        var paps = swaps.Where(p => IsPap(p.Key)).ToDictionary(StringComparer.OrdinalIgnoreCase);
+        if (paps.Count == _appliedPaps.Count
+         && paps.All(p => _appliedPaps.TryGetValue(p.Key, out var applied) && applied.Equals(p.Value, StringComparison.OrdinalIgnoreCase)))
             return false;
 
-        _appliedPaps.Clear();
-        foreach (var (key, value) in swaps)
-        {
-            if (key.EndsWith(".pap", StringComparison.OrdinalIgnoreCase))
-                _appliedPaps[key] = value;
-        }
-
+        _appliedPaps = paps;
         return true;
     }
+
+    private static bool IsPap(string path)
+        => path.EndsWith(".pap", StringComparison.OrdinalIgnoreCase);
+
+    private static string FallbackPap(string name)
+        => name == BasePap ? "mount01.pap" : BasePap;
 
     private void AddAnimationSwaps(Dictionary<string, string> swaps, MountInfo source, MountInfo target)
     {
@@ -340,17 +331,16 @@ public sealed unsafe class MountReplacementApplier : IRequiredService, IDisposab
 
         var sourcePaps = RiderPaps(source);
         var targetPaps = RiderPaps(target);
-        if (sourcePaps.Length == 0 || targetPaps.Length == 0)
+        if (sourcePaps.Count == 0 || targetPaps.Count == 0)
             return;
 
         foreach (var name in RiderPapNames)
         {
-            if (!HasPap(sourcePaps, name))
+            if (!sourcePaps.Contains(name))
                 continue;
 
-            var targetName = HasPap(targetPaps, name) ? name
-                : HasPap(targetPaps, "mount.pap") ? "mount.pap"
-                : name == "mount.pap" && HasPap(targetPaps, "mount01.pap") ? "mount01.pap"
+            var targetName = targetPaps.Contains(name) ? name
+                : targetPaps.Contains(FallbackPap(name)) ? FallbackPap(name)
                 : null;
             if (targetName == null)
                 continue;
@@ -373,20 +363,8 @@ public sealed unsafe class MountReplacementApplier : IRequiredService, IDisposab
         if (_gameData.FileExists(path))
             return path;
 
-        if (name != "mount.pap")
-        {
-            path = PapPath(skeleton, directory, "mount.pap");
-            if (_gameData.FileExists(path))
-                return path;
-        }
-        else
-        {
-            path = PapPath(skeleton, directory, "mount01.pap");
-            if (_gameData.FileExists(path))
-                return path;
-        }
-
-        return null;
+        path = PapPath(skeleton, directory, FallbackPap(name));
+        return _gameData.FileExists(path) ? path : null;
     }
 
     private void ApplyMountScale(nint gameObject, MountInfo source, MountInfo target)
@@ -471,17 +449,6 @@ public sealed unsafe class MountReplacementApplier : IRequiredService, IDisposab
         };
     }
 
-    private static bool HasPap(RiderPap[] paps, string name)
-    {
-        foreach (var pap in paps)
-        {
-            if (pap.Name == name)
-                return true;
-        }
-
-        return false;
-    }
-
     private static string AnimationDirectory(MountInfo mount)
         => $"mt_{(mount.ModelType == 2 ? 'd' : 'm')}{mount.Model:D4}";
 
@@ -511,29 +478,27 @@ public sealed unsafe class MountReplacementApplier : IRequiredService, IDisposab
             swaps[from] = to;
     }
 
-    private RiderPap[] RiderPaps(MountInfo mount)
+    private HashSet<string> RiderPaps(MountInfo mount)
     {
         if (mount.ModelType is not (2 or 3))
-            return [];
+            return NoPaps;
 
         var key = (mount.ModelType, mount.Model);
         if (_riderPaps.TryGetValue(key, out var cached))
             return cached;
 
-        var kind = mount.ModelType == 2 ? 'd' : 'm';
-        var list = new List<RiderPap>();
+        var directory = AnimationDirectory(mount);
+        var names     = new HashSet<string>();
         for (var race = 1; race <= 18; ++race)
         {
-            var raceCode = $"c{race:D2}01";
             foreach (var name in RiderPapNames)
             {
-                var path = $"chara/human/{raceCode}/animation/a0001/mt_{kind}{mount.Model:D4}/resident/{name}";
-                if (_gameData.FileExists(path))
-                    list.Add(new RiderPap(raceCode, name, path));
+                if (_gameData.FileExists(PapPath((ushort)(race * 100 + 1), directory, name)))
+                    names.Add(name);
             }
         }
 
-        return _riderPaps[key] = list.ToArray();
+        return _riderPaps[key] = names;
     }
 
     private void SetAnimationSwaps(Dictionary<string, string> swaps)
@@ -572,7 +537,7 @@ public sealed unsafe class MountReplacementApplier : IRequiredService, IDisposab
         foreach (var source in swaps.Keys.ToArray())
         {
             var dest = swaps[source];
-            if (!dest.EndsWith(".pap", StringComparison.OrdinalIgnoreCase))
+            if (!IsPap(dest))
                 continue;
 
             if (!resolved.TryGetValue(dest, out var path))

@@ -104,7 +104,7 @@ public sealed partial class Configuration : IPluginConfiguration, ISavable, ISer
 
     public List<(string Code, bool Enabled)> Codes { get; set; } = [];
 
-    public bool ShowMountReplacementPanel { get; set; } = true;
+    public bool ShowMountReplacementPanel { get; set; } = false;
 
 #if DEBUG
     public bool DebugMode { get; set; } = true;

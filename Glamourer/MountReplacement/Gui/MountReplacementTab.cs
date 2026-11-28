@@ -38,7 +38,7 @@ public sealed class MountReplacementTab : ITab<MainTabType>
             _manager.SetEnabled(enabled);
         Im.Line.Same();
         LunaStyle.DrawAlignedHelpMarker(
-            "召唤原坐骑时，在本地将其外观显示为另一坐骑，多座位数乘客骑乘时可能显示异常。\n所选坐骑的规则优先于「任意坐骑」规则。"u8);
+            "召唤原坐骑时，在本地将其外观显示为另一坐骑。多人坐骑乘客位置可能显示异常。\n所选坐骑的规则优先于「任意坐骑」规则。"u8);
         Im.Separator();
 
         using var table = Im.Table.Begin("MountReplacementTable"u8, 4, TableFlags.RowBackground | TableFlags.ScrollY);
