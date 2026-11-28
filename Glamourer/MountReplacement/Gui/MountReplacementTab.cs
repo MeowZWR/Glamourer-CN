@@ -23,7 +23,7 @@ public sealed class MountReplacementTab : ITab<MainTabType>
     }
 
     public bool IsVisible
-        => _manager.Enabled;
+        => _config.ShowMountReplacementPanel;
 
     public ReadOnlySpan<byte> Label
         => "坐骑替换"u8;
@@ -33,28 +33,31 @@ public sealed class MountReplacementTab : ITab<MainTabType>
 
     public void DrawContent()
     {
-        Im.TextWrapped("召唤原坐骑时，在本地将其外观显示为另一坐骑，不影响实际坐骑、飞行能力和座位数。\n"u8
-          + "具体坐骑的规则优先于「任意坐骑」规则。"u8);
+        var enabled = _manager.Enabled;
+        if (Im.Checkbox("启用坐骑替换"u8, ref enabled))
+            _manager.SetEnabled(enabled);
+        Im.Line.Same();
+        LunaStyle.DrawAlignedHelpMarker(
+            "召唤原坐骑时，在本地将其外观显示为另一坐骑，多座位数乘客骑乘时可能显示异常。\n所选坐骑的规则优先于「任意坐骑」规则。"u8);
         Im.Separator();
 
-        using var table = Im.Table.Begin("MountReplacementTable"u8, 5, TableFlags.RowBackground | TableFlags.ScrollY);
+        using var table = Im.Table.Begin("MountReplacementTable"u8, 4, TableFlags.RowBackground | TableFlags.ScrollY);
         if (!table)
             return;
 
         table.SetupScrollFreeze(0, 2);
-        table.SetupColumn("##del"u8,  TableColumnFlags.WidthFixed, Im.Style.FrameHeight);
-        table.SetupColumn("原坐骑"u8,  TableColumnFlags.WidthStretch);
-        table.SetupColumn("显示为"u8,  TableColumnFlags.WidthStretch);
-        table.SetupColumn("启用"u8,   TableColumnFlags.WidthFixed, Im.Font.CalculateSize("启用"u8).X);
-        table.SetupColumn("##warn"u8, TableColumnFlags.WidthFixed, Im.Style.FrameHeight);
+        table.SetupColumn("##del"u8, TableColumnFlags.WidthFixed, Im.Style.FrameHeight);
+        table.SetupColumn("原坐骑"u8, TableColumnFlags.WidthStretch);
+        table.SetupColumn("显示为"u8, TableColumnFlags.WidthStretch);
+        table.SetupColumn("启用"u8,  TableColumnFlags.WidthFixed, Im.Font.CalculateSize("启用"u8).X);
         table.HeaderRow();
 
         table.NextColumn();
         table.NextColumn();
-        if (_sourceCombo.Draw("##newSource"u8, 0, Im.ContentRegion.Available.X, out var newSource, _manager.HasSource))
+        if (_sourceCombo.Draw("##newSource"u8, 0, Im.ContentRegion.Available.X, out var newSource, _manager.HasSource,
+                MountCombo.NewSourceLabel))
             _endAction = () => _manager.AddRule(newSource);
         table.DrawFrameColumn("选择原坐骑以添加新规则"u8);
-        table.NextColumn();
         table.NextColumn();
 
         for (var i = 0; i < _manager.Rules.Count; ++i)
@@ -87,30 +90,36 @@ public sealed class MountReplacementTab : ITab<MainTabType>
             _manager.ChangeTarget(rule, newTarget);
 
         table.NextColumn();
-        var enabled = rule.Enabled;
-        if (Im.Checkbox("##enabled"u8, ref enabled))
-            _manager.SetRuleEnabled(rule, enabled);
-
-        table.NextColumn();
-        DrawWarning(rule);
+        DrawEnabled(rule);
     }
 
-    private void DrawWarning(MountReplacementRule rule)
+    private void DrawEnabled(MountReplacementRule rule)
+    {
+        var warning = Warning(rule);
+        using (ImStyleBorder.Frame.Push(new ColorParameter(Colors.SelectedRed), Im.Style.GlobalScale, warning.Length > 0))
+        {
+            var enabled = rule.Enabled;
+            if (Im.Checkbox("##enabled"u8, ref enabled))
+                _manager.SetRuleEnabled(rule, enabled);
+        }
+
+        if (warning.Length > 0)
+            Im.Tooltip.OnHover(warning);
+    }
+
+    private ReadOnlySpan<byte> Warning(MountReplacementRule rule)
     {
         if (!_manager.Mounts.TryGetValue(rule.Source, out var source) || !_manager.Mounts.TryGetValue(rule.Target, out var target))
-            return;
+            return [];
 
         var seats  = source.ExtraSeats != target.ExtraSeats;
         var flying = source.IsFlying != target.IsFlying;
-        if (!seats && !flying)
-            return;
-
-        ImEx.Icon.DrawAligned(LunaStyle.WarningIcon, Colors.SelectedRed);
-        Im.Tooltip.OnHover((seats, flying) switch
+        return (seats, flying) switch
         {
-            (true, true) => "两个坐骑的座位数和飞行能力不同，乘客位置和飞行动作可能显示异常。"u8,
-            (true, _)    => "两个坐骑的座位数不同，乘客位置可能显示异常。"u8,
-            _            => "两个坐骑的飞行能力不同，飞行动作可能显示异常。"u8,
-        });
+            (false, false) => [],
+            (true, true)   => "两个坐骑的座位数和飞行能力不同，乘客位置和飞行动作可能显示异常。"u8,
+            (true, false)  => "两个坐骑的座位数不同，乘客位置可能显示异常。"u8,
+            _              => "两个坐骑的飞行能力不同，飞行动作可能显示异常。"u8,
+        };
     }
 }

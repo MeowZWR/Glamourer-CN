@@ -11,7 +11,6 @@ using Glamourer.Gui.Equipment;
 using Glamourer.Gui.Tabs.DesignTab;
 using Glamourer.Interop;
 using Glamourer.Interop.PalettePlus;
-using Glamourer.MountReplacement;
 using Glamourer.Services;
 using ImSharp;
 using Luna;
@@ -35,8 +34,7 @@ public sealed class SettingsTab(
     PredefinedTagManager predefinedTags,
     PcpService pcpService,
     IgnoredMods ignoredMods,
-    DesignColorUi designColors,
-    MountReplacementManager mountReplacement)
+    DesignColorUi designColors)
     : ITab<MainTabType>
 {
     private readonly VirtualKey[] _validKeys = keys.GetValidVirtualKeys().Prepend(VirtualKey.NO_KEY).ToArray();
@@ -60,10 +58,7 @@ public sealed class SettingsTab(
                 config.EnableAutoDesigns = v;
                 autoDesignApplier.OnEnableAutoDesignsChanged(v);
             });
-        Checkbox("启用坐骑替换"u8,
-            "启用后，召唤坐骑时在本地将其外观显示为另一坐骑，规则可以在坐骑替换标签页中配置。"u8,
-            mountReplacement.Enabled, mountReplacement.SetEnabled);
-        Im.Cursor.Y += Im.Style.FrameHeightWithSpacing * 3;
+        Im.Cursor.Y += Im.Style.FrameHeightWithSpacing * 4;
 
         using (Im.Child.Begin("SettingsChild"u8))
         {
@@ -339,6 +334,8 @@ public sealed class SettingsTab(
             "保持高级染色窗口与主窗口吸附，取消勾选使其可自由移动。"u8,
             config.KeepAdvancedDyesAttached, v => config.KeepAdvancedDyesAttached = v);
 
+        Checkbox("显示坐骑替换面板"u8, "在主窗口中显示坐骑替换标签页。此选项只控制面板是否显示。"u8,
+            config.ShowMountReplacementPanel, v => config.ShowMountReplacementPanel = v);
         Checkbox("调试模式"u8, "显示调试选项卡，仅对调试和进阶用法有帮助。一般不建议使用。"u8,
             config.DebugMode,
             v => config.DebugMode = v);

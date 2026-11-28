@@ -41,10 +41,13 @@ public sealed unsafe class MountReplacementApplier : IRequiredService, IDisposab
     private readonly HookManager        _hooks;
     private readonly AddTemporaryMod    _addTemporaryMod;
     private readonly RemoveTemporaryMod _removeTemporaryMod;
+    private readonly ResolvePath        _resolvePath;
     private readonly EventSubscriber    _penumbraInitialized;
+    private readonly EventSubscriber<ModSettingChange, Guid, string, bool> _modSettingChanged;
     private readonly Task<Hook<SetRideBgm>> _rideBgmHook;
 
     private readonly Dictionary<(byte Type, ushort Model), RiderPap[]> _riderPaps = [];
+    private readonly Dictionary<string, string>                        _appliedPaps = new(StringComparer.OrdinalIgnoreCase);
     private readonly PapLoadTable?                                     _papLoadTable;
 
     private Guid  _modCollection;
@@ -56,6 +59,8 @@ public sealed unsafe class MountReplacementApplier : IRequiredService, IDisposab
     private ushort _swapSkeleton;
     private int    _refreshCooldown;
     private uint   _shownTarget;
+    private bool   _modSwapsDirty;
+    private bool   _riderSwapsChanged;
 
     private delegate nint SetRideBgm(ushort bgmId);
 
@@ -75,7 +80,9 @@ public sealed unsafe class MountReplacementApplier : IRequiredService, IDisposab
         _papLoadTable        = PapLoadTable.Read(gameData.GetFile("chara/xls/animation/papLoadTable.plt")?.Data);
         _addTemporaryMod     = new AddTemporaryMod(pluginInterface);
         _removeTemporaryMod  = new RemoveTemporaryMod(pluginInterface);
-        _penumbraInitialized = Initialized.Subscriber(pluginInterface, UpdateAnimationSwaps);
+        _resolvePath         = new ResolvePath(pluginInterface);
+        _penumbraInitialized = Initialized.Subscriber(pluginInterface, RefreshModdedRiders);
+        _modSettingChanged   = ModSettingChanged.Subscriber(pluginInterface, OnModSettingChanged);
         _penumbra.GameState.CreatingCharacterBase += OnCreatingCharacterBase;
         _manager.Changed                          += OnChanged;
         _clientState.Login                        += UpdateAnimationSwaps;
@@ -94,6 +101,7 @@ public sealed unsafe class MountReplacementApplier : IRequiredService, IDisposab
         _framework.Update                         -= OnFramework;
         _hooks.DisposeHook("MountReplacementRideBgm");
         _penumbraInitialized.Dispose();
+        _modSettingChanged.Dispose();
         ClearAnimationSwaps();
     }
 
@@ -183,8 +191,35 @@ public sealed unsafe class MountReplacementApplier : IRequiredService, IDisposab
         _shownTarget = next;
     }
 
+    private void OnModSettingChanged(ModSettingChange type, Guid collectionId, string modDirectory, bool inherited)
+    {
+        if (type is ModSettingChange.TemporaryMod or ModSettingChange.TemporarySetting)
+            return;
+
+        _modSwapsDirty = true;
+    }
+
+    private void RefreshModdedRiders()
+    {
+        UpdateAnimationSwaps();
+        if (!_riderSwapsChanged || !_manager.Enabled || !TryGetCurrentMount(out _, out _))
+            return;
+
+        if (_refreshCooldown == 0)
+            _refreshCooldown = 30;
+        var player = _objects.Player;
+        if (player.Valid)
+            _penumbra.Redraw(player.Index.Index);
+    }
+
     private void OnFramework(IFramework framework)
     {
+        if (_modSwapsDirty)
+        {
+            _modSwapsDirty = false;
+            RefreshModdedRiders();
+        }
+
         if (_refreshCooldown > 0)
         {
             --_refreshCooldown;
@@ -264,6 +299,36 @@ public sealed unsafe class MountReplacementApplier : IRequiredService, IDisposab
         }
 
         SetAnimationSwaps(swaps);
+        _riderSwapsChanged = CommitPapSwaps(swaps);
+    }
+
+    private bool CommitPapSwaps(Dictionary<string, string> swaps)
+    {
+        var count   = 0;
+        var changed = false;
+        foreach (var (key, value) in swaps)
+        {
+            if (!key.EndsWith(".pap", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            ++count;
+            if (!_appliedPaps.TryGetValue(key, out var applied) || !applied.Equals(value, StringComparison.OrdinalIgnoreCase))
+                changed = true;
+        }
+
+        if (_appliedPaps.Count != count)
+            changed = true;
+        if (!changed)
+            return false;
+
+        _appliedPaps.Clear();
+        foreach (var (key, value) in swaps)
+        {
+            if (key.EndsWith(".pap", StringComparison.OrdinalIgnoreCase))
+                _appliedPaps[key] = value;
+        }
+
+        return true;
     }
 
     private void AddAnimationSwaps(Dictionary<string, string> swaps, MountInfo source, MountInfo target)
@@ -489,6 +554,7 @@ public sealed unsafe class MountReplacementApplier : IRequiredService, IDisposab
             if (collection == Guid.Empty)
                 return;
 
+            ResolveModdedPaps(collection, swaps);
             var ec = _addTemporaryMod.Invoke(TemporaryModTag, collection, swaps, "", TemporaryModPriority);
             _hasSwaps      = ec == PenumbraApiEc.Success;
             _modCollection = collection;
@@ -497,6 +563,40 @@ public sealed unsafe class MountReplacementApplier : IRequiredService, IDisposab
         catch (Exception e)
         {
             Glamourer.Log.Warning($"[MountReplacement] Failed to set rider animation swaps: {e.Message}");
+        }
+    }
+
+    private void ResolveModdedPaps(Guid collection, Dictionary<string, string> swaps)
+    {
+        var resolved = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var source in swaps.Keys.ToArray())
+        {
+            var dest = swaps[source];
+            if (!dest.EndsWith(".pap", StringComparison.OrdinalIgnoreCase))
+                continue;
+
+            if (!resolved.TryGetValue(dest, out var path))
+            {
+                path = dest;
+                try
+                {
+                    if (_resolvePath.Invoke(collection, dest, out var result) == PenumbraApiEc.Success && !string.IsNullOrEmpty(result))
+                    {
+                        var gamePath = dest.Replace('\\', '/');
+                        var modPath  = result.Replace('\\', '/');
+                        if (!gamePath.Equals(modPath, StringComparison.OrdinalIgnoreCase))
+                            path = result;
+                    }
+                }
+                catch (Exception e)
+                {
+                    Glamourer.Log.Debug($"[MountReplacement] Failed to resolve {dest}: {e.Message}");
+                }
+
+                resolved[dest] = path;
+            }
+
+            swaps[source] = path;
         }
     }
 

@@ -51,7 +51,8 @@ public sealed class MountReplacementManager : ISavable, IService
     private readonly SaveService  _saveService;
     private readonly ActorManager _actors;
 
-    private readonly List<MountReplacementRule> _rules = [];
+    private readonly List<MountReplacementRule> _rules     = [];
+    private readonly HashSet<uint>              _favorites = [];
 
     public readonly IReadOnlyDictionary<uint, MountInfo> Mounts;
 
@@ -95,6 +96,19 @@ public sealed class MountReplacementManager : ISavable, IService
 
     public bool HasSource(uint source)
         => _rules.Any(r => r.Source == source);
+
+    public bool IsFavorite(uint mount)
+        => _favorites.Contains(mount);
+
+    public void ToggleFavorite(uint mount)
+    {
+        if (mount is 0 || !Mounts.ContainsKey(mount))
+            return;
+
+        if (!_favorites.Remove(mount))
+            _favorites.Add(mount);
+        _saveService.DelaySave(this);
+    }
 
     public void SetTarget(uint source, uint target)
     {
@@ -263,6 +277,10 @@ public sealed class MountReplacementManager : ISavable, IService
         }
 
         j.WriteEndArray();
+        j.WriteStartArray("Favorites"u8);
+        foreach (var favorite in _favorites)
+            j.WriteNumberValue(favorite);
+        j.WriteEndArray();
         j.WriteEndObject();
     }
 
@@ -270,6 +288,7 @@ public sealed class MountReplacementManager : ISavable, IService
     {
         var file = ToFilePath(_saveService.FileNames);
         _rules.Clear();
+        _favorites.Clear();
         if (!File.Exists(file))
             return;
 
@@ -281,6 +300,15 @@ public sealed class MountReplacementManager : ISavable, IService
                 return;
 
             Enabled = obj.RootElement.PropertyOrDefault("Enabled"u8, false);
+            if (obj.RootElement.TryReadArray("Favorites"u8, out var favorites))
+            {
+                foreach (var favorite in favorites.EnumerateArray())
+                {
+                    if (favorite.TryGetUInt32(out var id))
+                        _favorites.Add(id);
+                }
+            }
+
             if (!obj.RootElement.TryReadArray("Rules"u8, out var array))
                 return;
 
