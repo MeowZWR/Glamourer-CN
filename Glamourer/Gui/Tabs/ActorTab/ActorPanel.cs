@@ -10,6 +10,7 @@ using Glamourer.Gui.Equipment;
 using Glamourer.Gui.Materials;
 using Glamourer.Interop;
 using Glamourer.Interop.Material;
+using Glamourer.MountReplacement.Gui;
 using Glamourer.Services;
 using Glamourer.State;
 using ImSharp;
@@ -36,6 +37,7 @@ public sealed class ActorPanel : IPanel
     private readonly AdvancedDyePopup         _advancedDyes;
     private readonly DesignApplier            _designApplier;
     private readonly NavigationService        _navigator;
+    private readonly MountActorDrawer         _mountDrawer;
 
     public ActorPanel(StateManager stateManager,
         CustomizationDrawer customizationDrawer,
@@ -51,7 +53,8 @@ public sealed class ActorPanel : IPanel
         EditorHistory editorHistory,
         ActorSelection selection,
         DesignApplier designApplier,
-        NavigationService navigator)
+        NavigationService navigator,
+        MountActorDrawer mountDrawer)
     {
         _stateManager        = stateManager;
         _customizationDrawer = customizationDrawer;
@@ -66,6 +69,7 @@ public sealed class ActorPanel : IPanel
         _selection           = selection;
         _designApplier       = designApplier;
         _navigator           = navigator;
+        _mountDrawer         = mountDrawer;
     }
 
     private CustomizeFlag CustomizeApplicationFlags
@@ -315,6 +319,7 @@ public sealed class ActorPanel : IPanel
             Im.Separator();
         }
 
+        _mountDrawer.Draw(_selection.Identifier);
         var names = _modelChara[_selection.State!.ModelData.ModelId];
         using (Im.ListBox.Begin("##MonsterList"u8, Im.ContentRegion.Available with { Y = 10 * Im.Style.TextHeightWithSpacing }))
         {

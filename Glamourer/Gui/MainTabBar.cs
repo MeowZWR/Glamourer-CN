@@ -8,6 +8,7 @@ using Glamourer.Gui.Tabs.DesignTab;
 using Glamourer.Gui.Tabs.NpcTab;
 using Glamourer.Gui.Tabs.SettingsTab;
 using Glamourer.Gui.Tabs.UnlocksTab;
+using Glamourer.MountReplacement.Gui;
 using Luna;
 
 namespace Glamourer.Gui;
@@ -19,8 +20,9 @@ public sealed class MainTabBar : TabBar<MainTabType>, IDisposable
     public readonly  SettingsTab       Settings;
 
     public MainTabBar(LunaLogger log, EphemeralConfig config, SettingsTab settings, ActorTab actors, DesignTab designs,
-        AutomationTab automation, UnlocksTab unlocks, NpcTab npcs, MessagesTab messages, DebugTab debug, NavigationService navigation)
-        : base("MainTabBar", log, settings, actors, designs, automation, unlocks, npcs, messages, debug)
+        AutomationTab automation, MountReplacementTab mountReplacement, UnlocksTab unlocks, NpcTab npcs, MessagesTab messages, DebugTab debug,
+        NavigationService navigation)
+        : base("MainTabBar", log, settings, actors, designs, automation, mountReplacement, unlocks, npcs, messages, debug)
     {
         Settings    = settings;
         _navigation = navigation;

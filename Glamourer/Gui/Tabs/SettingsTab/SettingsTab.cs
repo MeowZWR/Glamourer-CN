@@ -11,6 +11,7 @@ using Glamourer.Gui.Equipment;
 using Glamourer.Gui.Tabs.DesignTab;
 using Glamourer.Interop;
 using Glamourer.Interop.PalettePlus;
+using Glamourer.MountReplacement;
 using Glamourer.Services;
 using ImSharp;
 using Luna;
@@ -34,7 +35,8 @@ public sealed class SettingsTab(
     PredefinedTagManager predefinedTags,
     PcpService pcpService,
     IgnoredMods ignoredMods,
-    DesignColorUi designColors)
+    DesignColorUi designColors,
+    MountReplacementManager mountReplacement)
     : ITab<MainTabType>
 {
     private readonly VirtualKey[] _validKeys = keys.GetValidVirtualKeys().Prepend(VirtualKey.NO_KEY).ToArray();
@@ -58,7 +60,10 @@ public sealed class SettingsTab(
                 config.EnableAutoDesigns = v;
                 autoDesignApplier.OnEnableAutoDesignsChanged(v);
             });
-        Im.Cursor.Y += Im.Style.FrameHeightWithSpacing * 4;
+        Checkbox("启用坐骑替换"u8,
+            "启用后，召唤坐骑时在本地将其外观显示为另一坐骑，规则可以在坐骑替换标签页中配置。"u8,
+            mountReplacement.Enabled, mountReplacement.SetEnabled);
+        Im.Cursor.Y += Im.Style.FrameHeightWithSpacing * 3;
 
         using (Im.Child.Begin("SettingsChild"u8))
         {
