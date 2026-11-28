@@ -21,7 +21,8 @@ public sealed class MountActorDrawer : IUiService
             return;
 
         var source = identifier.DataId.Id;
-        if (_combo.Draw("##mountReplacement"u8, _manager.GetTarget(source), 300 * Im.Style.GlobalScale, out var target))
+        if (_combo.Draw("##mountReplacement"u8, _manager.GetTarget(source), 300 * Im.Style.GlobalScale, out var target,
+                id => id is not 0 && id == source))
             _manager.SetTarget(source, target);
         LunaStyle.DrawAlignedHelpMarkerLabel("坐骑显示为"u8,
             "在本地将此坐骑的外观显示为另一坐骑，与坐骑替换标签页中此坐骑的规则相同。\n选择「请选择」以取消替换。"u8);

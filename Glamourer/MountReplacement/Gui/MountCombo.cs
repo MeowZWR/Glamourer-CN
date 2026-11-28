@@ -9,7 +9,8 @@ public sealed class MountCombo(MountReplacementManager manager, string firstLabe
     public const string AnyLabel   = "任意坐骑";
     public const string UnsetLabel = "请选择";
 
-    private uint _current;
+    private uint                _current;
+    private Func<uint, bool>?   _hide;
 
     public readonly struct MountCacheItem(uint id, string name)
     {
@@ -31,9 +32,15 @@ public sealed class MountCombo(MountReplacementManager manager, string firstLabe
 
     protected override IEnumerable<MountCacheItem> GetItems()
     {
-        yield return new MountCacheItem(0, firstLabel);
+        if (_hide?.Invoke(0) is not true)
+            yield return new MountCacheItem(0, firstLabel);
         foreach (var mount in manager.Mounts.Values.OrderBy(m => m.Name, StringComparer.OrdinalIgnoreCase))
+        {
+            if (_hide?.Invoke(mount.Id) is true)
+                continue;
+
             yield return new MountCacheItem(mount.Id, ToDisplayName(mount));
+        }
     }
 
     protected override float ItemHeight
@@ -42,17 +49,32 @@ public sealed class MountCombo(MountReplacementManager manager, string firstLabe
     protected override bool DrawItem(in MountCacheItem item, int globalIndex, bool selected)
         => Im.Selectable(item.Name.Utf8, selected);
 
-    public bool Draw(Utf8StringHandler<LabelStringHandlerBuffer> label, uint current, float width, out uint newId)
+    public bool Draw(Utf8StringHandler<LabelStringHandlerBuffer> label, uint current, float width, out uint newId,
+        Func<uint, bool>? hide = null)
     {
         _current = current;
-        if (!base.Draw(label, ToDisplayName(current), StringU8.Empty, width, out var item))
+        _hide    = hide;
+        try
         {
-            newId = current;
-            return false;
-        }
+            if (!base.Draw(label, ToDisplayName(current), StringU8.Empty, width, out var item))
+            {
+                newId = current;
+                return false;
+            }
 
-        newId = item.Id;
-        return true;
+            newId = item.Id;
+            return true;
+        }
+        finally
+        {
+            _hide = null;
+        }
+    }
+
+    protected override void PreDrawCombo(float width)
+    {
+        if (CacheManager.Instance.TryGetCache(CurrentId, out FilterComboBaseCache<MountCacheItem>? cache))
+            cache.Dirty |= IManagedCache.DirtyFlags.Custom;
     }
 
     protected override bool IsSelected(MountCacheItem item, int globalIndex)

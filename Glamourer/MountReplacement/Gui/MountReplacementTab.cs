@@ -34,7 +34,7 @@ public sealed class MountReplacementTab : ITab<MainTabType>
     public void DrawContent()
     {
         Im.TextWrapped("召唤原坐骑时，在本地将其外观显示为另一坐骑，不影响实际坐骑、飞行能力和座位数。\n"u8
-          + "具体坐骑的规则优先于「任意坐骑」规则，同一坐骑存在多条规则时，排在前面的生效。"u8);
+          + "具体坐骑的规则优先于「任意坐骑」规则。"u8);
         Im.Separator();
 
         using var table = Im.Table.Begin("MountReplacementTable"u8, 5, TableFlags.RowBackground | TableFlags.ScrollY);
@@ -51,7 +51,7 @@ public sealed class MountReplacementTab : ITab<MainTabType>
 
         table.NextColumn();
         table.NextColumn();
-        if (_sourceCombo.Draw("##newSource"u8, 0, Im.ContentRegion.Available.X, out var newSource))
+        if (_sourceCombo.Draw("##newSource"u8, 0, Im.ContentRegion.Available.X, out var newSource, _manager.HasSource))
             _endAction = () => _manager.AddRule(newSource);
         table.DrawFrameColumn("选择原坐骑以添加新规则"u8);
         table.NextColumn();
@@ -77,11 +77,13 @@ public sealed class MountReplacementTab : ITab<MainTabType>
             Im.Tooltip.OnHover(HoveredFlags.AllowWhenDisabled, $"按住 {_config.DeleteDesignModifier} 来删除此规则。");
 
         table.NextColumn();
-        if (_sourceCombo.Draw("##source"u8, rule.Source, Im.ContentRegion.Available.X, out var newSource))
+        if (_sourceCombo.Draw("##source"u8, rule.Source, Im.ContentRegion.Available.X, out var newSource,
+                id => id != rule.Source && _manager.HasSource(id)))
             _manager.ChangeSource(rule, newSource);
 
         table.NextColumn();
-        if (_targetCombo.Draw("##target"u8, rule.Target, Im.ContentRegion.Available.X, out var newTarget))
+        if (_targetCombo.Draw("##target"u8, rule.Target, Im.ContentRegion.Available.X, out var newTarget,
+                id => id is not 0 && id == rule.Source))
             _manager.ChangeTarget(rule, newTarget);
 
         table.NextColumn();

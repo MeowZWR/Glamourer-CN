@@ -20,7 +20,12 @@ public sealed record MountInfo(
     CharacterArmor Legs,
     CharacterArmor Feet,
     byte ExtraSeats,
-    bool IsFlying)
+    bool IsFlying,
+    ushort Model,
+    byte ModelType,
+    ushort RideBgmId,
+    ushort SoundPack,
+    ushort[] RaceScales)
 {
     public bool HasEquipment
         => Head != CharacterArmor.Empty || Body != CharacterArmor.Empty || Legs != CharacterArmor.Empty || Feet != CharacterArmor.Empty;
@@ -86,8 +91,14 @@ public sealed class MountReplacementManager : ISavable, IService
     public uint GetTarget(uint source)
         => _rules.FirstOrDefault(r => r.Source == source && source is not 0) is { Enabled: true } rule ? rule.Target : 0;
 
+    public bool HasSource(uint source)
+        => _rules.Any(r => r.Source == source);
+
     public void SetTarget(uint source, uint target)
     {
+        if (target is not 0 && target == source)
+            return;
+
         var rule = _rules.FirstOrDefault(r => r.Source == source);
         if (rule is null)
         {
@@ -118,6 +129,9 @@ public sealed class MountReplacementManager : ISavable, IService
 
     public void AddRule(uint source)
     {
+        if (HasSource(source))
+            return;
+
         _rules.Add(new MountReplacementRule { Source = source });
         OnChange();
     }
@@ -133,7 +147,7 @@ public sealed class MountReplacementManager : ISavable, IService
 
     public void ChangeSource(MountReplacementRule rule, uint source)
     {
-        if (rule.Source == source)
+        if (rule.Source == source || HasSource(source))
             return;
 
         rule.Source = source;
@@ -142,7 +156,7 @@ public sealed class MountReplacementManager : ISavable, IService
 
     public void ChangeTarget(MountReplacementRule rule, uint target)
     {
-        if (rule.Target == target)
+        if (rule.Target == target || (target is not 0 && target == rule.Source))
             return;
 
         rule.Target = target;
@@ -166,19 +180,53 @@ public sealed class MountReplacementManager : ISavable, IService
 
     private static Dictionary<uint, MountInfo> CreateMounts(IDataManager gameData)
     {
-        var ret = new Dictionary<uint, MountInfo>();
+        var ret    = new Dictionary<uint, MountInfo>();
+        var charas = gameData.GetExcelSheet<Lumina.Excel.Sheets.ModelChara>()!;
         foreach (var mount in gameData.GetExcelSheet<Lumina.Excel.Sheets.Mount>())
         {
             var name = mount.Singular.ExtractTextExtended();
-            if (mount.ModelChara.RowId is 0 || name.Length is 0)
+            if (mount.ModelChara.RowId is 0 || name.Length is 0 || !charas.TryGetRow(mount.ModelChara.RowId, out var chara))
                 continue;
 
             ret[mount.RowId] = new MountInfo(mount.RowId, name, mount.ModelChara.RowId, ToArmor(mount.EquipHead), ToArmor(mount.EquipBody),
-                ToArmor(mount.EquipLeg), ToArmor(mount.EquipFoot), mount.ExtraSeats, mount.IsFlying is not 0);
+                ToArmor(mount.EquipLeg), ToArmor(mount.EquipFoot), mount.ExtraSeats, mount.IsFlying is not 0, chara.Model, chara.Type,
+                (ushort)mount.RideBGM.RowId, chara.SEPack, CreateRaceScales(mount));
         }
 
         return ret;
     }
+
+    private static ushort[] CreateRaceScales(Lumina.Excel.Sheets.Mount mount)
+    {
+        var scales = new ushort[18];
+        Array.Fill(scales, (ushort)100);
+        if (!mount.MountCustomize.IsValid)
+            return scales;
+
+        var row = mount.MountCustomize.Value;
+        scales[0]  = Scale(row.HyurMidlanderMaleScale);
+        scales[1]  = Scale(row.HyurMidlanderFemaleScale);
+        scales[2]  = Scale(row.HyurHighlanderMaleScale);
+        scales[3]  = Scale(row.HyurHighlanderFemaleScale);
+        scales[4]  = Scale(row.ElezenMaleScale);
+        scales[5]  = Scale(row.ElezenFemaleScale);
+        scales[6]  = Scale(row.MiqoMaleScale);
+        scales[7]  = Scale(row.MiqoFemaleScale);
+        scales[8]  = Scale(row.RoeMaleScale);
+        scales[9]  = Scale(row.RoeFemaleScale);
+        scales[10] = Scale(row.LalaMaleScale);
+        scales[11] = Scale(row.LalaFemaleScale);
+        scales[12] = Scale(row.AuRaMaleScale);
+        scales[13] = Scale(row.AuRaFemaleScale);
+        scales[14] = Scale(row.HrothgarMaleScale);
+        scales[15] = Scale(row.HrothgarFemaleScale);
+        scales[16] = Scale(row.VieraMaleScale);
+        scales[17] = Scale(row.VieraFemaleScale);
+        return scales;
+    }
+
+    private static ushort Scale(ushort value)
+        => value == 0 ? (ushort)100 : value;
 
     public static CharacterArmor ToArmor(int value)
     {
@@ -232,9 +280,13 @@ public sealed class MountReplacementManager : ISavable, IService
                 if (ruleObj.ValueKind is not JsonValueKind.Object)
                     continue;
 
+                var source = ruleObj.PropertyOrDefault("Source"u8, 0u);
+                if (_rules.Any(r => r.Source == source))
+                    continue;
+
                 _rules.Add(new MountReplacementRule
                 {
-                    Source  = ruleObj.PropertyOrDefault("Source"u8,  0u),
+                    Source  = source,
                     Target  = ruleObj.PropertyOrDefault("Target"u8,  0u),
                     Enabled = ruleObj.PropertyOrDefault("Enabled"u8, true),
                 });
