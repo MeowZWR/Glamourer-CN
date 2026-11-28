@@ -25,6 +25,8 @@ public sealed record MountInfo(
     byte ModelType,
     ushort RideBgmId,
     ushort SoundPack,
+    string SummonSound,
+    string DismissSound,
     ushort[] RaceScales)
 {
     public bool HasEquipment
@@ -190,7 +192,8 @@ public sealed class MountReplacementManager : ISavable, IService
 
             ret[mount.RowId] = new MountInfo(mount.RowId, name, mount.ModelChara.RowId, ToArmor(mount.EquipHead), ToArmor(mount.EquipBody),
                 ToArmor(mount.EquipLeg), ToArmor(mount.EquipFoot), mount.ExtraSeats, mount.IsFlying is not 0, chara.Model, chara.Type,
-                (ushort)mount.RideBGM.RowId, chara.SEPack, CreateRaceScales(mount));
+                (ushort)mount.RideBGM.RowId, chara.SEPack, SoundName(mount.Unknown1), SoundName(mount.Unknown3),
+                CreateRaceScales(mount));
         }
 
         return ret;
@@ -227,6 +230,12 @@ public sealed class MountReplacementManager : ISavable, IService
 
     private static ushort Scale(ushort value)
         => value == 0 ? (ushort)100 : value;
+
+    private static string SoundName(Lumina.Text.ReadOnly.ReadOnlySeString value)
+    {
+        var name = value.ExtractTextExtended();
+        return name.Length == 0 ? string.Empty : name;
+    }
 
     public static CharacterArmor ToArmor(int value)
     {

@@ -425,11 +425,23 @@ public sealed unsafe class MountReplacementApplier : IRequiredService, IDisposab
 
     private void AddSoundSwaps(Dictionary<string, string> swaps, MountInfo source, MountInfo target)
     {
-        if (source.SoundPack == 0 || target.SoundPack == 0 || source.SoundPack == target.SoundPack)
+        if (source.SoundPack != 0 && target.SoundPack != 0 && source.SoundPack != target.SoundPack)
+            AddSoundFile(swaps, $"sound/battle/mon/{source.SoundPack}.scd", $"sound/battle/mon/{target.SoundPack}.scd");
+
+        AddBoardSound(swaps, source.SummonSound, target.SummonSound);
+        AddBoardSound(swaps, source.DismissSound, target.DismissSound);
+    }
+
+    private void AddBoardSound(Dictionary<string, string> swaps, string source, string target)
+    {
+        if (source.Length == 0 || target.Length == 0 || source == target)
             return;
 
-        var from = $"sound/battle/mon/{source.SoundPack}.scd";
-        var to   = $"sound/battle/mon/{target.SoundPack}.scd";
+        AddSoundFile(swaps, $"sound/battle/etc/{source}.scd", $"sound/battle/etc/{target}.scd");
+    }
+
+    private void AddSoundFile(Dictionary<string, string> swaps, string from, string to)
+    {
         if (from != to && _gameData.FileExists(from) && _gameData.FileExists(to))
             swaps[from] = to;
     }
